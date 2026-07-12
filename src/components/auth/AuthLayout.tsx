@@ -1,0 +1,43 @@
+import { type ReactNode } from 'react';
+import { useLocale } from '@/hooks/useLocale';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
+
+interface AuthLayoutProps {
+  title: string;
+  children: ReactNode;
+}
+
+export function AuthLayout({ title, children }: AuthLayoutProps) {
+  const { t } = useLocale();
+
+  return (
+    <div data-ev-id="ev_428f2f0803" className="min-h-screen bg-background bg-grid-texture flex flex-col">
+			{/* Header with language toggle */}
+			<header data-ev-id="ev_046c244768" className="p-4 flex justify-end">
+				<LanguageToggle />
+			</header>
+			
+			{/* Centered auth card */}
+			<main data-ev-id="ev_d38ee4bb63" className="flex-1 flex items-center justify-center p-4">
+				<div data-ev-id="ev_ed8620bc02" className="w-full max-w-md">
+					{/* Logo and app name */}
+					<div data-ev-id="ev_4dc04a9fbb" className="text-center mb-8">
+						<div data-ev-id="ev_a24d868992" className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary-muted border border-primary/30 mb-4">
+							<span data-ev-id="ev_fa5ad66a1b" className="text-2xl font-bold text-primary">NA</span>
+						</div>
+						<h1 data-ev-id="ev_39feb958d4" className="text-2xl font-bold text-foreground">{t.appName}</h1>
+						<p data-ev-id="ev_ae115b1ab5" className="text-foreground-muted text-sm mt-1">{t.tagline}</p>
+					</div>
+					
+					{/* Auth card */}
+					<div data-ev-id="ev_6add778236" className="bg-card border border-card-border rounded-xl p-6">
+						<h2 data-ev-id="ev_bbbc183eb9" className="text-xl font-semibold text-foreground mb-6 text-center">
+							{title}
+						</h2>
+						{children}
+					</div>
+				</div>
+			</main>
+		</div>);
+
+}

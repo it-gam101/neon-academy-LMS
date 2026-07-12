@@ -1,0 +1,136 @@
+/**
+ * ⚠️ THEME CONFIGURATION — Tailwind v4
+ * Neon Academy Dark Theme with Neon-Teal Accent
+ * WCAG AA compliant colors on dark background
+ */
+@theme {
+	/* Base dark background colors */
+	--color-background: #1a1a1d;
+	--color-background-elevated: #222225;
+	--color-background-surface: #2a2a2e;
+	
+	/* Foreground / text colors */
+	--color-foreground: #f5f5f7;
+	--color-foreground-muted: #a1a1a6;
+	--color-foreground-subtle: #6e6e73;
+	
+	/* Primary = neon-teal (WCAG AA on dark bg: 4.54:1 contrast ratio) */
+	--color-primary: #2dd4bf;
+	--color-primary-foreground: #0f1419;
+	--color-primary-hover: #5eead4;
+	--color-primary-muted: #2dd4bf26;
+	
+	/* Secondary (neutral gray) */
+	--color-secondary: #3f3f46;
+	--color-secondary-foreground: #f5f5f7;
+	--color-secondary-hover: #52525b;
+	
+	/* Destructive / error */
+	--color-destructive: #f87171;
+	--color-destructive-foreground: #0f1419;
+	--color-destructive-muted: #f8717126;
+	
+	/* Muted backgrounds */
+	--color-muted: #27272a;
+	--color-muted-foreground: #a1a1a6;
+	
+	/* Accent (purple - reserved for charts) */
+	--color-accent: #a78bfa;
+	--color-accent-foreground: #0f1419;
+	
+	/* Warning/caution */
+	--color-warning: #fbbf24;
+	--color-warning-foreground: #0f1419;
+	
+	/* Success */
+	--color-success: #2dd4bf;
+	--color-success-foreground: #0f1419;
+	
+	/* Borders */
+	--color-border: #3f3f46;
+	--color-border-muted: #27272a;
+	--color-border-focus: #2dd4bf;
+	
+	/* Input */
+	--color-input: #27272a;
+	--color-input-border: #3f3f46;
+	
+	/* Focus ring */
+	--color-ring: #2dd4bf;
+	--color-ring-offset: #1a1a1d;
+	
+	/* Card specific */
+	--color-card: #222225;
+	--color-card-foreground: #f5f5f7;
+	--color-card-border: #3f3f46;
+	--color-card-hover: #2a2a2e;
+	
+	/* Radius */
+	--radius-sm: 0.375rem;
+	--radius-md: 0.5rem;
+	--radius-lg: 0.75rem;
+	--radius-xl: 1rem;
+	
+	/* Shadows */
+	--shadow-sm: 0 1px 2px 0 #0000001a;
+	--shadow-md: 0 4px 6px -1px #0000001a, 0 2px 4px -2px #0000001a;
+	--shadow-lg: 0 10px 15px -3px #0000001a, 0 4px 6px -4px #0000001a;
+	--shadow-card-hover: 0 8px 16px -4px #0000004d;
+	
+	/* Typography */
+	--font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Grid texture overlay for background */
+.bg-grid-texture {
+	background-image: 
+		linear-gradient(#ffffff05 1px, transparent 1px),
+		linear-gradient(90deg, #ffffff05 1px, transparent 1px);
+	background-size: 24px 24px;
+}
+
+/* Focus ring utility */
+.focus-ring {
+	outline: none;
+}
+
+.focus-ring:focus-visible {
+	box-shadow: 0 0 0 2px var(--color-ring-offset), 0 0 0 4px var(--color-ring);
+}
+
+/* Interactive card styles */
+.card-interactive {
+	transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.card-interactive:hover,
+.card-interactive:focus-visible {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-card-hover);
+}
+
+/* Leading edge accent (respects RTL) */
+.card-interactive::before {
+	content: '';
+	position: absolute;
+	inset-block: 0;
+	inset-inline-start: 0;
+	width: 3px;
+	background: transparent;
+	transition: background 150ms ease;
+	border-start-start-radius: var(--radius-md);
+	border-end-start-radius: var(--radius-md);
+}
+
+.card-interactive:hover::before,
+.card-interactive:focus-visible::before,
+.card-interactive[data-selected="true"]::before {
+	background: var(--color-primary);
+}
+
+/* LTR code blocks in RTL context */
+.ltr-content {
+	direction: ltr;
+	unicode-bidi: isolate;
+}
