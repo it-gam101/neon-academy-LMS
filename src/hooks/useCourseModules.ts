@@ -47,7 +47,7 @@ export function useCourseModules(courseId: string) {
 			if (courseError) throw courseError;
 			setCourse(courseData);
 
-			// Fetch modules with quizzes
+			// Fetch modules with quizzes and SCORM packages
 			const { data: modulesData, error: modulesError } = await supabase
 				.from('modules')
 				.select(`
@@ -55,7 +55,8 @@ export function useCourseModules(courseId: string) {
 					quiz:quizzes(
 						*,
 						questions:quiz_questions(*)
-					)
+					),
+					scorm_package:scorm_packages(*)
 				`)
 				.eq('course_id', courseId)
 				.order('sort_order');
@@ -67,6 +68,7 @@ export function useCourseModules(courseId: string) {
 			let enrollmentData: Tables<'enrollments'> | null = null;
 			let progressData: ModuleProgress[] = [];
 			let attemptsData: Tables<'quiz_attempts'>[] = [];
+			let scormRegistrationsData: Tables<'scorm_registrations'>[] = [];
 
 			if (user) {
 				// Get enrollment
@@ -105,9 +107,25 @@ export function useCourseModules(courseId: string) {
 
 					attemptsData = attempts || [];
 				}
+
+				// Get SCORM registrations for SCORM modules
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const scormPackageIds = (modulesData as any[])
+					?.filter((m) => m.module_type === 'scorm_package' && m.scorm_package_id)
+					.map((m) => m.scorm_package_id) || [];
+
+				if (scormPackageIds.length > 0 && enrollment) {
+					const { data: registrations } = await supabase
+						.from('scorm_registrations')
+						.select('*')
+						.eq('enrollment_id', enrollment.id)
+						.in('package_id', scormPackageIds);
+
+					scormRegistrationsData = registrations || [];
+				}
 			}
 
-			// Map modules with progress and attempts
+			// Map modules with progress, attempts, and SCORM registrations
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const modulesWithProgress = (modulesData || []).map((mod: any) => ({
 				...mod,
@@ -115,6 +133,9 @@ export function useCourseModules(courseId: string) {
 				attempts: mod.quiz 
 					? attemptsData.filter(a => a.quiz_id === mod.quiz.id)
 					: [],
+				scorm_registration: mod.module_type === 'scorm_package' && mod.scorm_package_id
+					? scormRegistrationsData.find(r => r.package_id === mod.scorm_package_id)
+					: undefined,
 			}));
 
 			setModules(modulesWithProgress);

@@ -56,6 +56,17 @@ export interface Dictionary {
 		hebrew: string;
 	};
 	
+	// SCORM
+	scorm: {
+		launch: string;
+		resume: string;
+		loadingPlayer: string;
+		packageNotFound: string;
+		invalidPackageUrl: string;
+		runtimeError: string;
+		scormPackage: string;
+	};
+	
 	// Roles
 	roles: {
 		super_admin: string;
@@ -530,6 +541,16 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			hebrew: 'עברית',
 		},
 		
+		scorm: {
+			launch: 'Launch',
+			resume: 'Resume',
+			loadingPlayer: 'Loading SCORM player...',
+			packageNotFound: 'SCORM package not found',
+			invalidPackageUrl: 'Invalid package URL',
+			runtimeError: 'SCORM runtime error',
+			scormPackage: 'SCORM Package',
+		},
+		
 		roles: {
 			super_admin: 'Super Admin',
 			hr_manager: 'HR Manager',
@@ -980,6 +1001,16 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			language: 'שפה',
 			english: 'English',
 			hebrew: 'עברית',
+		},
+		
+		scorm: {
+			launch: 'הפעל',
+			resume: 'המשך',
+			loadingPlayer: 'טוען נגן SCORM...',
+			packageNotFound: 'חבילת SCORM לא נמצאה',
+			invalidPackageUrl: 'כתובת חבילה לא תקינה',
+			runtimeError: 'שגיאת זמן ריצה של SCORM',
+			scormPackage: 'חבילת SCORM',
 		},
 		
 		roles: {

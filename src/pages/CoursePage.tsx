@@ -180,7 +180,8 @@ export default function CoursePage() {
 					<ModuleList
             courseId={courseId || ''}
             modules={modules}
-            enrolled={isEnrolled} />
+            enrolled={isEnrolled}
+            enrollmentId={enrollment?.id} />
 
 				</div>
 

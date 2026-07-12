@@ -296,6 +296,13 @@ export type Database = {
             referencedRelation: "courses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "modules_scorm_package_id_fkey"
+            columns: ["scorm_package_id"]
+            isOneToOne: false
+            referencedRelation: "scorm_packages"
+            referencedColumns: ["id"]
+          },
         ]
       }
       org_settings: {
@@ -543,6 +550,133 @@ export type Database = {
           {
             foreignKeyName: "report_snapshots_generated_by_fkey"
             columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scorm_packages: {
+        Row: {
+          created_at: string | null
+          entry_point: string
+          expires_at: string | null
+          id: string
+          is_public_sandbox: boolean
+          manifest_json: Json | null
+          scorm_version: string
+          size_bytes: number | null
+          storage_base_url: string
+          title: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entry_point: string
+          expires_at?: string | null
+          id?: string
+          is_public_sandbox?: boolean
+          manifest_json?: Json | null
+          scorm_version: string
+          size_bytes?: number | null
+          storage_base_url: string
+          title: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entry_point?: string
+          expires_at?: string | null
+          id?: string
+          is_public_sandbox?: boolean
+          manifest_json?: Json | null
+          scorm_version?: string
+          size_bytes?: number | null
+          storage_base_url?: string
+          title?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scorm_packages_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scorm_registrations: {
+        Row: {
+          cmi_data: Json | null
+          completion_status: string | null
+          created_at: string | null
+          enrollment_id: string | null
+          id: string
+          module_id: string | null
+          package_id: string
+          score_raw: number | null
+          success_status: string | null
+          suspend_data: string | null
+          total_time: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cmi_data?: Json | null
+          completion_status?: string | null
+          created_at?: string | null
+          enrollment_id?: string | null
+          id?: string
+          module_id?: string | null
+          package_id: string
+          score_raw?: number | null
+          success_status?: string | null
+          suspend_data?: string | null
+          total_time?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cmi_data?: Json | null
+          completion_status?: string | null
+          created_at?: string | null
+          enrollment_id?: string | null
+          id?: string
+          module_id?: string | null
+          package_id?: string
+          score_raw?: number | null
+          success_status?: string | null
+          suspend_data?: string | null
+          total_time?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scorm_registrations_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scorm_registrations_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scorm_registrations_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "scorm_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scorm_registrations_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

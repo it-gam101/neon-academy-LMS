@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { BookOpen, FileQuestion, CheckCircle, Circle, PlayCircle, ChevronRight, ChevronLeft, Lock } from 'lucide-react';
+import { BookOpen, FileQuestion, CheckCircle, Circle, PlayCircle, ChevronRight, ChevronLeft, Lock, Package } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { Badge } from '@/components/ui/Badge';
@@ -9,15 +9,18 @@ interface ModuleWithProgress extends Tables<'modules'> {
   progress?: Tables<'module_progress'>;
   quiz?: Tables<'quizzes'>;
   attempts?: Tables<'quiz_attempts'>[];
+  scorm_package?: Tables<'scorm_packages'>;
+  scorm_registration?: Tables<'scorm_registrations'>;
 }
 
 interface ModuleListProps {
   courseId: string;
   modules: ModuleWithProgress[];
   enrolled: boolean;
+  enrollmentId?: string;
 }
 
-export function ModuleList({ courseId, modules, enrolled }: ModuleListProps) {
+export function ModuleList({ courseId, modules, enrolled, enrollmentId }: ModuleListProps) {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
   const Chevron = locale === 'he' ? ChevronLeft : ChevronRight;
@@ -38,6 +41,8 @@ export function ModuleList({ courseId, modules, enrolled }: ModuleListProps) {
     switch (moduleType) {
       case 'quiz':
         return <FileQuestion className="w-5 h-5" />;
+      case 'scorm_package':
+        return <Package className="w-5 h-5" />;
       default:
         return <BookOpen className="w-5 h-5" />;
     }
@@ -46,12 +51,25 @@ export function ModuleList({ courseId, modules, enrolled }: ModuleListProps) {
   const getStatusBadge = (mod: ModuleWithProgress) => {
     const status = mod.progress?.status || 'not_started';
 
+    // Quiz module with attempts
     if (mod.module_type === 'quiz' && mod.attempts && mod.attempts.length > 0) {
       const lastAttempt = mod.attempts[0];
       if (lastAttempt.passed) {
         return <Badge variant="success">{dict.course.quizPassed} ({lastAttempt.score}%)</Badge>;
       }
       return <Badge variant="danger">{dict.course.quizFailed} ({lastAttempt.score}%)</Badge>;
+    }
+
+    // SCORM module with registration
+    if (mod.module_type === 'scorm_package' && mod.scorm_registration) {
+      const reg = mod.scorm_registration;
+      if (reg.completion_status === 'completed') {
+        const score = reg.score_raw != null ? ` (${Math.round(Number(reg.score_raw))}%)` : '';
+        return <Badge variant="success">{dict.common.completed}{score}</Badge>;
+      }
+      if (reg.completion_status === 'incomplete') {
+        return <Badge variant="info">{dict.course.inProgress}</Badge>;
+      }
     }
 
     switch (status) {
@@ -61,6 +79,26 @@ export function ModuleList({ courseId, modules, enrolled }: ModuleListProps) {
         return <Badge variant="info">{dict.course.inProgress}</Badge>;
       default:
         return <Badge>{dict.course.notStarted}</Badge>;
+    }
+  };
+
+  const getModuleUrl = (mod: ModuleWithProgress) => {
+    // SCORM modules use the player route with enrollment ID
+    if (mod.module_type === 'scorm_package' && enrollmentId) {
+      return `/learn/${enrollmentId}/scorm/${mod.id}`;
+    }
+    // Default module route
+    return `/course/${courseId}/module/${mod.id}`;
+  };
+
+  const getModuleTypeLabel = (mod: ModuleWithProgress, index: number) => {
+    switch (mod.module_type) {
+      case 'quiz':
+        return `${dict.course.quiz} ${index + 1}`;
+      case 'scorm_package':
+        return dict.scorm.scormPackage;
+      default:
+        return `${dict.course.lesson} ${index + 1}`;
     }
   };
 
@@ -76,7 +114,7 @@ export function ModuleList({ courseId, modules, enrolled }: ModuleListProps) {
           <div data-ev-id="ev_649ed2b906" key={mod.id} className="group">
 						{canAccess ?
             <Link
-              to={`/course/${courseId}/module/${mod.id}`}
+              to={getModuleUrl(mod)}
               className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all group-hover:shadow-md relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 
 								{/* Leading accent */}
@@ -94,8 +132,12 @@ export function ModuleList({ courseId, modules, enrolled }: ModuleListProps) {
 								<div data-ev-id="ev_534866f1a2" className="flex-1 min-w-0">
 									<div data-ev-id="ev_2830a6f1ab" className="flex items-center gap-2">
 										<span data-ev-id="ev_424b0648eb" className="text-sm text-muted-foreground">
-											{mod.module_type === 'quiz' ? dict.course.quiz : dict.course.lesson} {index + 1}
+											{getModuleTypeLabel(mod, index)}
 										</span>
+										{/* SCORM version chip */}
+										{mod.module_type === 'scorm_package' && mod.scorm_package && (
+											<Badge>{mod.scorm_package.scorm_version}</Badge>
+										)}
 									</div>
 									<h4 data-ev-id="ev_b76dd0d2c8" className="font-medium text-foreground truncate">{getTitle(mod)}</h4>
 								</div>
@@ -114,7 +156,7 @@ export function ModuleList({ courseId, modules, enrolled }: ModuleListProps) {
 								</div>
 								<div data-ev-id="ev_2fae3deed8" className="flex-1">
 									<span data-ev-id="ev_927d2526e3" className="text-sm text-muted-foreground">
-										{mod.module_type === 'quiz' ? dict.course.quiz : dict.course.lesson} {index + 1}
+										{getModuleTypeLabel(mod, index)}
 									</span>
 									<h4 data-ev-id="ev_27ca456428" className="font-medium text-foreground">{getTitle(mod)}</h4>
 								</div>

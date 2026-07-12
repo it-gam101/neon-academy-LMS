@@ -21,6 +21,7 @@ import SettingsPage from '@/pages/Settings';
 import CoursePage from '@/pages/CoursePage';
 import ModulePage from '@/pages/ModulePage';
 import QuizPage from '@/pages/QuizPage';
+import ScormPlayer from '@/pages/ScormPlayer';
 import NotFound from '@/pages/NotFound';
 
 // Auth pages
@@ -48,6 +49,7 @@ export default function App() {
 			<Route path="/course/:courseId" element={<CoursePage />} />
 			<Route path="/course/:courseId/module/:moduleId" element={<ModulePage />} />
 			<Route path="/course/:courseId/quiz/:moduleId" element={<QuizPage />} />
+			<Route path="/learn/:enrollmentId/scorm/:moduleId" element={<ScormPlayer />} />
 			
 			{/* Auth pages */}
 			<Route path="/auth/login" element={<Login />} />
