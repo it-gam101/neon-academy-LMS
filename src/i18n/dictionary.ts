@@ -136,6 +136,8 @@ export interface Dictionary {
 		tryAgain: string;
 		saveSnapshot: string;
 		exportCsv: string;
+		profileLoadError: string;
+		retry: string;
 	};
 	
 	// Tooltips
@@ -606,6 +608,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			tryAgain: 'Try Again',
 			saveSnapshot: 'Save Snapshot',
 			exportCsv: 'Export CSV',
+			profileLoadError: "Couldn't load your profile",
+			retry: 'Retry',
 		},
 		
 		tooltips: {
@@ -1056,6 +1060,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			tryAgain: 'נסה שוב',
 			saveSnapshot: 'שמור תמונת מצב',
 			exportCsv: 'ייצוא CSV',
+			profileLoadError: 'לא ניתן לטעון את הפרופיל שלך',
+			retry: 'נסה שוב',
 		},
 		
 		tooltips: {

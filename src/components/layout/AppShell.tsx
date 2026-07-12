@@ -1,19 +1,32 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 
 interface AppShellProps {
-	children: ReactNode;
-	hideLoginButton?: boolean;
+  children: ReactNode;
+  hideLoginButton?: boolean;
 }
 
 export function AppShell({ children, hideLoginButton = false }: AppShellProps) {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated, profileError, refreshProfile } = useAuth();
   const { t } = useLocale();
+  const hasShownError = useRef(false);
 
-  // Show loading while auth is initializing
+  // Show non-blocking toast when profile fails to load
+  useEffect(() => {
+    // Only show toast once per error, and only when authenticated
+    if (profileError && isAuthenticated && !hasShownError.current) {
+      hasShownError.current = true;
+    }
+    // Reset when error clears
+    if (!profileError) {
+      hasShownError.current = false;
+    }
+  }, [profileError, isAuthenticated]);
+
+  // Show loading only during initial session check (milliseconds)
   if (isLoading) {
     return (
       <div data-ev-id="ev_559d72eb3a" className="min-h-screen bg-background bg-grid-texture flex items-center justify-center">
@@ -22,7 +35,6 @@ export function AppShell({ children, hideLoginButton = false }: AppShellProps) {
 					<p data-ev-id="ev_dc1067a1a4" className="text-foreground-muted">{t.common.loading}</p>
 				</div>
 			</div>);
-
   }
 
   return (
@@ -33,6 +45,23 @@ export function AppShell({ children, hideLoginButton = false }: AppShellProps) {
 					{children}
 				</div>
 			</main>
-		</div>);
+			
+			{/* Non-blocking profile error toast */}
+			{profileError && isAuthenticated &&
+      <div
+        data-ev-id="ev_profile_error_toast"
+        className="fixed bottom-4 inset-inline-start-4 z-50 bg-destructive/10 border border-destructive/30 rounded-lg p-4 shadow-lg max-w-sm animate-in slide-in-from-bottom-5"
+        role="alert">
 
+					<p data-ev-id="ev_ea1d150649" className="text-sm text-foreground mb-2">{t.common.profileLoadError}</p>
+					<button data-ev-id="ev_219c5667a7"
+        onClick={() => void refreshProfile()}
+        className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium transition-colors">
+
+						<RefreshCw className="w-4 h-4" />
+						{t.common.retry}
+					</button>
+				</div>
+      }
+		</div>);
 }
