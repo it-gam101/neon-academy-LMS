@@ -3,7 +3,7 @@ import { BookOpen, CheckCircle, AlertTriangle, PlayCircle, ChevronRight, Chevron
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useEnrollments } from '@/hooks/useEnrollments';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Tabs } from '@/components/ui/Tabs';
@@ -28,29 +28,22 @@ export default function MyLearning() {
 
   if (loading) {
     return (
-      <AppShell>
       <div data-ev-id="ev_af2908c6d6" className="max-w-4xl mx-auto">
 				<div data-ev-id="ev_c23f48f0bc" className="mb-8">
 					<LoadingSkeleton variant="text" count={2} />
 				</div>
 				<LoadingSkeleton variant="list" count={5} />
-			</div>
-      </AppShell>);
-
+			</div>);
   }
 
   if (error) {
     return (
-      <AppShell>
       <div data-ev-id="ev_bb019f7e60" className="max-w-4xl mx-auto text-center">
 				<p data-ev-id="ev_67c667bf0e" className="text-destructive">{error}</p>
-			</div>
-      </AppShell>);
-
+			</div>);
   }
 
   return (
-    <AppShell>
     <div data-ev-id="ev_489677b633">
 			<div data-ev-id="ev_f20949d045" className="max-w-4xl mx-auto">
 				{/* Header */}
@@ -178,7 +171,5 @@ export default function MyLearning() {
 					</Tabs>
         }
 			</div>
-		</div>
-    </AppShell>);
-
+		</div>);
 }

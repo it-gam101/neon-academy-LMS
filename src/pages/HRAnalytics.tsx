@@ -3,7 +3,7 @@ import { BarChart3, Users, AlertTriangle, TrendingUp, Download, Save } from 'luc
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
@@ -309,16 +309,12 @@ export default function HRAnalytics() {
 
   if (loading) {
     return (
-      <AppShell>
       <div data-ev-id="ev_a8efb950bf" className="max-w-6xl mx-auto">
 				<LoadingSkeleton variant="card" count={4} />
-			</div>
-      </AppShell>);
-
+			</div>);
   }
 
   return (
-    <AppShell>
     <div data-ev-id="ev_0792db8bf0">
 			<div data-ev-id="ev_ea56bb1240" className="max-w-6xl mx-auto">
 				{/* Header */}
@@ -513,7 +509,6 @@ export default function HRAnalytics() {
           }}
 				</Tabs>
 			</div>
-		</div>
-    </AppShell>);
+		</div>);
 
 }

@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { AppShell } from '@/components/layout/AppShell';
 import type { UserRole } from '@/contexts/auth-context';
 
 interface ProtectedRouteProps {
@@ -53,5 +54,5 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 		);
 	}
 
-	return <>{children}</>;
+	return <AppShell>{children}</AppShell>;
 }

@@ -3,7 +3,7 @@ import { Users, FolderTree, FileText, Building, Plus, Search, Edit, Trash2, Save
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
@@ -197,16 +197,12 @@ export default function Admin() {
 
   if (loading) {
     return (
-      <AppShell>
       <div data-ev-id="ev_b06c6e374f" className="max-w-6xl mx-auto">
 				<LoadingSkeleton variant="table" count={5} />
-			</div>
-      </AppShell>);
-
+			</div>);
   }
 
   return (
-    <AppShell>
     <div data-ev-id="ev_4a362e43ac">
 			<div data-ev-id="ev_f831ab947a" className="max-w-6xl mx-auto">
 				{/* Header */}
@@ -587,7 +583,5 @@ export default function Admin() {
 					</div>
         }
 			</Modal>
-		</div>
-    </AppShell>);
-
+		</div>);
 }

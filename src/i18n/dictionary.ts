@@ -5,6 +5,19 @@ export interface Dictionary {
 	appName: string;
 	tagline: string;
 	
+	// Dashboard
+	dashboard: {
+		welcome: string;
+		continueLearning: string;
+		continueWhereLeft: string;
+		viewAllCourses: string;
+		newInCatalogue: string;
+		noInProgress: string;
+		noInProgressDescription: string;
+		noNewCourses: string;
+		noNewCoursesDescription: string;
+	};
+	
 	// Navigation
 	nav: {
 		catalogue: string;
@@ -499,6 +512,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		appName: 'Neon Academy',
 		tagline: 'Corporate Learning Management',
 		
+		dashboard: {
+			welcome: 'Welcome',
+			continueLearning: 'Continue Learning',
+			continueWhereLeft: 'Pick up where you left off',
+			viewAllCourses: 'View all courses',
+			newInCatalogue: 'New in the Catalogue',
+			noInProgress: 'No courses in progress',
+			noInProgressDescription: 'Enroll in a course from the catalogue to get started.',
+			noNewCourses: 'No new courses',
+			noNewCoursesDescription: 'Check back later for new content.',
+		},
+		
 		nav: {
 			catalogue: 'Catalogue',
 			myLearning: 'My Learning',
@@ -966,6 +991,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
 	he: {
 		appName: 'ניאון אקדמי',
 		tagline: 'מערכת ניהול למידה ארגונית',
+		
+		dashboard: {
+			welcome: 'שלום',
+			continueLearning: 'המשך ללמוד',
+			continueWhereLeft: 'המשך מהמקום שהפסקת',
+			viewAllCourses: 'צפה בכל הקורסים',
+			newInCatalogue: 'חדש בקטלוג',
+			noInProgress: 'אין קורסים בתהליך',
+			noInProgressDescription: 'הירשם לקורס מהקטלוג כדי להתחיל.',
+			noNewCourses: 'אין קורסים חדשים',
+			noNewCoursesDescription: 'בדוק שוב מאוחר יותר לתוכן חדש.',
+		},
 		
 		nav: {
 			catalogue: 'קטלוג',

@@ -4,7 +4,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useCourses } from '@/hooks/useCourses';
 import { CourseCard } from '@/components/courses/CourseCard';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -46,7 +46,7 @@ export default function Catalogue() {
   };
 
   return (
-    <AppShell>
+    <>
     <div data-ev-id="ev_507e222300">
 				{/* Header */}
 				<div data-ev-id="ev_f58e92002e" className="mb-8">
@@ -114,6 +114,6 @@ export default function Catalogue() {
 					</div>
         }
 		</div>
-    </AppShell>);
+    </>);
 
 }

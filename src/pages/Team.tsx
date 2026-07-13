@@ -5,7 +5,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useTeam } from '@/hooks/useTeam';
 import { useCourses } from '@/hooks/useCourses';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -63,25 +63,19 @@ export default function Team() {
 
   if (loading) {
     return (
-      <AppShell>
       <div data-ev-id="ev_5b662e9b66" className="max-w-6xl mx-auto">
 				<LoadingSkeleton variant="text" count={2} />
 				<div data-ev-id="ev_966d601ee9" className="mt-8">
 					<LoadingSkeleton variant="table" count={5} />
 				</div>
-			</div>
-      </AppShell>);
-
+			</div>);
   }
 
   if (error) {
     return (
-      <AppShell>
       <div data-ev-id="ev_ace1f43f95" className="max-w-6xl mx-auto">
         <ErrorState error={error} onRetry={refetch} />
-      </div>
-      </AppShell>);
-
+      </div>);
   }
 
   // Detail view for a selected member
@@ -89,7 +83,6 @@ export default function Team() {
     const enrollments = selectedMember.enrollments || [];
 
     return (
-      <AppShell>
       <div data-ev-id="ev_8e9dec2956">
 				<div data-ev-id="ev_2c1f05a058" className="max-w-4xl mx-auto">
 					{/* Breadcrumbs */}
@@ -180,13 +173,10 @@ export default function Team() {
 						</div>
           }
 				</div>
-			</div>
-      </AppShell>);
-
+			</div>);
   }
 
   return (
-    <AppShell>
     <div data-ev-id="ev_e3e439baf8">
 			<div data-ev-id="ev_32189d9da4" className="max-w-6xl mx-auto">
 				{/* Header */}
@@ -360,7 +350,6 @@ export default function Team() {
 					</div>
 				</div>
 			</Modal>
-		</div>
-    </AppShell>);
+		</div>);
 
 }
