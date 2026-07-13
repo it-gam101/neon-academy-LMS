@@ -45,6 +45,10 @@ export interface Dictionary {
 		invalidResetLinkDescription: string;
 		passwordMismatch: string;
 		passwordMinLength: string;
+		accountDeactivated: string;
+		accountDeactivatedDescription: string;
+		contactAdmin: string;
+		tryDifferentAccount: string;
 	};
 	
 	// Profile
@@ -255,6 +259,8 @@ export interface Dictionary {
 		timeUpMessage: string;
 		maxAttemptsReached: string;
 		maxAttemptsMessage: string;
+		noQuestionsTitle: string;
+		noQuestionsDescription: string;
 	};
 	
 	// My Learning
@@ -531,6 +537,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			invalidResetLinkDescription: 'This password reset link has expired or is invalid.',
 			passwordMismatch: 'Passwords do not match',
 			passwordMinLength: 'Password must be at least 8 characters',
+			accountDeactivated: 'Account Deactivated',
+			accountDeactivatedDescription: 'Your account has been deactivated. Please contact your administrator for assistance.',
+			contactAdmin: 'Contact Administrator',
+			tryDifferentAccount: 'Try a different account',
 		},
 		
 		profile: {
@@ -733,6 +743,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			timeUpMessage: 'Your quiz has been automatically submitted.',
 			maxAttemptsReached: 'Maximum Attempts Reached',
 			maxAttemptsMessage: 'You have used all available attempts for this quiz.',
+			noQuestionsTitle: 'No Questions Yet',
+			noQuestionsDescription: 'This quiz does not have any questions yet. Please contact your instructor.',
 		},
 		
 		myLearning: {
@@ -993,6 +1005,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			invalidResetLinkDescription: 'קישור איפוס הסיסמה פג תוקף או לא תקין.',
 			passwordMismatch: 'הסיסמאות אינן תואמות',
 			passwordMinLength: 'הסיסמה חייבת להכיל לפחות 8 תווים',
+			accountDeactivated: 'החשבון הושבת',
+			accountDeactivatedDescription: 'החשבון שלך הושבת. אנא פנה למנהל המערכת לקבלת סיוע.',
+			contactAdmin: 'פנה למנהל',
+			tryDifferentAccount: 'נסה חשבון אחר',
 		},
 		
 		profile: {
@@ -1195,6 +1211,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			timeUpMessage: 'המבחן שלך הוגש אוטומטית.',
 			maxAttemptsReached: 'הגעת למקסימום ניסיונות',
 			maxAttemptsMessage: 'ניצלת את כל הניסיונות הזמינים למבחן זה.',
+			noQuestionsTitle: 'אין שאלות עדיין',
+			noQuestionsDescription: 'למבחן זה אין עדיין שאלות. אנא פנה למדריך.',
 		},
 		
 		myLearning: {

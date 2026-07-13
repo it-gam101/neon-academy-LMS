@@ -1,55 +1,62 @@
 {
-  "summary": "Fix Catalogue hang and add upward navigation",
+  "summary": "Phase 1 Hardening: Global nav, route guards, deactivated users, quiz fixes, team page, org settings, dashboard polish",
   "todos": [
     {
       "id": 1,
-      "description": "Add i18n keys + create Breadcrumbs component with RTL support",
+      "description": "Core infrastructure: AppShell wrapping, AccessDenied page, ProtectedRoute, ErrorBoundary",
       "files": [
-        "src/i18n/dictionary.ts",
-        "src/components/ui/Breadcrumbs.tsx"
+        "src/components/layout/ProtectedRoute.tsx",
+        "src/pages/AccessDenied.tsx",
+        "src/components/ui/ErrorBoundary.tsx",
+        "src/App.tsx"
       ],
       "status": "complete"
     },
     {
       "id": 2,
-      "description": "Create timeout/error handling hook + update useCourses",
+      "description": "Auth hardening: is_active check, deactivation screen, scorm-commit update",
       "files": [
-        "src/hooks/useQueryWithTimeout.ts",
-        "src/hooks/useCourses.ts"
+        "src/contexts/AuthContext.tsx",
+        "src/pages/auth/Deactivated.tsx",
+        "supabase/functions/scorm-commit/index.ts"
       ],
       "status": "complete"
     },
     {
       "id": 3,
-      "description": "Update Header + Navigation for role-home and current-page highlight",
+      "description": "Page fixes: Quiz empty questions guard, Team query, Org settings save, Quiz editor settings",
       "files": [
-        "src/components/layout/Header.tsx",
-        "src/components/layout/Navigation.tsx"
-      ],
-      "status": "complete"
-    },
-    {
-      "id": 4,
-      "description": "Add breadcrumbs/back to CoursePage, ModulePage, QuizPage, StudioEditor",
-      "files": [
-        "src/pages/CoursePage.tsx",
-        "src/pages/ModulePage.tsx",
         "src/pages/QuizPage.tsx",
+        "src/hooks/useTeam.ts",
+        "src/pages/Admin.tsx",
         "src/pages/StudioEditor.tsx"
       ],
       "status": "complete"
     },
     {
-      "id": 5,
-      "description": "Update remaining hooks + Team page drilldown navigation",
+      "id": 4,
+      "description": "Wrap all pages with AppShell + contrast fixes",
       "files": [
-        "src/hooks/useEnrollments.ts",
-        "src/hooks/useTeam.ts",
-        "src/pages/Team.tsx"
+        "src/pages/Catalogue.tsx",
+        "src/pages/MyLearning.tsx",
+        "src/pages/Team.tsx",
+        "src/pages/Studio.tsx",
+        "src/pages/HRAnalytics.tsx",
+        "src/pages/CoursePage.tsx",
+        "src/pages/ModulePage.tsx"
       ],
       "status": "active"
+    },
+    {
+      "id": 5,
+      "description": "Dashboard polish: Continue card, new courses strip, i18n strings",
+      "files": [
+        "src/pages/Index.tsx",
+        "src/i18n/dictionary.ts"
+      ],
+      "status": "pending"
     }
   ],
-  "createdAt": "2026-07-09T09:42:50.474Z",
-  "updatedAt": "2026-07-09T09:52:25.425Z"
+  "createdAt": "2026-07-13T15:41:27.870Z",
+  "updatedAt": "2026-07-13T15:47:46.061Z"
 }

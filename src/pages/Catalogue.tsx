@@ -4,6 +4,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useCourses } from '@/hooks/useCourses';
 import { CourseCard } from '@/components/courses/CourseCard';
+import { AppShell } from '@/components/layout/AppShell';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -45,8 +46,8 @@ export default function Catalogue() {
   };
 
   return (
-    <div data-ev-id="ev_507e222300" className="min-h-screen bg-background">
-			<div data-ev-id="ev_ef64fb4e15" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppShell>
+    <div data-ev-id="ev_507e222300">
 				{/* Header */}
 				<div data-ev-id="ev_f58e92002e" className="mb-8">
 					<h1 data-ev-id="ev_455822cc29" className="text-3xl font-bold text-foreground mb-2">{dict.catalogue.title}</h1>
@@ -112,7 +113,7 @@ export default function Catalogue() {
           )}
 					</div>
         }
-			</div>
-		</div>);
+		</div>
+    </AppShell>);
 
 }

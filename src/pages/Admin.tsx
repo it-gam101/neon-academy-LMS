@@ -3,6 +3,7 @@ import { Users, FolderTree, FileText, Building, Plus, Search, Edit, Trash2, Save
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
+import { AppShell } from '@/components/layout/AppShell';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
@@ -157,8 +158,11 @@ export default function Admin() {
     }
   };
 
+  const [savingSettings, setSavingSettings] = useState(false);
+
   const handleSaveOrgSettings = async () => {
     if (!supabase || !orgSettings) return;
+    setSavingSettings(true);
 
     const { error } = await supabase.
     from('org_settings').
@@ -175,6 +179,7 @@ export default function Admin() {
     } else {
       showToast('success', dict.admin.settingsSaved);
     }
+    setSavingSettings(false);
   };
 
   const filteredUsers = users.filter((u) => {
@@ -192,15 +197,18 @@ export default function Admin() {
 
   if (loading) {
     return (
-      <div data-ev-id="ev_b06c6e374f" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AppShell>
+      <div data-ev-id="ev_b06c6e374f" className="max-w-6xl mx-auto">
 				<LoadingSkeleton variant="table" count={5} />
-			</div>);
+			</div>
+      </AppShell>);
 
   }
 
   return (
-    <div data-ev-id="ev_4a362e43ac" className="min-h-screen bg-background">
-			<div data-ev-id="ev_f831ab947a" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppShell>
+    <div data-ev-id="ev_4a362e43ac">
+			<div data-ev-id="ev_f831ab947a" className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div data-ev-id="ev_ff40bbc416" className="mb-8">
 					<h1 data-ev-id="ev_a8930f1195" className="text-3xl font-bold text-foreground mb-2">{dict.admin.title}</h1>
@@ -412,10 +420,11 @@ export default function Admin() {
 
 										<button data-ev-id="ev_e62a14f3ac"
                   onClick={handleSaveOrgSettings}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                  disabled={savingSettings}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 											<Save className="w-4 h-4" />
-											{dict.common.save}
+											{savingSettings ? dict.common.loading : dict.common.save}
 										</button>
 									</div>
                 }
@@ -578,6 +587,7 @@ export default function Admin() {
 					</div>
         }
 			</Modal>
-		</div>);
+		</div>
+    </AppShell>);
 
 }

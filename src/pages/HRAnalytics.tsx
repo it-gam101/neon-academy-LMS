@@ -3,6 +3,7 @@ import { BarChart3, Users, AlertTriangle, TrendingUp, Download, Save } from 'luc
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
+import { AppShell } from '@/components/layout/AppShell';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
@@ -308,15 +309,18 @@ export default function HRAnalytics() {
 
   if (loading) {
     return (
-      <div data-ev-id="ev_a8efb950bf" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AppShell>
+      <div data-ev-id="ev_a8efb950bf" className="max-w-6xl mx-auto">
 				<LoadingSkeleton variant="card" count={4} />
-			</div>);
+			</div>
+      </AppShell>);
 
   }
 
   return (
-    <div data-ev-id="ev_0792db8bf0" className="min-h-screen bg-background">
-			<div data-ev-id="ev_ea56bb1240" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppShell>
+    <div data-ev-id="ev_0792db8bf0">
+			<div data-ev-id="ev_ea56bb1240" className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div data-ev-id="ev_02aabed4dd" className="mb-8">
 					<h1 data-ev-id="ev_176b256d88" className="text-3xl font-bold text-foreground mb-2">{dict.hrAnalytics.title}</h1>
@@ -509,6 +513,7 @@ export default function HRAnalytics() {
           }}
 				</Tabs>
 			</div>
-		</div>);
+		</div>
+    </AppShell>);
 
 }

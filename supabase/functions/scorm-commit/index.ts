@@ -131,6 +131,21 @@ Deno.serve(async (req: Request) => {
 
 		const userId = user.id;
 
+		// Server-side backstop: check if user is deactivated
+		// Note: Full RLS-level enforcement is deferred; this is an explicit check
+		const { data: profileData, error: profileError } = await supabaseService
+			.from('profiles')
+			.select('is_active')
+			.eq('id', userId)
+			.single();
+
+		if (profileError || !profileData || !profileData.is_active) {
+			return new Response(
+				JSON.stringify({ error: 'Account is deactivated' }),
+				{ status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+			);
+		}
+
 		// Parse request body
 		const body: ScormCommitRequest = await req.json();
 		const { module_id, package_id, enrollment_id, event, cmi } = body;

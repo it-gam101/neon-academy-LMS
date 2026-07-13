@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, GripVertical } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, GripVertical, Settings } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +16,7 @@ import type { Tables } from '@/integrations/supabase/helpers';
 type Course = Tables<'courses'>;
 type Module = Tables<'modules'>;
 type Category = Tables<'course_categories'>;
+type Quiz = Tables<'quizzes'>;
 
 export default function StudioEditor() {
   const { courseId } = useParams<{courseId: string;}>();
@@ -30,6 +31,12 @@ export default function StudioEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+
+  // Quiz settings state
+  const [showQuizSettingsModal, setShowQuizSettingsModal] = useState(false);
+  const [editingQuizModuleId, setEditingQuizModuleId] = useState<string | null>(null);
+  const [quizSettings, setQuizSettings] = useState<Quiz | null>(null);
+  const [savingQuizSettings, setSavingQuizSettings] = useState(false);
 
   // Form state
   const [titleEn, setTitleEn] = useState('');
@@ -182,6 +189,49 @@ export default function StudioEditor() {
     } else {
       setModules((prev) => prev.filter((m) => m.id !== moduleId));
     }
+  };
+
+  const handleOpenQuizSettings = async (moduleId: string) => {
+    if (!supabase) return;
+
+    // Fetch quiz settings for this module
+    const { data, error } = await supabase.
+    from('quizzes').
+    select('*').
+    eq('module_id', moduleId).
+    single();
+
+    if (error || !data) {
+      showToast('error', error?.message || 'Quiz not found');
+      return;
+    }
+
+    setQuizSettings(data);
+    setEditingQuizModuleId(moduleId);
+    setShowQuizSettingsModal(true);
+  };
+
+  const handleSaveQuizSettings = async () => {
+    if (!supabase || !quizSettings) return;
+    setSavingQuizSettings(true);
+
+    const { error } = await supabase.
+    from('quizzes').
+    update({
+      pass_score: quizSettings.pass_score,
+      attempts_allowed: quizSettings.attempts_allowed,
+      time_limit_minutes: quizSettings.time_limit_minutes,
+      shuffle_questions: quizSettings.shuffle_questions
+    }).
+    eq('id', quizSettings.id);
+
+    if (error) {
+      showToast('error', error.message);
+    } else {
+      showToast('success', dict.studio.courseSaved);
+      setShowQuizSettingsModal(false);
+    }
+    setSavingQuizSettings(false);
   };
 
   if (loading) {
@@ -403,6 +453,14 @@ export default function StudioEditor() {
 											{locale === 'he' ? mod.title_he : mod.title_en}
 										</p>
 									</div>
+									{mod.module_type === 'quiz' &&
+              <button data-ev-id="ev_quiz_settings_btn"
+              onClick={() => handleOpenQuizSettings(mod.id)}
+              className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+              title={dict.studio.quizSettings}>
+                <Settings className="w-4 h-4" />
+              </button>
+              }
 									<button data-ev-id="ev_e2850d52d2"
               onClick={() => handleDeleteModule(mod.id)}
               className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
@@ -476,6 +534,85 @@ export default function StudioEditor() {
         }>
 
 				<p data-ev-id="ev_6cb6a55427" className="text-muted-foreground">{dict.studio.confirmPublishMessage}</p>
+			</Modal>
+
+			{/* Quiz settings modal */}
+			<Modal
+        isOpen={showQuizSettingsModal}
+        onClose={() => setShowQuizSettingsModal(false)}
+        title={dict.studio.quizSettings}
+        size="md"
+        footer={
+        <>
+						<button data-ev-id="ev_quiz_settings_cancel"
+          onClick={() => setShowQuizSettingsModal(false)}
+          className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors">
+							{dict.common.cancel}
+						</button>
+						<button data-ev-id="ev_quiz_settings_save"
+          onClick={handleSaveQuizSettings}
+          disabled={savingQuizSettings}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
+							{savingQuizSettings ? dict.common.loading : dict.common.save}
+						</button>
+					</>
+        }>
+				{quizSettings &&
+        <div data-ev-id="ev_quiz_settings_form" className="flex flex-col gap-4">
+						<div data-ev-id="ev_qs_pass_score">
+							<label data-ev-id="ev_qs_pass_label" className="block text-sm font-medium text-foreground mb-1">
+								{dict.studio.passScore} (%)
+							</label>
+							<input data-ev-id="ev_qs_pass_input"
+            type="number"
+            min="0"
+            max="100"
+            value={quizSettings.pass_score}
+            onChange={(e) => setQuizSettings({ ...quizSettings, pass_score: parseInt(e.target.value) || 0 })}
+            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+
+						</div>
+						<div data-ev-id="ev_qs_attempts">
+							<label data-ev-id="ev_qs_attempts_label" className="block text-sm font-medium text-foreground mb-1">
+								{dict.studio.attemptsAllowed}
+							</label>
+							<input data-ev-id="ev_qs_attempts_input"
+            type="number"
+            min="1"
+            value={quizSettings.attempts_allowed}
+            onChange={(e) => setQuizSettings({ ...quizSettings, attempts_allowed: parseInt(e.target.value) || 1 })}
+            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+
+						</div>
+						<div data-ev-id="ev_qs_time">
+							<label data-ev-id="ev_qs_time_label" className="block text-sm font-medium text-foreground mb-1">
+								{dict.studio.timeLimitMinutes}
+							</label>
+							<input data-ev-id="ev_qs_time_input"
+            type="number"
+            min="0"
+            placeholder={dict.course.noTimeLimit}
+            value={quizSettings.time_limit_minutes || ''}
+            onChange={(e) => setQuizSettings({ ...quizSettings, time_limit_minutes: e.target.value ? parseInt(e.target.value) : null })}
+            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+
+							<p data-ev-id="ev_qs_time_hint" className="text-xs text-muted-foreground mt-1">
+								{locale === 'he' ? 'השאר ריק למבחן ללא מגבלת זמן' : 'Leave empty for no time limit'}
+							</p>
+						</div>
+						<div data-ev-id="ev_qs_shuffle">
+							<label data-ev-id="ev_qs_shuffle_label" className="flex items-center gap-2 cursor-pointer">
+								<input data-ev-id="ev_qs_shuffle_input"
+              type="checkbox"
+              checked={quizSettings.shuffle_questions || false}
+              onChange={(e) => setQuizSettings({ ...quizSettings, shuffle_questions: e.target.checked })}
+              className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+
+								<span data-ev-id="ev_b2670c3733" className="text-sm font-medium text-foreground">{dict.studio.shuffleQuestions}</span>
+							</label>
+						</div>
+					</div>
+        }
 			</Modal>
 		</div>);
 

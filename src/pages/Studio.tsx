@@ -5,6 +5,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useCourses } from '@/hooks/useCourses';
 import { supabase } from '@/integrations/supabase/client';
+import { AppShell } from '@/components/layout/AppShell';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Badge } from '@/components/ui/Badge';
@@ -54,18 +55,21 @@ export default function Studio() {
 
   if (loading) {
     return (
-      <div data-ev-id="ev_0403bc2c57" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AppShell>
+      <div data-ev-id="ev_0403bc2c57" className="max-w-6xl mx-auto">
 				<LoadingSkeleton variant="text" count={2} />
 				<div data-ev-id="ev_fb173e2954" className="mt-8">
 					<LoadingSkeleton variant="list" count={5} />
 				</div>
-			</div>);
+			</div>
+      </AppShell>);
 
   }
 
   return (
-    <div data-ev-id="ev_e953f14ce8" className="min-h-screen bg-background">
-			<div data-ev-id="ev_3f2dd53e8b" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppShell>
+    <div data-ev-id="ev_e953f14ce8">
+			<div data-ev-id="ev_3f2dd53e8b" className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div data-ev-id="ev_8ab9aacb53" className="flex items-center justify-between mb-8">
 					<div data-ev-id="ev_5b70f2a250">
@@ -140,6 +144,7 @@ export default function Studio() {
 					</div>
         }
 			</div>
-		</div>);
+		</div>
+    </AppShell>);
 
 }

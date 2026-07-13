@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useNavigate } from 'react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContext, type Profile } from '@/contexts/auth-context';
 import { withTimeout } from '@/utils/fetchWithTimeout';
@@ -11,8 +12,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [session, setSession] = useState<import('@supabase/supabase-js').Session | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [profileError, setProfileError] = useState<string | null>(null);
+	const [isDeactivated, setIsDeactivated] = useState(false);
 	
 	// Load profile with timeout - never blocks rendering
+	// Checks is_active and signs out deactivated users
 	const loadProfile = useCallback(async (userId: string) => {
 		if (!supabase) return;
 		
@@ -35,8 +38,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				return;
 			}
 			
+			// Check if user is deactivated
+			if (data && !data.is_active) {
+				console.warn('User account is deactivated, signing out');
+				setIsDeactivated(true);
+				setProfile(null);
+				// Sign out the user
+				await supabase.auth.signOut();
+				return;
+			}
+			
 			setProfile(data as Profile);
 			setProfileError(null);
+			setIsDeactivated(false);
 			
 			// Sync locale from profile
 			if (data?.locale) {
@@ -126,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				isLoading,
 				isAuthenticated: !!user,
 				profileError,
+				isDeactivated,
 				signOut,
 				refreshProfile,
 			}}

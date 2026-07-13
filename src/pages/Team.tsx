@@ -5,6 +5,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useTeam } from '@/hooks/useTeam';
 import { useCourses } from '@/hooks/useCourses';
+import { AppShell } from '@/components/layout/AppShell';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -62,20 +63,24 @@ export default function Team() {
 
   if (loading) {
     return (
-      <div data-ev-id="ev_5b662e9b66" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AppShell>
+      <div data-ev-id="ev_5b662e9b66" className="max-w-6xl mx-auto">
 				<LoadingSkeleton variant="text" count={2} />
 				<div data-ev-id="ev_966d601ee9" className="mt-8">
 					<LoadingSkeleton variant="table" count={5} />
 				</div>
-			</div>);
+			</div>
+      </AppShell>);
 
   }
 
   if (error) {
     return (
-      <div data-ev-id="ev_ace1f43f95" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AppShell>
+      <div data-ev-id="ev_ace1f43f95" className="max-w-6xl mx-auto">
         <ErrorState error={error} onRetry={refetch} />
-      </div>);
+      </div>
+      </AppShell>);
 
   }
 
@@ -84,8 +89,9 @@ export default function Team() {
     const enrollments = selectedMember.enrollments || [];
 
     return (
-      <div data-ev-id="ev_8e9dec2956" className="min-h-screen bg-background">
-				<div data-ev-id="ev_2c1f05a058" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AppShell>
+      <div data-ev-id="ev_8e9dec2956">
+				<div data-ev-id="ev_2c1f05a058" className="max-w-4xl mx-auto">
 					{/* Breadcrumbs */}
 					<Breadcrumbs
             items={[
@@ -174,13 +180,15 @@ export default function Team() {
 						</div>
           }
 				</div>
-			</div>);
+			</div>
+      </AppShell>);
 
   }
 
   return (
-    <div data-ev-id="ev_e3e439baf8" className="min-h-screen bg-background">
-			<div data-ev-id="ev_32189d9da4" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppShell>
+    <div data-ev-id="ev_e3e439baf8">
+			<div data-ev-id="ev_32189d9da4" className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div data-ev-id="ev_49fc0838ee" className="flex items-center justify-between mb-8">
 					<div data-ev-id="ev_59a00c5714">
@@ -352,6 +360,7 @@ export default function Team() {
 					</div>
 				</div>
 			</Modal>
-		</div>);
+		</div>
+    </AppShell>);
 
 }

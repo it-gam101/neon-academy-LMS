@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { type User, type Session } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 import type { Tables } from '@/integrations/supabase/helpers';
 
 export type UserRole = 'super_admin' | 'hr_manager' | 'team_manager' | 'instructor' | 'employee';
@@ -15,6 +15,7 @@ export interface AuthContextType {
 	isLoading: boolean;
 	isAuthenticated: boolean;
 	profileError: string | null;
+	isDeactivated: boolean;
 	signOut: () => Promise<void>;
 	refreshProfile: () => Promise<void>;
 }

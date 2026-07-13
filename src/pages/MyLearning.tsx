@@ -3,6 +3,7 @@ import { BookOpen, CheckCircle, AlertTriangle, PlayCircle, ChevronRight, Chevron
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useEnrollments } from '@/hooks/useEnrollments';
+import { AppShell } from '@/components/layout/AppShell';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Tabs } from '@/components/ui/Tabs';
@@ -27,26 +28,31 @@ export default function MyLearning() {
 
   if (loading) {
     return (
-      <div data-ev-id="ev_af2908c6d6" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AppShell>
+      <div data-ev-id="ev_af2908c6d6" className="max-w-4xl mx-auto">
 				<div data-ev-id="ev_c23f48f0bc" className="mb-8">
 					<LoadingSkeleton variant="text" count={2} />
 				</div>
 				<LoadingSkeleton variant="list" count={5} />
-			</div>);
+			</div>
+      </AppShell>);
 
   }
 
   if (error) {
     return (
-      <div data-ev-id="ev_bb019f7e60" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+      <AppShell>
+      <div data-ev-id="ev_bb019f7e60" className="max-w-4xl mx-auto text-center">
 				<p data-ev-id="ev_67c667bf0e" className="text-destructive">{error}</p>
-			</div>);
+			</div>
+      </AppShell>);
 
   }
 
   return (
-    <div data-ev-id="ev_489677b633" className="min-h-screen bg-background">
-			<div data-ev-id="ev_f20949d045" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppShell>
+    <div data-ev-id="ev_489677b633">
+			<div data-ev-id="ev_f20949d045" className="max-w-4xl mx-auto">
 				{/* Header */}
 				<div data-ev-id="ev_26724187ad" className="mb-8">
 					<h1 data-ev-id="ev_aa068b4215" className="text-3xl font-bold text-foreground mb-2">{dict.myLearning.title}</h1>
@@ -172,6 +178,7 @@ export default function MyLearning() {
 					</Tabs>
         }
 			</div>
-		</div>);
+		</div>
+    </AppShell>);
 
 }

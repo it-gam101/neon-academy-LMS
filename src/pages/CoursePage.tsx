@@ -5,6 +5,7 @@ import { getDictionary } from '@/i18n/dictionary';
 import { useCourseModules } from '@/hooks/useCourseModules';
 import { useCourses } from '@/hooks/useCourses';
 import { ModuleList } from '@/components/courses/ModuleList';
+import { AppShell } from '@/components/layout/AppShell';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -39,24 +40,28 @@ export default function CoursePage() {
 
   if (loading) {
     return (
-      <div data-ev-id="ev_0bf22c888e" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AppShell>
+      <div data-ev-id="ev_0bf22c888e" className="max-w-4xl mx-auto">
 				<LoadingSkeleton variant="text" count={3} />
 				<div data-ev-id="ev_62301e1cdd" className="mt-8">
 					<LoadingSkeleton variant="list" count={5} />
 				</div>
-			</div>);
+			</div>
+      </AppShell>);
 
   }
 
   if (error || !course) {
     return (
-      <div data-ev-id="ev_7ae8776e0b" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AppShell>
+      <div data-ev-id="ev_7ae8776e0b" className="max-w-4xl mx-auto">
 				<BackButton to="/catalogue" label={dict.nav.catalogue} />
 				<ErrorState
           error={error || dict.common.notFound}
           onRetry={refetch} />
 
-			</div>);
+			</div>
+      </AppShell>);
 
   }
 
@@ -81,8 +86,9 @@ export default function CoursePage() {
   };
 
   return (
-    <div data-ev-id="ev_825ddcb642" className="min-h-screen bg-background">
-			<div data-ev-id="ev_0004629ff6" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppShell>
+    <div data-ev-id="ev_825ddcb642">
+			<div data-ev-id="ev_0004629ff6" className="max-w-4xl mx-auto">
 				{/* Breadcrumbs */}
 				<Breadcrumbs
           showHome={false}
@@ -193,6 +199,7 @@ export default function CoursePage() {
 					</div>
         }
 			</div>
-		</div>);
+		</div>
+    </AppShell>);
 
 }

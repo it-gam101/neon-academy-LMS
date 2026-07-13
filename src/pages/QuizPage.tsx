@@ -117,7 +117,24 @@ export default function QuizPage() {
         <BackButton to={`/course/${courseId}`} label={dict.quiz.backToCourse} />
         <ErrorState error={error || dict.common.notFound} />
       </div>);
+  }
 
+  // Guard against empty questions - quiz exists but no questions yet
+  if (questions.length === 0) {
+    return (
+      <div data-ev-id="ev_quiz_no_questions" className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton to={`/course/${courseId}`} label={dict.quiz.backToCourse} />
+        <div data-ev-id="ev_no_questions_card" className="bg-card border border-border rounded-lg p-8 text-center">
+          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h2 data-ev-id="ev_no_questions_title" className="text-xl font-semibold text-foreground mb-2">
+            {dict.quiz.noQuestionsTitle}
+          </h2>
+          <p data-ev-id="ev_no_questions_desc" className="text-muted-foreground">
+            {dict.quiz.noQuestionsDescription}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // Info screen
