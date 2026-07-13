@@ -6,7 +6,7 @@
  * - Static imports only — NO React.lazy() or dynamic import()
  */
 
-import { Routes, Route } from 'react-router';
+import { Routes, Route, Navigate } from 'react-router';
 
 // Layout components
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
@@ -111,6 +111,12 @@ export default function App() {
 				<Route path="/hr-analytics" element={
 					<ProtectedRoute allowedRoles={['super_admin', 'hr_manager']}>
 						<HRAnalytics />
+					</ProtectedRoute>
+				} />
+				{/* /hr alias - redirects to /hr-analytics (guard applied via redirect) */}
+				<Route path="/hr" element={
+					<ProtectedRoute allowedRoles={['super_admin', 'hr_manager']}>
+						<Navigate to="/hr-analytics" replace />
 					</ProtectedRoute>
 				} />
 				

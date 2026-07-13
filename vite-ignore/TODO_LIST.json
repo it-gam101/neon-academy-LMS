@@ -1,62 +1,31 @@
 {
-  "summary": "Phase 1 Hardening: Global nav, route guards, deactivated users, quiz fixes, team page, org settings, dashboard polish",
+  "summary": "Four frontend fixes: team query, /hr redirect, quiz editor, button contrast",
   "todos": [
     {
       "id": 1,
-      "description": "Core infrastructure: AppShell wrapping, AccessDenied page, ProtectedRoute, ErrorBoundary",
-      "files": [
-        "src/components/layout/ProtectedRoute.tsx",
-        "src/pages/AccessDenied.tsx",
-        "src/components/ui/ErrorBoundary.tsx",
-        "src/App.tsx"
-      ],
+      "description": "Team query fix with FK hint + role-based all-users view for super_admin/hr_manager",
+      "files": [],
       "status": "complete"
     },
     {
       "id": 2,
-      "description": "Auth hardening: is_active check, deactivation screen, scorm-commit update",
-      "files": [
-        "src/contexts/AuthContext.tsx",
-        "src/pages/auth/Deactivated.tsx",
-        "supabase/functions/scorm-commit/index.ts"
-      ],
+      "description": "Add /hr route alias redirecting to /hr-analytics",
+      "files": [],
       "status": "complete"
     },
     {
       "id": 3,
-      "description": "Page fixes: Quiz empty questions guard, Team query, Org settings save, Quiz editor settings",
-      "files": [
-        "src/pages/QuizPage.tsx",
-        "src/hooks/useTeam.ts",
-        "src/pages/Admin.tsx",
-        "src/pages/StudioEditor.tsx"
-      ],
+      "description": "Build quiz question editor with full CRUD matching QuizPage data shape",
+      "files": [],
       "status": "complete"
     },
     {
       "id": 4,
-      "description": "Wrap all pages with AppShell + contrast fixes",
-      "files": [
-        "src/pages/Catalogue.tsx",
-        "src/pages/MyLearning.tsx",
-        "src/pages/Team.tsx",
-        "src/pages/Studio.tsx",
-        "src/pages/HRAnalytics.tsx",
-        "src/pages/CoursePage.tsx",
-        "src/pages/ModulePage.tsx"
-      ],
-      "status": "active"
-    },
-    {
-      "id": 5,
-      "description": "Dashboard polish: Continue card, new courses strip, i18n strings",
-      "files": [
-        "src/pages/Index.tsx",
-        "src/i18n/dictionary.ts"
-      ],
-      "status": "pending"
+      "description": "Fix button contrast tokens for outline/ghost variants",
+      "files": [],
+      "status": "complete"
     }
   ],
-  "createdAt": "2026-07-13T15:41:27.870Z",
-  "updatedAt": "2026-07-13T15:47:46.061Z"
+  "createdAt": "2026-07-13T22:10:14.153Z",
+  "updatedAt": "2026-07-13T22:16:34.246Z"
 }

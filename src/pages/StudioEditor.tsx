@@ -12,6 +12,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
 import type { Tables } from '@/integrations/supabase/helpers';
+import { QuizQuestionEditor } from '@/components/studio/QuizQuestionEditor';
 
 type Course = Tables<'courses'>;
 type Module = Tables<'modules'>;
@@ -37,6 +38,7 @@ export default function StudioEditor() {
   const [editingQuizModuleId, setEditingQuizModuleId] = useState<string | null>(null);
   const [quizSettings, setQuizSettings] = useState<Quiz | null>(null);
   const [savingQuizSettings, setSavingQuizSettings] = useState(false);
+  const [quizQuestionCounts, setQuizQuestionCounts] = useState<Record<string, number>>({});
 
   // Form state
   const [titleEn, setTitleEn] = useState('');
@@ -411,14 +413,14 @@ export default function StudioEditor() {
 						<div data-ev-id="ev_e29c860240" className="flex items-center gap-2">
 							<button data-ev-id="ev_3d7cf3be7a"
               onClick={() => handleAddModule('lesson')}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted transition-colors">
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 
 								<BookOpen className="w-4 h-4" />
 								{dict.studio.addLesson}
 							</button>
 							<button data-ev-id="ev_5a93129782"
               onClick={() => handleAddModule('quiz')}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted transition-colors">
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 
 								<FileQuestion className="w-4 h-4" />
 								{dict.studio.addQuiz}
@@ -447,7 +449,7 @@ export default function StudioEditor() {
 									</div>
 									<div data-ev-id="ev_0fd824dbbd" className="flex-1">
 										<span data-ev-id="ev_7bc8188839" className="text-sm text-muted-foreground">
-											{mod.module_type === 'quiz' ? dict.course.quiz : dict.course.lesson} {index + 1}
+											{mod.module_type === 'quiz' ? `${dict.course.quiz} ${index + 1}${quizQuestionCounts[mod.id] ? ` (${quizQuestionCounts[mod.id]} ${locale === 'he' ? 'שאלות' : 'Q'})` : ''}` : `${dict.course.lesson} ${index + 1}`}
 										</span>
 										<p data-ev-id="ev_d6adc26529" className="font-medium text-foreground">
 											{locale === 'he' ? mod.title_he : mod.title_en}
@@ -478,7 +480,7 @@ export default function StudioEditor() {
 				<div data-ev-id="ev_a8097d2908" className="flex items-center justify-between">
 					<Link
             to={course.status === 'published' ? `/course/${courseId}` : '#'}
-            className={`flex items-center gap-2 px-4 py-2 border border-border rounded-lg transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 text-foreground border border-border rounded-lg transition-colors ${
             course.status === 'published' ?
             'hover:bg-muted' :
             'opacity-50 cursor-not-allowed'}`
@@ -492,7 +494,7 @@ export default function StudioEditor() {
 						<button data-ev-id="ev_fecdcefa3d"
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50">
+            className="flex items-center gap-2 px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50">
 
 							<Save className="w-4 h-4" />
 							{saving ? dict.common.loading : dict.studio.saveDraft}
@@ -520,7 +522,7 @@ export default function StudioEditor() {
         <>
 						<button data-ev-id="ev_e2292c487a"
           onClick={() => setShowPublishModal(false)}
-          className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors">
+          className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 
 							{dict.common.cancel}
 						</button>
@@ -541,12 +543,12 @@ export default function StudioEditor() {
         isOpen={showQuizSettingsModal}
         onClose={() => setShowQuizSettingsModal(false)}
         title={dict.studio.quizSettings}
-        size="md"
+        size="lg"
         footer={
         <>
 						<button data-ev-id="ev_quiz_settings_cancel"
           onClick={() => setShowQuizSettingsModal(false)}
-          className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors">
+          className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 							{dict.common.cancel}
 						</button>
 						<button data-ev-id="ev_quiz_settings_save"
@@ -610,6 +612,18 @@ export default function StudioEditor() {
 
 								<span data-ev-id="ev_b2670c3733" className="text-sm font-medium text-foreground">{dict.studio.shuffleQuestions}</span>
 							</label>
+						</div>
+
+						{/* Questions Editor */}
+						<div data-ev-id="ev_40c2ebd41a" className="pt-4 border-t border-border">
+							<QuizQuestionEditor
+              quizId={quizSettings.id}
+              onQuestionCountChange={(count) => {
+                if (editingQuizModuleId) {
+                  setQuizQuestionCounts((prev) => ({ ...prev, [editingQuizModuleId]: count }));
+                }
+              }} />
+
 						</div>
 					</div>
         }

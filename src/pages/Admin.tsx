@@ -439,7 +439,7 @@ export default function Admin() {
         <>
 						<button data-ev-id="ev_39e169f49d"
           onClick={() => setEditingUser(null)}
-          className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors">
+          className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 
 							{dict.common.cancel}
 						</button>
@@ -528,7 +528,7 @@ export default function Admin() {
         <>
 						<button data-ev-id="ev_3b64f219f7"
           onClick={() => setEditingCategory(null)}
-          className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors">
+          className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 
 							{dict.common.cancel}
 						</button>

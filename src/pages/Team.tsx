@@ -4,6 +4,7 @@ import { Users, ChevronRight, ChevronLeft, Calendar, Plus, BookOpen, CheckCircle
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useTeam } from '@/hooks/useTeam';
+import { useAuth } from '@/hooks/useAuth';
 import { useCourses } from '@/hooks/useCourses';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -20,7 +21,8 @@ import type { TeamMember } from '@/hooks/useTeam';
 export default function Team() {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
-  const { members, loading, error, getMemberStats, assignCourse, updateDueDate, revokeEnrollment, refetch } = useTeam();
+  const { profile } = useAuth();
+  const { members, loading, error, getMemberStats, assignCourse, updateDueDate, revokeEnrollment, refetch } = useTeam({ viewerRole: profile?.role });
   const { courses } = useCourses({ onlyPublished: true });
   const Chevron = locale === 'he' ? ChevronLeft : ChevronRight;
   const BackArrow = locale === 'he' ? ArrowRight : ArrowLeft;
@@ -31,6 +33,20 @@ export default function Team() {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const [managerFilter, setManagerFilter] = useState<string>('');
+
+  // For super_admin/hr_manager, show all users; team_manager sees direct reports only
+  const isOrgWideViewer = profile?.role === 'super_admin' || profile?.role === 'hr_manager';
+
+  // Get unique managers for filter dropdown
+  const uniqueManagers = isOrgWideViewer ?
+  Array.from(new Set(members.map((m) => m.manager?.[0]?.full_name).filter(Boolean))) :
+  [];
+
+  // Filter members by manager if filter is set
+  const filteredMembers = managerFilter ?
+  members.filter((m) => m.manager?.[0]?.full_name === managerFilter) :
+  members;
 
   const handleAssign = async () => {
     if (!selectedCourse || assigningTo.length === 0) return;
@@ -185,9 +201,9 @@ export default function Team() {
 						<h1 data-ev-id="ev_e91de1340a" className="text-3xl font-bold text-foreground mb-2">{dict.team.title}</h1>
 						<p data-ev-id="ev_affbb3a847" className="text-muted-foreground">{dict.team.description}</p>
 					</div>
-					{members.length > 0 &&
+					{filteredMembers.length > 0 &&
           <button data-ev-id="ev_97635d0419"
-          onClick={() => openAssignModal(members.map((m) => m.id))}
+          onClick={() => openAssignModal(filteredMembers.map((m) => m.id))}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
 
 							<Plus className="w-4 h-4" />
@@ -202,7 +218,24 @@ export default function Team() {
 					</div>
         }
 
-				{members.length === 0 ?
+				{/* Manager filter for super_admin/hr_manager */}
+				{isOrgWideViewer && uniqueManagers.length > 0 &&
+        <div data-ev-id="ev_2e022005b8" className="flex items-center gap-2 mb-4">
+						<label data-ev-id="ev_deb177b34b" className="text-sm text-muted-foreground">{dict.admin.manager}:</label>
+						<select data-ev-id="ev_db61a428fe"
+          value={managerFilter}
+          onChange={(e) => setManagerFilter(e.target.value)}
+          className="px-3 py-1.5 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+
+							<option data-ev-id="ev_7c4d45973d" value="">{dict.common.all}</option>
+							{uniqueManagers.map((mgr) =>
+            <option data-ev-id="ev_18aee2aba0" key={mgr} value={mgr}>{mgr}</option>
+            )}
+						</select>
+					</div>
+        }
+
+				{filteredMembers.length === 0 ?
         <EmptyState
           icon={Users}
           title={dict.team.noReports}
@@ -214,6 +247,9 @@ export default function Team() {
 							<thead data-ev-id="ev_a51c5fb992" className="bg-muted">
 								<tr data-ev-id="ev_b95ffa0af0">
 									<th data-ev-id="ev_53c5b27e79" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.common.name}</th>
+									{isOrgWideViewer &&
+                <th data-ev-id="ev_c6dc4a7535" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.admin.manager}</th>
+                }
 									<th data-ev-id="ev_e1c17e9b3b" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.team.enrolled}</th>
 									<th data-ev-id="ev_9ac3912e39" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.team.completed}</th>
 									<th data-ev-id="ev_f9a5080ab7" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.team.overdue}</th>
@@ -221,7 +257,7 @@ export default function Team() {
 								</tr>
 							</thead>
 							<tbody data-ev-id="ev_1f521c1c02" className="divide-y divide-border">
-								{members.map((member) => {
+								{filteredMembers.map((member) => {
                 const stats = getMemberStats(member);
                 return (
                   <tr data-ev-id="ev_897c7f7389" key={member.id} className="hover:bg-muted/50 transition-colors">
@@ -231,6 +267,13 @@ export default function Team() {
 													<p data-ev-id="ev_a9262e7a06" className="text-sm text-muted-foreground">{member.department || '-'}</p>
 												</div>
 											</td>
+											{isOrgWideViewer &&
+                    <td data-ev-id="ev_0a3cccee97" className="px-4 py-3">
+													<span data-ev-id="ev_3111a77824" className="text-muted-foreground">
+														{member.manager?.[0]?.full_name || '-'}
+													</span>
+												</td>
+                    }
 											<td data-ev-id="ev_eb14e29828" className="px-4 py-3">
 												<span data-ev-id="ev_c2cab52e0e" className="flex items-center gap-1 text-foreground">
 													<BookOpen className="w-4 h-4 text-muted-foreground" />
@@ -291,7 +334,7 @@ export default function Team() {
         <>
 						<button data-ev-id="ev_3e39fcd1b6"
           onClick={() => setShowAssignModal(false)}
-          className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors">
+          className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 
 							{dict.common.cancel}
 						</button>

@@ -7,7 +7,9 @@ import type { Tables } from '@/integrations/supabase/helpers';
 
 interface ModuleWithProgress extends Tables<'modules'> {
   progress?: Tables<'module_progress'>;
-  quiz?: Tables<'quizzes'>;
+  quiz?: Tables<'quizzes'> & {
+    questions?: Tables<'quiz_questions'>[];
+  };
   attempts?: Tables<'quiz_attempts'>[];
   scorm_package?: Tables<'scorm_packages'>;
   scorm_registration?: Tables<'scorm_registrations'>;
@@ -93,8 +95,13 @@ export function ModuleList({ courseId, modules, enrolled, enrollmentId }: Module
 
   const getModuleTypeLabel = (mod: ModuleWithProgress, index: number) => {
     switch (mod.module_type) {
-      case 'quiz':
-        return `${dict.course.quiz} ${index + 1}`;
+      case 'quiz': {
+        const questionCount = mod.quiz?.questions?.length ?? 0;
+        const questionLabel = questionCount > 0 
+          ? ` (${questionCount} ${locale === 'he' ? 'שאלות' : 'Q'})` 
+          : '';
+        return `${dict.course.quiz} ${index + 1}${questionLabel}`;
+      }
       case 'scorm_package':
         return dict.scorm.scormPackage;
       default:

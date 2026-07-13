@@ -2,17 +2,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { withTimeout } from '@/utils/fetchWithTimeout';
+import type { UserRole } from '@/contexts/auth-context';
 
 export type TeamMember = Tables<'profiles'> & {
 	enrollments?: (Tables<'enrollments'> & {
 		course: Tables<'courses'>;
 	})[];
+	manager?: Tables<'profiles'>[] | null;
 };
 
-export function useTeam() {
+interface UseTeamOptions {
+	viewerRole?: UserRole;
+}
+
+export function useTeam(options?: UseTeamOptions) {
 	const [members, setMembers] = useState<TeamMember[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+
+	const viewerRole = options?.viewerRole;
 
 	const fetchTeam = useCallback(async () => {
 		if (!supabase) {
@@ -30,32 +38,41 @@ export function useTeam() {
 				return;
 			}
 
-			// Fetch direct reports with timeout
-			const { data: membersData, error: membersError } = await withTimeout(
-				supabase
-					.from('profiles')
-					.select(`
+			// super_admin and hr_manager see ALL users; team_manager sees direct reports only
+			const isOrgWideViewer = viewerRole === 'super_admin' || viewerRole === 'hr_manager';
+
+			// Build the query - FK hint fixes ambiguous enrollments relationship
+			let query = supabase
+				.from('profiles')
+				.select(`
+					*,
+					enrollments!enrollments_user_id_fkey(
 						*,
-						enrollments(
-							*,
-							course:courses(*)
-						)
-					`)
-					.eq('manager_id', user.id)
-					.eq('is_active', true)
-					.then(r => r),
+						course:courses(*)
+					),
+					manager:profiles!profiles_manager_id_fkey(*)
+				`)
+				.eq('is_active', true);
+
+			// Apply direct-reports filter only for team_manager
+			if (!isOrgWideViewer) {
+				query = query.eq('manager_id', user.id);
+			}
+
+			const { data: membersData, error: membersError } = await withTimeout(
+				query.then(r => r),
 				10000
 			);
 
 			if (membersError) throw membersError;
-			setMembers((membersData as TeamMember[]) || []);
+			setMembers((membersData as unknown as TeamMember[]) || []);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Failed to load team';
 			setError(message === 'TIMEOUT' ? 'Request timed out. Please try again.' : message);
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	}, [viewerRole]);
 
 	useEffect(() => {
 		fetchTeam();
