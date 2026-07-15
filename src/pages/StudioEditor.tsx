@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, GripVertical, Settings } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
@@ -39,6 +39,13 @@ export default function StudioEditor() {
   const [quizSettings, setQuizSettings] = useState<Quiz | null>(null);
   const [savingQuizSettings, setSavingQuizSettings] = useState(false);
   const [quizQuestionCounts, setQuizQuestionCounts] = useState<Record<string, number>>({});
+
+  // Stable callback for question count updates
+  const handleQuestionCountChange = useCallback((count: number) => {
+    if (editingQuizModuleId) {
+      setQuizQuestionCounts((prev) => ({ ...prev, [editingQuizModuleId]: count }));
+    }
+  }, [editingQuizModuleId]);
 
   // Form state
   const [titleEn, setTitleEn] = useState('');
@@ -618,11 +625,7 @@ export default function StudioEditor() {
 						<div data-ev-id="ev_40c2ebd41a" className="pt-4 border-t border-border">
 							<QuizQuestionEditor
               quizId={quizSettings.id}
-              onQuestionCountChange={(count) => {
-                if (editingQuizModuleId) {
-                  setQuizQuestionCounts((prev) => ({ ...prev, [editingQuizModuleId]: count }));
-                }
-              }} />
+              onQuestionCountChange={handleQuestionCountChange} />
 
 						</div>
 					</div>

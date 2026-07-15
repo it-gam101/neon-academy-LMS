@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical, Check, X } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
@@ -40,7 +40,13 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  // Fetch existing questions
+  // Store callback in ref to avoid re-triggering fetch on parent re-renders
+  const onCountChangeRef = useRef(onQuestionCountChange);
+  useEffect(() => {
+    onCountChangeRef.current = onQuestionCountChange;
+  }, [onQuestionCountChange]);
+
+  // Fetch existing questions - only depends on quizId
   useEffect(() => {
     const fetchQuestions = async () => {
       if (!supabase || !quizId) {
@@ -69,13 +75,13 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
           isExpanded: false
         }));
         setQuestions(mapped);
-        onQuestionCountChange?.(mapped.length);
+        onCountChangeRef.current?.(mapped.length);
       }
       setLoading(false);
     };
 
     fetchQuestions();
-  }, [quizId, onQuestionCountChange]);
+  }, [quizId]);
 
   const handleAddQuestion = () => {
     const newQuestion: EditableQuestion = {
@@ -227,7 +233,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
       q.sort_order = i;
     });
     setQuestions(updated);
-    onQuestionCountChange?.(updated.length);
+    onCountChangeRef.current?.(updated.length);
     setDeleteConfirm(null);
     showToast('success', locale === 'he' ? 'השאלה נמחקה' : 'Question deleted');
   };
@@ -291,7 +297,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
           isNew: false
         };
         setQuestions(updated);
-        onQuestionCountChange?.(updated.length);
+        onCountChangeRef.current?.(updated.length);
         showToast('success', locale === 'he' ? 'השאלה נוספה' : 'Question added');
       }
     }
