@@ -355,7 +355,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
               type="button"
               onClick={(e) => {e.stopPropagation();handleMoveQuestion(index, 'up');}}
               disabled={index === 0}
-              className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed">
+              className="p-1 text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed">
 
 										<ChevronUp className="w-4 h-4" />
 									</button>
@@ -363,7 +363,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
               type="button"
               onClick={(e) => {e.stopPropagation();handleMoveQuestion(index, 'down');}}
               disabled={index === questions.length - 1}
-              className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed">
+              className="p-1 text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed">
 
 										<ChevronDown className="w-4 h-4" />
 									</button>
@@ -520,7 +520,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
                       <button data-ev-id="ev_2ad285530f"
                       type="button"
                       onClick={() => handleRemoveOption(index, optIndex)}
-                      className="flex-shrink-0 p-1.5 text-muted-foreground hover:text-destructive transition-colors">
+                      className="flex-shrink-0 p-1.5 text-foreground/70 hover:text-destructive transition-colors">
 
 																<X className="w-4 h-4" />
 															</button>
@@ -557,7 +557,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
               <button data-ev-id="ev_2ba0eb0673"
               type="button"
               onClick={() => setDeleteConfirm(q.id || `new-${index}`)}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm text-destructive border border-destructive/30 rounded hover:bg-destructive/10 transition-colors">
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-destructive border border-destructive/50 rounded hover:bg-destructive/10 transition-colors">
 
 												<Trash2 className="w-4 h-4" />
 												{dict.common.delete}

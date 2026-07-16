@@ -239,7 +239,7 @@ export default function QuizPage() {
 						<div data-ev-id="ev_13acaec1e8" className="flex flex-col sm:flex-row gap-4 justify-center">
 							<button data-ev-id="ev_d0db9d9be6"
               onClick={() => setState('review')}
-              className="px-6 py-2 border border-border rounded-lg text-foreground hover:bg-muted transition-colors">
+              className="px-6 py-2 border border-border rounded-lg text-foreground hover:bg-muted hover:border-muted-foreground transition-colors">
 
 								{dict.quiz.reviewAnswers}
 							</button>
@@ -320,11 +320,11 @@ export default function QuizPage() {
                       return (
                         <div data-ev-id="ev_57c78d1dc6"
                         key={optIndex}
-                        className={`p-3 rounded-lg border ${
+                        className={`p-3 rounded-lg border text-foreground ${
                         isCorrectAnswer ?
-                        'bg-primary/10 border-primary/30' :
+                        'bg-primary/10 border-primary/50' :
                         isUserAnswer ?
-                        'bg-destructive/10 border-destructive/30' :
+                        'bg-destructive/10 border-destructive/50' :
                         'border-border'}`
                         }>
 
@@ -410,7 +410,7 @@ export default function QuizPage() {
                 className={`w-full p-4 text-start border rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
                 isSelected ?
                 'bg-primary/10 border-primary text-foreground' :
-                'border-border hover:border-muted-foreground text-muted-foreground hover:text-foreground'}`
+                'border-border hover:border-primary/50 text-foreground'}`
                 }>
 
 									{opt}
@@ -425,7 +425,7 @@ export default function QuizPage() {
 					<button data-ev-id="ev_dbc4b343a2"
           onClick={() => setCurrentQuestion((prev) => prev - 1)}
           disabled={currentQuestion === 0}
-          className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          className="flex items-center gap-2 px-4 py-2 text-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 						<PrevChevron className="w-5 h-5" />
 						{dict.quiz.previousQuestion}
@@ -460,7 +460,7 @@ export default function QuizPage() {
         <>
 						<button data-ev-id="ev_fbcd445444"
           onClick={() => setShowConfirmModal(false)}
-          className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors">
+          className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 
 							{dict.common.cancel}
 						</button>
