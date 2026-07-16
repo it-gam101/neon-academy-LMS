@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import logoSrc from '@/assets/logo.svg';
 
 interface AuthLayoutProps {
   title: string;
@@ -22,9 +23,7 @@ export function AuthLayout({ title, children }: AuthLayoutProps) {
 				<div data-ev-id="ev_ed8620bc02" className="w-full max-w-md">
 					{/* Logo and app name */}
 					<div data-ev-id="ev_4dc04a9fbb" className="text-center mb-8">
-						<div data-ev-id="ev_a24d868992" className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary-muted border border-primary/30 mb-4">
-							<span data-ev-id="ev_fa5ad66a1b" className="text-2xl font-bold text-primary">NA</span>
-						</div>
+						<img data-ev-id="ev_f2654a32bb" src={logoSrc} alt="Neon Academy" className="w-16 h-16 rounded-xl mx-auto mb-4" />
 						<h1 data-ev-id="ev_39feb958d4" className="text-2xl font-bold text-foreground">{t.appName}</h1>
 						<p data-ev-id="ev_ae115b1ab5" className="text-foreground-muted text-sm mt-1">{t.tagline}</p>
 					</div>

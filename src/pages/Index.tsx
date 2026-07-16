@@ -8,6 +8,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { BookOpen, GraduationCap, Users, PenTool, BarChart3, Settings, ChevronRight, ChevronLeft, PlayCircle, Clock, Sparkles } from 'lucide-react';
 import type { UserRole } from '@/contexts/auth-context';
+import logoSrc from '@/assets/logo.svg';
 
 interface QuickAction {
   path: string;
@@ -94,9 +95,7 @@ export default function Index() {
 			{!isAuthenticated ?
       // Welcome screen for unauthenticated users
       <div data-ev-id="ev_145ef5f237" className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-					<div data-ev-id="ev_dd00302cc0" className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary-muted border border-primary/30 mb-6">
-						<span data-ev-id="ev_a606fc9a3e" className="text-3xl font-bold text-primary">NA</span>
-					</div>
+					<img data-ev-id="ev_3c448943a7" src={logoSrc} alt="Neon Academy" className="w-20 h-20 rounded-2xl mb-6" />
 					<h1 data-ev-id="ev_a6f0842431" className="text-4xl font-bold text-foreground mb-3">{t.appName}</h1>
 					<p data-ev-id="ev_0a55aa9db5" className="text-lg text-foreground-muted mb-8 max-w-md">
 						{t.tagline}
