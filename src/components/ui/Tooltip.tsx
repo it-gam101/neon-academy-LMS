@@ -10,8 +10,8 @@ export function Tooltip({ content, children, position = 'bottom' }: TooltipProps
   const [isVisible, setIsVisible] = useState(false);
 
   const positionClasses = {
-    top: 'bottom-full mb-2 start-1/2 -translate-x-1/2',
-    bottom: 'top-full mt-2 start-1/2 -translate-x-1/2',
+    top: 'bottom-full mb-2 left-1/2 -translate-x-1/2',
+    bottom: 'top-full mt-2 left-1/2 -translate-x-1/2',
     start: 'end-full me-2 top-1/2 -translate-y-1/2',
     end: 'start-full ms-2 top-1/2 -translate-y-1/2'
   };
