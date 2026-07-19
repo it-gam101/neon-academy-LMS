@@ -1,31 +1,32 @@
 {
-  "summary": "Four frontend fixes: team query, /hr redirect, quiz editor, button contrast",
+  "summary": "Marketing landing page, Hebrew brand rename, CORS fix",
   "todos": [
     {
       "id": 1,
-      "description": "Team query fix with FK hint + role-based all-users view for super_admin/hr_manager",
-      "files": [],
+      "description": "Update dictionary: Hebrew brand rename + all landing page i18n strings",
+      "files": [
+        "src/i18n/dictionary.ts"
+      ],
       "status": "complete"
     },
     {
       "id": 2,
-      "description": "Add /hr route alias redirecting to /hr-analytics",
-      "files": [],
+      "description": "Rebuild Index.tsx as marketing landing page",
+      "files": [
+        "src/pages/Index.tsx"
+      ],
       "status": "complete"
     },
     {
       "id": 3,
-      "description": "Build quiz question editor with full CRUD matching QuizPage data shape",
-      "files": [],
-      "status": "complete"
-    },
-    {
-      "id": 4,
-      "description": "Fix button contrast tokens for outline/ghost variants",
-      "files": [],
+      "description": "Update index.html meta + scorm-commit CORS",
+      "files": [
+        "index.html",
+        "supabase/functions/scorm-commit/index.ts"
+      ],
       "status": "complete"
     }
   ],
-  "createdAt": "2026-07-13T22:10:14.153Z",
-  "updatedAt": "2026-07-13T22:16:34.246Z"
+  "createdAt": "2026-07-19T20:27:10.720Z",
+  "updatedAt": "2026-07-19T20:31:32.508Z"
 }

@@ -505,6 +505,33 @@ export interface Dictionary {
 		retry: string;
 		noAccess: string;
 	};
+	
+	// Landing page
+	landing: {
+		heroTitle: string;
+		heroSub: string;
+		trust1: string;
+		trust2: string;
+		trust3: string;
+		talkToUs: string;
+		showcaseCaption: string;
+		feature1Title: string;
+		feature1Body: string;
+		feature2Title: string;
+		feature2Body: string;
+		feature3Title: string;
+		feature3Body: string;
+		secondary1Caption: string;
+		secondary2Caption: string;
+		roadmapLabel: string;
+		roadmap1: string;
+		roadmap2: string;
+		roadmap3: string;
+		roadmap4: string;
+		ctaTitle: string;
+		ctaSub: string;
+		footerText: string;
+	};
 }
 
 export const dictionaries: Record<Locale, Dictionary> = {
@@ -986,10 +1013,36 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			retry: 'Retry',
 			noAccess: 'You don\'t have access to this content',
 		},
+		
+		landing: {
+			heroTitle: 'Corporate learning that speaks both your languages.',
+			heroSub: 'Neon Academy is a modern learning management system for teams that train in English and Hebrew — courses, quizzes, SCORM content, team assignments and compliance reporting, in one clean, fast platform.',
+			trust1: 'Bilingual EN·HE with true RTL',
+			trust2: 'SCORM 1.2 & 2004',
+			trust3: 'Built on Sticklight',
+			talkToUs: 'Talk to us',
+			showcaseCaption: 'One catalogue, every language, every device. Employees browse, self-enroll and pick up exactly where they left off.',
+			feature1Title: 'Bilingual by design, not by afterthought.',
+			feature1Body: 'Every screen, course and report exists in English and Hebrew — with true right-to-left mirroring, not a stretched translation. One click switches the entire experience, and each employee learns in the language they think in.',
+			feature2Title: 'Bring the training you already own.',
+			feature2Body: 'Neon Academy plays standard SCORM 1.2 and 2004 packages from any authoring tool — scores, completion and resume included. Your existing course library doesn\'t need rebuilding; it needs a better home.',
+			feature3Title: 'Compliance answers before anyone asks.',
+			feature3Body: 'Live dashboards for HR: completion rates, overdue mandatory training, engagement per course — with one-click CSV export and saved snapshots. Managers see their own team; HR sees the whole picture; everything is permission-controlled at the database level.',
+			secondary1Caption: 'Build bilingual courses and quizzes in-house — no vendors, no waiting.',
+			secondary2Caption: 'Managers assign courses with due dates and track their team in real time.',
+			roadmapLabel: 'On the roadmap',
+			roadmap1: 'Public SCORM testing sandbox',
+			roadmap2: 'Instructor SCORM upload',
+			roadmap3: 'xAPI support',
+			roadmap4: 'Course certificates',
+			ctaTitle: 'See it with your own content.',
+			ctaSub: 'We\'ll walk you through Neon Academy with your courses and your org structure — in English, in Hebrew, or both.',
+			footerText: 'Neon Academy is a vibe-coding4elearning (vc4el) product, built on Sticklight.',
+		},
 	},
 	
 	he: {
-		appName: 'ניאון אקדמי',
+		appName: 'אקדמיית ניאון',
 		tagline: 'מערכת ניהול למידה ארגונית',
 		
 		dashboard: {
@@ -1465,6 +1518,32 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			failedToLoad: 'טעינת הנתונים נכשלה',
 			retry: 'נסה שוב',
 			noAccess: 'אין לך גישה לתוכן זה',
+		},
+		
+		landing: {
+			heroTitle: 'למידה ארגונית שמדברת בשתי השפות שלכם.',
+			heroSub: 'אקדמיית ניאון היא מערכת ניהול למידה מודרנית לצוותים שלומדים בעברית ובאנגלית — קורסים, בחנים, תוכן SCORM, שיבוצי צוות ודוחות ציות, בפלטפורמה אחת נקייה ומהירה.',
+			trust1: 'דו-לשונית עברית·אנגלית עם RTL אמיתי',
+			trust2: 'SCORM 1.2 ו-2004',
+			trust3: 'נבנתה על Sticklight',
+			talkToUs: 'דברו איתנו',
+			showcaseCaption: 'קטלוג אחד, כל שפה, כל מכשיר. העובדים מעיינים, נרשמים בעצמם וממשיכים בדיוק מהנקודה שבה עצרו.',
+			feature1Title: 'דו-לשוניות מהיסוד, לא כתוספת.',
+			feature1Body: 'כל מסך, קורס ודוח קיימים בעברית ובאנגלית — עם שיקוף מלא מימין לשמאל, לא תרגום מתוח. לחיצה אחת מחליפה את כל החוויה, וכל עובד לומד בשפה שבה הוא חושב.',
+			feature2Title: 'הביאו את ההדרכות שכבר יש לכם.',
+			feature2Body: 'אקדמיית ניאון מריצה חבילות SCORM 1.2 ו-2004 סטנדרטיות מכל כלי פיתוח תוכן — כולל ציונים, השלמה והמשך מאותה נקודה. ספריית הקורסים הקיימת שלכם לא צריכה להיבנות מחדש; היא צריכה בית טוב יותר.',
+			feature3Title: 'תשובות ציות עוד לפני שנשאלתם.',
+			feature3Body: 'לוחות בקרה חיים למשאבי אנוש: שיעורי השלמה, הדרכות חובה באיחור, מעורבות לפי קורס — עם ייצוא CSV בלחיצה ותמונות-מצב שמורות. מנהלים רואים את הצוות שלהם, משאבי אנוש רואים את התמונה המלאה — והכול נאכף ברמת בסיס הנתונים.',
+			secondary1Caption: 'בונים קורסים ובחנים דו-לשוניים בתוך הארגון — בלי ספקים ובלי המתנה.',
+			secondary2Caption: 'מנהלים משבצים קורסים עם תאריכי יעד ועוקבים אחרי הצוות בזמן אמת.',
+			roadmapLabel: 'בקרוב במפת הדרכים',
+			roadmap1: 'ארגז חול ציבורי לבדיקת SCORM',
+			roadmap2: 'העלאת SCORM למדריכים',
+			roadmap3: 'תמיכה ב-xAPI',
+			roadmap4: 'תעודות סיום',
+			ctaTitle: 'תראו את זה עם התוכן שלכם.',
+			ctaSub: 'נלווה אתכם בסיור באקדמיית ניאון עם הקורסים והמבנה הארגוני שלכם — בעברית, באנגלית, או בשתיהן.',
+			footerText: 'אקדמיית ניאון היא מוצר של vibe-coding4elearning (vc4el), בנוי על Sticklight.',
 		},
 	},
 };

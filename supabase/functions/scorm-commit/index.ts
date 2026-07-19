@@ -1,10 +1,18 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const corsHeaders = {
-	'Access-Control-Allow-Origin': '*',
-	'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-	'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+const allowedOrigins = [
+	'https://neon-academy.sticklight.app',
+	'https://academy.vibe-coding4elearning.com',
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+	const allowedOrigin = origin && allowedOrigins.some(o => origin.startsWith(o)) ? origin : allowedOrigins[0];
+	return {
+		'Access-Control-Allow-Origin': allowedOrigin,
+		'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+		'Access-Control-Allow-Methods': 'POST, OPTIONS',
+	};
+}
 
 interface ScormCommitRequest {
 	module_id: string;
@@ -83,6 +91,9 @@ function extractCmiFields(cmi: Record<string, unknown>, scormVersion: string): C
 console.info('SCORM commit function started');
 
 Deno.serve(async (req: Request) => {
+	const origin = req.headers.get('origin');
+	const corsHeaders = getCorsHeaders(origin);
+
 	// Handle CORS preflight
 	if (req.method === 'OPTIONS') {
 		return new Response(null, { headers: corsHeaders });
