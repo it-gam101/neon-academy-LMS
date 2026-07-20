@@ -296,8 +296,8 @@ export default function Index() {
             <h2 data-ev-id="ev_9677751dcf" className="text-2xl md:text-3xl font-bold text-foreground mb-4">
               {t.landing.ctaTitle}
             </h2>
-            <p data-ev-id="ev_a732e2d263" className="text-muted-foreground mb-8 max-w-xl mx-auto text-pretty">
-              {t.landing.ctaSub}
+            <p data-ev-id="ev_a732e2d263" className="text-muted-foreground mb-8 max-w-xl mx-auto text-pretty">נלווה אתכם בסיור באקדמיית ניאון עם הקורסים והמבנה הארגוני שלכם - בעברית, באנגלית, או בשתיהן.
+
             </p>
             <div data-ev-id="ev_bea6c921c4" className="flex flex-col sm:flex-row gap-4 justify-center">
               <a data-ev-id="ev_25a3881c1c"
