@@ -233,8 +233,8 @@ export default function Index() {
                 <h3 data-ev-id="ev_21790cff03" className="text-xl md:text-2xl font-bold text-foreground mb-4">מענה לדרישות ציות עוד לפני שנשאלתם.
 
                 </h3>
-                <p data-ev-id="ev_1574a21ed5" className="text-muted-foreground text-pretty">
-                  {t.landing.feature3Body}
+                <p data-ev-id="ev_1574a21ed5" className="text-muted-foreground text-pretty">לוחות בקרה חיים למשאבי אנוש: שיעורי השלמה, הדרכות חובה באיחור, מעורבות לפי קורס - עם ייצוא CSV בלחיצה ותמונות-מצב שמורות. מנהלים רואים את הצוות שלהם, משאבי אנוש רואים את התמונה המלאה, והכול נאכף ברמת בסיס הנתונים.
+
                 </p>
               </div>
             </div>
