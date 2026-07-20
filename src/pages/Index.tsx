@@ -117,8 +117,8 @@ export default function Index() {
             <h1 data-ev-id="ev_5ba3837e1e" className="text-3xl md:text-5xl font-bold text-foreground mb-6 text-balance">
               {t.landing.heroTitle}
             </h1>
-            <p data-ev-id="ev_e73a997ae1" className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">אקדמיית ניאון היא מערכת ניהול למידה מודרנית לצוותים שלומדים בעברית ובאנגלית - קורסים, בחנים, תוכן SCORM, שיבוצי הדרכה אישיים וצוותיים, דוחות התקדמות, הכול בפלטפורמה אחת נקייה ומהירה
-
+            <p data-ev-id="ev_e73a997ae1" className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">
+              {t.landing.heroSub}
             </p>
             
             {/* Buttons */}
@@ -185,8 +185,8 @@ export default function Index() {
                 <h3 data-ev-id="ev_f8d1c7eebe" className="text-xl md:text-2xl font-bold text-foreground mb-4">
                   {t.landing.feature1Title}
                 </h3>
-                <p data-ev-id="ev_c98953e1b9" className="text-muted-foreground text-pretty">כל מסך, קורס ודוח קיימים בעברית ובאנגלית - עם שיקוף מלא מימין לשמאל, לא תרגום מתוח. לחיצה אחת מחליפה את כל החוויה, וכל עובד לומד בשפה שבה הוא חושב.
-
+                <p data-ev-id="ev_c98953e1b9" className="text-muted-foreground text-pretty">
+                  {t.landing.feature1Body}
                 </p>
               </div>
             </div>
@@ -197,8 +197,8 @@ export default function Index() {
                 <h3 data-ev-id="ev_1484255bfe" className="text-xl md:text-2xl font-bold text-foreground mb-4">
                   {t.landing.feature2Title}
                 </h3>
-                <p data-ev-id="ev_37d1c3312c" className="text-muted-foreground text-pretty">אקדמיית ניאון מריצה חבילות SCORM 1.2 ו-2004 סטנדרטיות מכל כלי פיתוח תוכן - כולל ציונים, השלמה והמשך מאותה נקודה. ספריית הקורסים הקיימת שלכם לא צריכה להיבנות מחדש; היא צריכה בית טוב יותר.
-
+                <p data-ev-id="ev_37d1c3312c" className="text-muted-foreground text-pretty">
+                  {t.landing.feature2Body}
                 </p>
               </div>
               <div data-ev-id="ev_665cf35951" className="w-full md:w-1/2">
@@ -230,11 +230,11 @@ export default function Index() {
                 </div>
               </div>
               <div data-ev-id="ev_f0512ebe03" className="w-full md:w-1/2 order-1 md:order-2">
-                <h3 data-ev-id="ev_21790cff03" className="text-xl md:text-2xl font-bold text-foreground mb-4">מענה לדרישות ציות עוד לפני שנשאלתם.
-
+                <h3 data-ev-id="ev_21790cff03" className="text-xl md:text-2xl font-bold text-foreground mb-4">
+                  {t.landing.feature3Title}
                 </h3>
-                <p data-ev-id="ev_1574a21ed5" className="text-muted-foreground text-pretty">לוחות בקרה חיים למשאבי אנוש: שיעורי השלמה, הדרכות חובה באיחור, מעורבות לפי קורס - עם ייצוא CSV בלחיצה ותמונות-מצב שמורות. מנהלים רואים את הצוות שלהם, משאבי אנוש רואים את התמונה המלאה, והכול נאכף ברמת בסיס הנתונים.
-
+                <p data-ev-id="ev_1574a21ed5" className="text-muted-foreground text-pretty">
+                  {t.landing.feature3Body}
                 </p>
               </div>
             </div>
@@ -254,8 +254,8 @@ export default function Index() {
                   className="w-full h-auto" />
 
                 </div>
-                <p data-ev-id="ev_02254bbf95" className="text-muted-foreground text-sm">בונים קורסים ובחנים דו-לשוניים בתוך הארגון - בלי ספקים ובלי המתנה.
-
+                <p data-ev-id="ev_02254bbf95" className="text-muted-foreground text-sm">
+                  {t.landing.secondary1Caption}
                 </p>
               </div>
               <div data-ev-id="ev_ad1b83c450">
@@ -296,8 +296,8 @@ export default function Index() {
             <h2 data-ev-id="ev_9677751dcf" className="text-2xl md:text-3xl font-bold text-foreground mb-4">
               {t.landing.ctaTitle}
             </h2>
-            <p data-ev-id="ev_a732e2d263" className="text-muted-foreground mb-8 max-w-xl mx-auto text-pretty">נלווה אתכם בסיור באקדמיית ניאון עם הקורסים והמבנה הארגוני שלכם - בעברית, באנגלית, או בשתיהן.
-
+            <p data-ev-id="ev_a732e2d263" className="text-muted-foreground mb-8 max-w-xl mx-auto text-pretty">
+              {t.landing.ctaSub}
             </p>
             <div data-ev-id="ev_bea6c921c4" className="flex flex-col sm:flex-row gap-4 justify-center">
               <a data-ev-id="ev_25a3881c1c"
