@@ -197,8 +197,8 @@ export default function Index() {
                 <h3 data-ev-id="ev_1484255bfe" className="text-xl md:text-2xl font-bold text-foreground mb-4">
                   {t.landing.feature2Title}
                 </h3>
-                <p data-ev-id="ev_37d1c3312c" className="text-muted-foreground text-pretty">
-                  {t.landing.feature2Body}
+                <p data-ev-id="ev_37d1c3312c" className="text-muted-foreground text-pretty">אקדמיית ניאון מריצה חבילות SCORM 1.2 ו-2004 סטנדרטיות מכל כלי פיתוח תוכן - כולל ציונים, השלמה והמשך מאותה נקודה. ספריית הקורסים הקיימת שלכם לא צריכה להיבנות מחדש; היא צריכה בית טוב יותר.
+
                 </p>
               </div>
               <div data-ev-id="ev_665cf35951" className="w-full md:w-1/2">
