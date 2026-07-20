@@ -117,8 +117,8 @@ export default function Index() {
             <h1 data-ev-id="ev_5ba3837e1e" className="text-3xl md:text-5xl font-bold text-foreground mb-6 text-balance">
               {t.landing.heroTitle}
             </h1>
-            <p data-ev-id="ev_e73a997ae1" className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">
-              {t.landing.heroSub}
+            <p data-ev-id="ev_e73a997ae1" className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">אקדמיית ניאון היא מערכת ניהול למידה מודרנית לצוותים שלומדים בעברית ובאנגלית - קורסים, בחנים, תוכן SCORM, שיבוצי הדרכה אישיים וצוותיים, דוחות התקדמות, הכול בפלטפורמה אחת נקייה ומהירה
+
             </p>
             
             {/* Buttons */}
