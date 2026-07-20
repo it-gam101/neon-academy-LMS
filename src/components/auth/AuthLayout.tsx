@@ -1,6 +1,8 @@
 import { type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { useLocale } from '@/hooks/useLocale';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import logoSrc from '@/assets/logo.svg';
 
 interface AuthLayoutProps {
@@ -9,7 +11,7 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ title, children }: AuthLayoutProps) {
-  const { t } = useLocale();
+  const { t, isRTL } = useLocale();
 
   return (
     <div data-ev-id="ev_428f2f0803" className="min-h-screen bg-background bg-grid-texture flex flex-col">
@@ -34,6 +36,17 @@ export function AuthLayout({ title, children }: AuthLayoutProps) {
 							{title}
 						</h2>
 						{children}
+					</div>
+					
+					{/* Back to landing link */}
+					<div data-ev-id="ev_29ae7cd96a" className="mt-6 text-center">
+						<Link
+              to="/"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors focus-ring rounded">
+
+							{isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+							{t.landing.backToOverview}
+						</Link>
 					</div>
 				</div>
 			</main>
