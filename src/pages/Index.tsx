@@ -254,8 +254,8 @@ export default function Index() {
                   className="w-full h-auto" />
 
                 </div>
-                <p data-ev-id="ev_02254bbf95" className="text-muted-foreground text-sm">
-                  {t.landing.secondary1Caption}
+                <p data-ev-id="ev_02254bbf95" className="text-muted-foreground text-sm">בונים קורסים ובחנים דו-לשוניים בתוך הארגון - בלי ספקים ובלי המתנה.
+
                 </p>
               </div>
               <div data-ev-id="ev_ad1b83c450">
