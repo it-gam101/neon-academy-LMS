@@ -230,8 +230,8 @@ export default function Index() {
                 </div>
               </div>
               <div data-ev-id="ev_f0512ebe03" className="w-full md:w-1/2 order-1 md:order-2">
-                <h3 data-ev-id="ev_21790cff03" className="text-xl md:text-2xl font-bold text-foreground mb-4">
-                  {t.landing.feature3Title}
+                <h3 data-ev-id="ev_21790cff03" className="text-xl md:text-2xl font-bold text-foreground mb-4">מענה לדרישות ציות עוד לפני שנשאלתם.
+
                 </h3>
                 <p data-ev-id="ev_1574a21ed5" className="text-muted-foreground text-pretty">
                   {t.landing.feature3Body}
