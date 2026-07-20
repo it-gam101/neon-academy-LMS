@@ -185,8 +185,8 @@ export default function Index() {
                 <h3 data-ev-id="ev_f8d1c7eebe" className="text-xl md:text-2xl font-bold text-foreground mb-4">
                   {t.landing.feature1Title}
                 </h3>
-                <p data-ev-id="ev_c98953e1b9" className="text-muted-foreground text-pretty">
-                  {t.landing.feature1Body}
+                <p data-ev-id="ev_c98953e1b9" className="text-muted-foreground text-pretty">כל מסך, קורס ודוח קיימים בעברית ובאנגלית - עם שיקוף מלא מימין לשמאל, לא תרגום מתוח. לחיצה אחת מחליפה את כל החוויה, וכל עובד לומד בשפה שבה הוא חושב.
+
                 </p>
               </div>
             </div>
