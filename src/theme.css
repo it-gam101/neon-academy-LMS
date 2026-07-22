@@ -138,4 +138,5 @@
 /* Prevent horizontal overflow from any stray RTL positioning bugs */
 html, body {
 	overflow-x: clip;
+	color-scheme: dark;
 }
