@@ -84,6 +84,16 @@ export interface Dictionary {
 		scormPackage: string;
 	};
 	
+	// Sandbox
+	sandbox: {
+		title: string;
+		subtitle: string;
+		guestName: string;
+		inspectorTitle: string;
+		noData: string;
+		relaunch: string;
+	};
+	
 	// Roles
 	roles: {
 		super_admin: string;
@@ -616,6 +626,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			scormPackage: 'SCORM Package',
 		},
 		
+		sandbox: {
+			title: 'SCORM Sandbox',
+			subtitle: 'Test SCORM packages without logging in - no data is saved',
+			guestName: 'Guest Learner',
+			inspectorTitle: 'Live CMI Inspector',
+			noData: 'No CMI data yet - interact with the content',
+			relaunch: 'Relaunch',
+		},
+		
 		roles: {
 			super_admin: 'Super Admin',
 			hr_manager: 'HR Manager',
@@ -1123,6 +1142,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			invalidPackageUrl: 'כתובת חבילה לא תקינה',
 			runtimeError: 'שגיאת זמן ריצה של SCORM',
 			scormPackage: 'חבילת SCORM',
+		},
+		
+		sandbox: {
+			title: 'ארגז חול SCORM',
+			subtitle: 'בדיקת חבילות SCORM ללא התחברות - הנתונים לא נשמרים',
+			guestName: 'אורח',
+			inspectorTitle: 'צג CMI חי',
+			noData: 'אין נתוני CMI עדיין - יש לקיים אינטראקציה עם התוכן',
+			relaunch: 'הפעל מחדש',
 		},
 		
 		roles: {

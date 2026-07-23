@@ -27,6 +27,7 @@ import CoursePage from '@/pages/CoursePage';
 import ModulePage from '@/pages/ModulePage';
 import QuizPage from '@/pages/QuizPage';
 import ScormPlayer from '@/pages/ScormPlayer';
+import Sandbox from '@/pages/Sandbox';
 import AccessDenied from '@/pages/AccessDenied';
 import NotFound from '@/pages/NotFound';
 
@@ -43,6 +44,7 @@ export default function App() {
 			<Routes>
 				{/* Public pages */}
 				<Route path="/" element={<Index />} />
+				<Route path="/sandbox" element={<Sandbox />} />
 				
 				{/* Authenticated pages - all roles */}
 				<Route path="/catalogue" element={
