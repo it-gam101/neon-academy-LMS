@@ -71,6 +71,7 @@ export default function Sandbox() {
       },
       SANDBOX_ORIGIN
     );
+    setBridgeReady(true);
   }, [dict.sandbox.guestName]);
 
   // Handle iframe load — guaranteed to fire after bridge's listener is attached
