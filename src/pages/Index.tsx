@@ -196,8 +196,8 @@ export default function Index() {
                 <h3 data-ev-id="ev_bddfc37380" className="text-xl md:text-2xl font-bold text-foreground mb-4">
                   {t.landing.feature1Title}
                 </h3>
-                <p data-ev-id="ev_bc75746c44" className="text-muted-foreground text-pretty">
-                  {t.landing.feature1Body}
+                <p data-ev-id="ev_bc75746c44" className="text-muted-foreground text-pretty">Every screen, course and report exists in English and Hebrew – with true right-to-left mirroring, not a stretched translation. One click switches the entire experience, and each employee learns in the language they think in.
+
                 </p>
               </div>
             </div>
