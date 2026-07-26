@@ -4,6 +4,7 @@ import { type Locale, type Dictionary } from '@/i18n/dictionary';
 export interface LocaleContextType {
 	locale: Locale;
 	setLocale: (locale: Locale) => void;
+	applyLocale: (locale: Locale) => void;
 	t: Dictionary;
 	isRTL: boolean;
 }

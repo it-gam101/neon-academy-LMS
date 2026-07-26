@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { type Locale, getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import { LocaleContext } from '@/contexts/locale-context';
@@ -20,9 +20,16 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 		document.documentElement.lang = locale;
 	}, [locale, isRTL]);
 	
-	const setLocale = async (newLocale: Locale) => {
+	// Apply locale to state + localStorage only (NO profile write)
+	// Used by AuthContext to sync from profile without causing a write loop
+	const applyLocale = useCallback((newLocale: Locale) => {
 		setLocaleState(newLocale);
 		localStorage.setItem('neon-academy-locale', newLocale);
+	}, []);
+	
+	// User-initiated locale change: apply + persist to profile
+	const setLocale = useCallback(async (newLocale: Locale) => {
+		applyLocale(newLocale);
 		
 		// Try to persist to profile if logged in
 		if (supabase) {
@@ -34,10 +41,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 					.eq('id', user.id);
 			}
 		}
-	};
+	}, [applyLocale]);
 	
 	return (
-		<LocaleContext.Provider value={{ locale, setLocale, t, isRTL }}>
+		<LocaleContext.Provider value={{ locale, setLocale, applyLocale, t, isRTL }}>
 			{children}
 		</LocaleContext.Provider>
 	);

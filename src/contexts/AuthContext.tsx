@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContext, type Profile } from '@/contexts/auth-context';
 import { withTimeout } from '@/utils/fetchWithTimeout';
+import { useLocale } from '@/hooks/useLocale';
 
 const PROFILE_TIMEOUT_MS = 10000;
 
@@ -13,6 +14,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isLoading, setIsLoading] = useState(true);
 	const [profileError, setProfileError] = useState<string | null>(null);
 	const [isDeactivated, setIsDeactivated] = useState(false);
+	const { applyLocale } = useLocale();
 	
 	// Load profile with timeout - never blocks rendering
 	// Checks is_active and signs out deactivated users
@@ -52,9 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			setProfileError(null);
 			setIsDeactivated(false);
 			
-			// Sync locale from profile
-			if (data?.locale) {
-				localStorage.setItem('neon-academy-locale', data.locale);
+			// Sync locale from profile (apply to React state, not just localStorage)
+			if (data?.locale === 'en' || data?.locale === 'he') {
+				applyLocale(data.locale);
 			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Failed to load profile';
@@ -62,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			setProfileError(message);
 			setProfile(null);
 		}
-	}, []);
+	}, [applyLocale]);
 	
 	const refreshProfile = useCallback(async () => {
 		if (user) {

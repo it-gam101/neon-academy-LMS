@@ -3,6 +3,7 @@ import { AlertCircle, Loader2, RefreshCw, Package } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { Badge } from '@/components/ui/Badge';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 // Hardcoded sandbox configuration — NO backend access
 const SANDBOX_ORIGIN = 'https://pub-e8446b5e9ca042bdb42ad44abe9aa269.r2.dev';
@@ -158,8 +159,8 @@ export default function Sandbox() {
       {/* Header Chrome */}
       <div data-ev-id="ev_d1f333b448" className="bg-card border-b border-border px-4 py-4">
         <div data-ev-id="ev_342648475c" className="max-w-7xl mx-auto">
-          <div data-ev-id="ev_ff615492b4" className="flex items-center justify-between">
-            <div data-ev-id="ev_791c77451b">
+          <div data-ev-id="ev_ff615492b4" className="flex items-start justify-between gap-3 flex-wrap">
+            <div data-ev-id="ev_791c77451b" className="min-w-0">
               <div data-ev-id="ev_47d760a13e" className="flex items-center gap-3">
                 <h1 data-ev-id="ev_130ee1ecdb" className="text-xl font-semibold text-foreground">{dict.sandbox.title}</h1>
                 <Badge>
@@ -169,13 +170,16 @@ export default function Sandbox() {
               </div>
               <p data-ev-id="ev_c857bcec1c" className="text-sm text-muted-foreground mt-1">{dict.sandbox.subtitle}</p>
             </div>
-            <button data-ev-id="ev_398983e797"
-            onClick={handleRelaunch}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+            <div data-ev-id="ev_3af750f43f" className="flex items-center gap-2 shrink-0">
+              <LanguageToggle />
+              <button data-ev-id="ev_398983e797"
+              onClick={handleRelaunch}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
 
-              <RefreshCw className="w-4 h-4" />
-              {dict.sandbox.relaunch}
-            </button>
+                <RefreshCw className="w-4 h-4" />
+                {dict.sandbox.relaunch}
+              </button>
+            </div>
           </div>
         </div>
       </div>
