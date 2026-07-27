@@ -9,6 +9,7 @@ import { LanguageToggle } from '@/components/ui/LanguageToggle';
 const SANDBOX_ORIGIN = 'https://pub-e8446b5e9ca042bdb42ad44abe9aa269.r2.dev';
 const ENTRY_POINT = 'mbti-v1/index.html';
 const VERSION = '1.2';
+const GUEST_NAME = 'Guest';
 
 interface ScormMessage {
   type: 'scorm:ready' | 'scorm:commit' | 'scorm:terminate' | 'scorm:error';
@@ -55,7 +56,7 @@ export default function Sandbox() {
     const cmi = {
       core: {
         student_id: 'sandbox',
-        student_name: dict.sandbox.guestName,
+        student_name: GUEST_NAME,
         lesson_status: 'not attempted'
       }
     };
@@ -73,7 +74,7 @@ export default function Sandbox() {
       SANDBOX_ORIGIN
     );
     setBridgeReady(true);
-  }, [dict.sandbox.guestName]);
+  }, []);
 
   // Handle iframe load — guaranteed to fire after bridge's listener is attached
   const handleIframeLoad = useCallback(() => {

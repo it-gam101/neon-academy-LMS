@@ -88,7 +88,6 @@ export interface Dictionary {
 	sandbox: {
 		title: string;
 		subtitle: string;
-		guestName: string;
 		inspectorTitle: string;
 		noData: string;
 		relaunch: string;
@@ -629,7 +628,6 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		sandbox: {
 			title: 'SCORM Sandbox',
 			subtitle: 'Test SCORM packages without logging in - no data is saved',
-			guestName: 'Guest Learner',
 			inspectorTitle: 'Live CMI Inspector',
 			noData: 'No CMI data yet - interact with the content',
 			relaunch: 'Relaunch',
@@ -1045,7 +1043,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			talkToUs: 'Talk to us',
 			showcaseCaption: 'One catalogue, every language, every device. Employees browse, self-enroll and pick up exactly where they left off.',
 			feature1Title: 'Bilingual by design, not by afterthought.',
-			feature1Body: 'Every screen, course and report exists in English and Hebrew - with true right-to-left mirroring, not a stretched translation. One click switches the entire experience, and each employee learns in the language they think in.',
+			feature1Body: 'Every screen, course and report exists in English and Hebrew – with true right-to-left mirroring, not a stretched translation. One click switches the entire experience, and each employee learns in the language they think in.',
 			feature2Title: 'Bring the training you already own.',
 			feature2Body: 'Neon Academy plays standard SCORM 1.2 and 2004 packages from any authoring tool - scores, completion and resume included. Your existing course library doesn\'t need rebuilding; it needs a better home.',
 			feature3Title: 'Compliance answers before anyone asks.',
@@ -1147,7 +1145,6 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		sandbox: {
 			title: 'ארגז חול SCORM',
 			subtitle: 'בדיקת חבילות SCORM ללא התחברות - הנתונים לא נשמרים',
-			guestName: 'אורח',
 			inspectorTitle: 'צג CMI חי',
 			noData: 'אין נתוני CMI עדיין - יש לקיים אינטראקציה עם התוכן',
 			relaunch: 'הפעל מחדש',
