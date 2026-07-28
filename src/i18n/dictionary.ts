@@ -93,6 +93,25 @@ export interface Dictionary {
 		relaunch: string;
 	};
 	
+	// Studio Upload
+	studioUpload: {
+		addScorm: string;
+		title: string;
+		selectFile: string;
+		packageTitle: string;
+		uploading: string;
+		parsingManifest: string;
+		uploadingFiles: string;
+		registering: string;
+		success: string;
+		noManifest: string;
+		noEntryPoint: string;
+		invalidZip: string;
+		uploadFailed: string;
+		cancel: string;
+		upload: string;
+	};
+	
 	// Roles
 	roles: {
 		super_admin: string;
@@ -633,6 +652,24 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			relaunch: 'Relaunch',
 		},
 		
+		studioUpload: {
+			addScorm: 'Add SCORM',
+			title: 'Upload SCORM Package',
+			selectFile: 'Click to select a SCORM .zip file',
+			packageTitle: 'Package Title',
+			uploading: 'Uploading...',
+			parsingManifest: 'Parsing manifest...',
+			uploadingFiles: 'Uploading files...',
+			registering: 'Registering package...',
+			success: 'Package uploaded successfully',
+			noManifest: 'No imsmanifest.xml found in the zip file',
+			noEntryPoint: 'Could not find entry point in manifest',
+			invalidZip: 'Invalid or corrupted zip file',
+			uploadFailed: 'Upload failed',
+			cancel: 'Cancel',
+			upload: 'Upload',
+		},
+		
 		roles: {
 			super_admin: 'Super Admin',
 			hr_manager: 'HR Manager',
@@ -1148,6 +1185,24 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			inspectorTitle: 'צג CMI חי',
 			noData: 'אין נתוני CMI עדיין - יש לקיים אינטראקציה עם התוכן',
 			relaunch: 'הפעל מחדש',
+		},
+		
+		studioUpload: {
+			addScorm: 'הוסף SCORM',
+			title: 'העלאת חבילת SCORM',
+			selectFile: 'לחץ לבחירת קובץ SCORM מסוג .zip',
+			packageTitle: 'שם החבילה',
+			uploading: 'מעלה...',
+			parsingManifest: 'מפענח מניפסט...',
+			uploadingFiles: 'מעלה קבצים...',
+			registering: 'רושם חבילה...',
+			success: 'החבילה הועלתה בהצלחה',
+			noManifest: 'לא נמצא קובץ imsmanifest.xml בקובץ ה-zip',
+			noEntryPoint: 'לא ניתן למצוא נקודת כניסה במניפסט',
+			invalidZip: 'קובץ zip לא תקין או פגום',
+			uploadFailed: 'ההעלאה נכשלה',
+			cancel: 'ביטול',
+			upload: 'העלה',
 		},
 		
 		roles: {

@@ -4,6 +4,7 @@ import { AwsClient } from 'npm:aws4fetch';
 const allowedOrigins = [
 	'https://neon-academy.sticklight.app',
 	'https://academy.vibe-coding4elearning.com',
+	'http://localhost:5173',
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
@@ -211,18 +212,17 @@ Deno.serve(async (req: Request) => {
 
 		for (const file of sanitizedFiles) {
 			const key = `${prefix}${file.path}`;
-			const url = `${r2Endpoint}/${R2_BUCKET}/${key}`;
 
-			// Presign the URL with query string signing
-			const signed = await awsClient.sign(url, {
+			// X-Amz-Expires MUST be a QUERY parameter, not a header. aws4fetch reads the
+			// expiry from the URL search params; passing it as a header both (a) leaves the
+			// expiry at the 86400s default and (b) adds x-amz-expires to X-Amz-SignedHeaders,
+			// which makes R2 reject the browser's PUT with a signature mismatch.
+			const url = new URL(`${r2Endpoint}/${R2_BUCKET}/${key}`);
+			url.searchParams.set('X-Amz-Expires', String(PRESIGN_EXPIRY));
+
+			const signed = await awsClient.sign(url.toString(), {
 				method: 'PUT',
-				aws: {
-					signQuery: true,
-					allHeaders: true,
-				},
-				headers: {
-					'X-Amz-Expires': String(PRESIGN_EXPIRY),
-				},
+				aws: { signQuery: true },
 			});
 
 			uploads.push({ path: file.path, url: signed.url });

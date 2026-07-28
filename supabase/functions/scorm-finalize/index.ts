@@ -4,6 +4,7 @@ import { AwsClient } from 'npm:aws4fetch';
 const allowedOrigins = [
 	'https://neon-academy.sticklight.app',
 	'https://academy.vibe-coding4elearning.com',
+	'http://localhost:5173',
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {

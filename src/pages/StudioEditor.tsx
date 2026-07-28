@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, GripVertical, Settings } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, GripVertical, Settings, Package } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { QuizQuestionEditor } from '@/components/studio/QuizQuestionEditor';
+import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
 
 type Course = Tables<'courses'>;
 type Module = Tables<'modules'>;
@@ -32,6 +33,9 @@ export default function StudioEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+
+  // SCORM upload state
+  const [showScormUploadModal, setShowScormUploadModal] = useState(false);
 
   // Quiz settings state
   const [showQuizSettingsModal, setShowQuizSettingsModal] = useState(false);
@@ -432,6 +436,13 @@ export default function StudioEditor() {
 								<FileQuestion className="w-4 h-4" />
 								{dict.studio.addQuiz}
 							</button>
+							<button data-ev-id="ev_add_scorm_btn"
+              onClick={() => setShowScormUploadModal(true)}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+
+								<Package className="w-4 h-4" />
+								{dict.studioUpload.addScorm}
+							</button>
 						</div>
 					</div>
 
@@ -448,15 +459,21 @@ export default function StudioEditor() {
 
 									<GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
 									<div data-ev-id="ev_8dca9d6384" className="w-8 h-8 rounded bg-muted flex items-center justify-center">
-										{mod.module_type === 'quiz' ?
-                <FileQuestion className="w-4 h-4 text-muted-foreground" /> :
-
+										{mod.module_type === 'quiz' ? (
+                <FileQuestion className="w-4 h-4 text-muted-foreground" />
+                ) : mod.module_type === 'scorm_package' ? (
+                <Package className="w-4 h-4 text-muted-foreground" />
+                ) : (
                 <BookOpen className="w-4 h-4 text-muted-foreground" />
-                }
+                )}
 									</div>
 									<div data-ev-id="ev_0fd824dbbd" className="flex-1">
 										<span data-ev-id="ev_7bc8188839" className="text-sm text-muted-foreground">
-											{mod.module_type === 'quiz' ? `${dict.course.quiz} ${index + 1}${quizQuestionCounts[mod.id] ? ` (${quizQuestionCounts[mod.id]} ${locale === 'he' ? 'שאלות' : 'Q'})` : ''}` : `${dict.course.lesson} ${index + 1}`}
+											{mod.module_type === 'quiz' 
+												? `${dict.course.quiz} ${index + 1}${quizQuestionCounts[mod.id] ? ` (${quizQuestionCounts[mod.id]} ${locale === 'he' ? 'שאלות' : 'Q'})` : ''}` 
+												: mod.module_type === 'scorm_package'
+												? `SCORM ${index + 1}`
+												: `${dict.course.lesson} ${index + 1}`}
 										</span>
 										<p data-ev-id="ev_d6adc26529" className="font-medium text-foreground">
 											{locale === 'he' ? mod.title_he : mod.title_en}
@@ -631,6 +648,19 @@ export default function StudioEditor() {
 					</div>
         }
 			</Modal>
+
+			{/* SCORM upload modal */}
+			{showScormUploadModal && (
+				<ScormUploadModal
+					courseId={courseId!}
+					sortOrder={modules.length + 1}
+					onClose={() => setShowScormUploadModal(false)}
+					onUploaded={(mod) => {
+						setModules((prev) => [...prev, mod]);
+						setShowScormUploadModal(false);
+					}}
+				/>
+			)}
 		</div>);
 
 }
