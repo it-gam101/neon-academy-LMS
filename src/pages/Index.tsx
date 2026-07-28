@@ -389,9 +389,9 @@ export default function Index() {
                   <p data-ev-id="ev_0624162e51" className="text-sm text-muted-foreground mb-1">
                     {t.dashboard.continueWhereLeft}
                   </p>
-                  <h3 data-ev-id="ev_f3a3039aae" className="font-semibold text-foreground truncate text-lg">
-                    {getEnrollmentTitle(continueEnrollment)}
-                  </h3>
+                  <h3 data-ev-id="ev_f3a3039aae" className="font-semibold text-foreground truncate text-lg">.קורס חדש
+
+                </h3>
                   <div data-ev-id="ev_1de4f15b05" className="mt-3 max-w-md">
                     <ProgressBar value={calculateProgress(continueEnrollment)} size="sm" showLabel />
                   </div>
