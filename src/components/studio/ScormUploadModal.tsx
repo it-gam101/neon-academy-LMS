@@ -41,6 +41,16 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
   const [unzippedFiles, setUnzippedFiles] = useState<Record<string, Uint8Array> | null>(null);
   const [packageRoot, setPackageRoot] = useState<string>('');
 
+  // SCORM 1.2 uses adlcp:scormtype, SCORM 2004 uses adlcp:scormType.
+  // XML getAttribute is case-sensitive, so match on the local name instead.
+  const getScormType = (resource: Element): string | null => {
+    for (const attr of Array.from(resource.attributes)) {
+      const local = attr.name.split(':').pop()?.toLowerCase();
+      if (local === 'scormtype') return attr.value;
+    }
+    return null;
+  };
+
   // Parse SCORM version from schemaversion element
   const parseScormVersion = (schemaversion: string): '1.2' | '2004_3rd' | '2004_4th' => {
     const v = schemaversion.toLowerCase();
@@ -70,7 +80,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
       let entryPoint: string | null = null;
 
       for (const resource of resources) {
-        const scormType = resource.getAttribute('adlcp:scormtype') || resource.getAttribute('scormType');
+        const scormType = getScormType(resource);
         if (scormType?.toLowerCase() === 'sco') {
           const href = resource.getAttribute('href');
           if (href) {
@@ -319,8 +329,11 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
       onUploaded(moduleData);
     } catch (err) {
       console.error('SCORM upload error:', err);
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg || dict.studioUpload.uploadFailed);
+      const msg =
+        (err as { message?: string } | null)?.message ||
+        (typeof err === 'string' ? err : JSON.stringify(err)) ||
+        dict.studioUpload.uploadFailed;
+      setError(msg);
       setState('error');
 
       // Clean up the module if it was created

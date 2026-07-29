@@ -91,6 +91,9 @@ export interface Dictionary {
 		inspectorTitle: string;
 		noData: string;
 		relaunch: string;
+		packagePicker: string;
+		defaultPackage: string;
+		packageLoadError: string;
 	};
 	
 	// Studio Upload
@@ -650,6 +653,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			inspectorTitle: 'Live CMI Inspector',
 			noData: 'No CMI data yet - interact with the content',
 			relaunch: 'Relaunch',
+			packagePicker: 'Package',
+			defaultPackage: 'MBTI Micro-Course (default)',
+			packageLoadError: 'Failed to load packages',
 		},
 		
 		studioUpload: {
@@ -1185,6 +1191,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			inspectorTitle: 'צג CMI חי',
 			noData: 'אין נתוני CMI עדיין - יש לקיים אינטראקציה עם התוכן',
 			relaunch: 'הפעל מחדש',
+			packagePicker: 'חבילה',
+			defaultPackage: 'קורס MBTI מקוצר (ברירת מחדל)',
+			packageLoadError: 'טעינת החבילות נכשלה',
 		},
 		
 		studioUpload: {
