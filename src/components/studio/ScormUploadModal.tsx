@@ -418,11 +418,11 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 							{/* Manifest info */}
 							<div data-ev-id="ev_20aabfeed8" className="p-3 bg-muted rounded-lg space-y-1">
 								<p data-ev-id="ev_bdff03090a" className="text-sm text-foreground">
-									<span data-ev-id="ev_2e2fe7d7f5" className="text-muted-foreground">SCORM:</span>{' '}
+									<span data-ev-id="ev_2e2fe7d7f5" className="text-muted-foreground">{dict.studioUpload.versionLabel}</span>{' '}
 									<span data-ev-id="ev_e8d7701c84" className="font-medium" dir="ltr">{manifestInfo.scormVersion}</span>
 								</p>
 								<p data-ev-id="ev_89400e83a8" className="text-sm text-foreground">
-									<span data-ev-id="ev_f681d59910" className="text-muted-foreground">Entry:</span>{' '}
+									<span data-ev-id="ev_f681d59910" className="text-muted-foreground">{dict.studioUpload.entryLabel}</span>{' '}
 									<span data-ev-id="ev_80c1e01904" className="font-mono text-xs" dir="ltr">{manifestInfo.entryPoint}</span>
 								</p>
 							</div>
