@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, GripVertical, Settings, Package } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, GripVertical, Settings, Package, Archive, AlertTriangle } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
 import type { Tables } from '@/integrations/supabase/helpers';
+import { useProfile } from '@/hooks/useProfile';
 import { QuizQuestionEditor } from '@/components/studio/QuizQuestionEditor';
 import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
 
@@ -36,6 +37,16 @@ export default function StudioEditor() {
 
   // SCORM upload state
   const [showScormUploadModal, setShowScormUploadModal] = useState(false);
+
+  // Profile for permission checks
+  const { profile } = useProfile();
+
+  // Danger zone state
+  const [enrollmentCount, setEnrollmentCount] = useState<number | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [archiving, setArchiving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Quiz settings state
   const [showQuizSettingsModal, setShowQuizSettingsModal] = useState(false);
@@ -109,6 +120,24 @@ export default function StudioEditor() {
     };
 
     fetchData();
+  }, [courseId]);
+
+  // Fetch enrollment count for danger zone
+  useEffect(() => {
+    if (!supabase || !courseId) return;
+
+    const fetchEnrollmentCount = async () => {
+      const { count, error } = await supabase
+        .from('enrollments')
+        .select('id', { count: 'exact', head: true })
+        .eq('course_id', courseId);
+
+      if (!error && count !== null) {
+        setEnrollmentCount(count);
+      }
+    };
+
+    fetchEnrollmentCount();
   }, [courseId]);
 
   const handleSave = async () => {
@@ -245,6 +274,60 @@ export default function StudioEditor() {
       setShowQuizSettingsModal(false);
     }
     setSavingQuizSettings(false);
+  };
+
+  // Danger zone handlers
+  const canManage = profile && course && (
+    profile.role === 'super_admin' ||
+    profile.role === 'hr_manager' ||
+    course.created_by === profile.id
+  );
+
+  const handleArchive = async () => {
+    if (!supabase || !courseId) return;
+    setArchiving(true);
+
+    const { data, error } = await supabase
+      .from('courses')
+      .update({ status: 'archived', updated_at: new Date().toISOString() })
+      .eq('id', courseId)
+      .select();
+
+    if (error) {
+      const msg = (error as { message?: string })?.message || JSON.stringify(error);
+      console.error('Archive error:', error);
+      showToast('error', msg);
+    } else if (!data || data.length === 0) {
+      showToast('error', dict.studio.deleteFailed);
+    } else {
+      setCourse((prev) => prev ? { ...prev, status: 'archived' } : null);
+      showToast('success', dict.studio.courseArchived);
+    }
+    setArchiving(false);
+  };
+
+  const handleDelete = async () => {
+    if (!supabase || !courseId) return;
+    setDeleting(true);
+
+    const { data, error } = await supabase
+      .from('courses')
+      .delete()
+      .eq('id', courseId)
+      .select();
+
+    if (error) {
+      const msg = (error as { message?: string })?.message || JSON.stringify(error);
+      console.error('Delete error:', error);
+      showToast('error', msg);
+      setDeleting(false);
+    } else if (!data || data.length === 0) {
+      showToast('error', dict.studio.deleteFailed);
+      setDeleting(false);
+    } else {
+      showToast('success', dict.studio.courseDeleted);
+      navigate('/studio');
+    }
   };
 
   if (loading) {
@@ -535,6 +618,84 @@ export default function StudioEditor() {
             }
 					</div>
 				</div>
+
+				{/* Danger Zone */}
+				{canManage && (
+					<div data-ev-id="ev_danger_zone" className="mt-8 p-6 bg-card border border-destructive/30 rounded-lg">
+						<div data-ev-id="ev_dz_header" className="flex items-center gap-2 mb-4">
+							<AlertTriangle className="w-5 h-5 text-destructive" />
+							<h2 data-ev-id="ev_dz_title" className="text-lg font-semibold text-foreground">{dict.studio.dangerZone}</h2>
+						</div>
+
+						{enrollmentCount !== null && (
+							<p data-ev-id="ev_dz_count" className="text-sm text-muted-foreground mb-4">
+								{locale === 'he' ? `${enrollmentCount} לומדים רשומים` : `${enrollmentCount} enrolled learner(s)`}
+							</p>
+						)}
+
+						<div data-ev-id="ev_dz_actions" className="flex flex-col gap-4">
+							{/* Archive option - always available */}
+							<div data-ev-id="ev_dz_archive" className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+								<div data-ev-id="ev_dz_archive_info">
+									<h3 data-ev-id="ev_dz_archive_title" className="font-medium text-foreground">{dict.studio.archiveCourse}</h3>
+									<p data-ev-id="ev_dz_archive_desc" className="text-sm text-muted-foreground mt-1">
+										{dict.studio.archiveCourseDescription}
+									</p>
+								</div>
+								<button
+									data-ev-id="ev_dz_archive_btn"
+									onClick={handleArchive}
+									disabled={archiving || course.status === 'archived'}
+									className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
+								>
+									<Archive className="w-4 h-4" />
+									{archiving ? dict.common.loading : course.status === 'archived' ? dict.common.archived : dict.studio.archiveCourse}
+								</button>
+							</div>
+
+							{/* Delete option */}
+							{enrollmentCount === 0 ? (
+								<div data-ev-id="ev_dz_delete" className="flex items-center justify-between p-4 bg-destructive/10 rounded-lg">
+									<div data-ev-id="ev_dz_delete_info">
+										<h3 data-ev-id="ev_dz_delete_title" className="font-medium text-destructive">{dict.tooltips.deleteCourse}</h3>
+										<p data-ev-id="ev_dz_delete_desc" className="text-sm text-muted-foreground mt-1">
+											{dict.studio.deleteCourseDescription}
+										</p>
+									</div>
+									<button
+										data-ev-id="ev_dz_delete_btn"
+										onClick={() => setShowDeleteModal(true)}
+										className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors"
+									>
+										<Trash2 className="w-4 h-4" />
+										{dict.tooltips.deleteCourse}
+									</button>
+								</div>
+							) : profile?.role === 'super_admin' ? (
+								<div data-ev-id="ev_dz_force_delete" className="flex items-center justify-between p-4 bg-destructive/10 rounded-lg">
+									<div data-ev-id="ev_dz_force_info">
+										<h3 data-ev-id="ev_dz_force_title" className="font-medium text-destructive">{dict.tooltips.deleteCourse}</h3>
+										<p data-ev-id="ev_dz_force_desc" className="text-sm text-muted-foreground mt-1">
+											{dict.studio.deleteCourseDescription}
+										</p>
+									</div>
+									<button
+										data-ev-id="ev_dz_force_btn"
+										onClick={() => setShowDeleteModal(true)}
+										className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors"
+									>
+										<Trash2 className="w-4 h-4" />
+										{dict.tooltips.deleteCourse}
+									</button>
+								</div>
+							) : (
+								<p data-ev-id="ev_dz_blocked" className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
+									{dict.studio.deleteBlockedNotAdmin}
+								</p>
+							)}
+						</div>
+					</div>
+				)}
 			</div>
 
 			{/* Publish confirmation modal */}
@@ -661,6 +822,74 @@ export default function StudioEditor() {
 					}}
 				/>
 			)}
+
+			{/* Delete confirmation modal */}
+			<Modal
+				isOpen={showDeleteModal}
+				onClose={() => {
+					setShowDeleteModal(false);
+					setDeleteConfirmText('');
+				}}
+				title={dict.studio.confirmDeleteCourse}
+				footer={
+					<>
+						<button
+							data-ev-id="ev_delete_cancel_btn"
+							onClick={() => {
+								setShowDeleteModal(false);
+								setDeleteConfirmText('');
+							}}
+							className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+						>
+							{dict.common.cancel}
+						</button>
+						<button
+							data-ev-id="ev_delete_confirm_btn"
+							onClick={handleDelete}
+							disabled={deleting || (enrollmentCount !== null && enrollmentCount > 0 && deleteConfirmText !== course.title_en)}
+							className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors disabled:opacity-50"
+						>
+							{deleting ? dict.common.loading : dict.tooltips.deleteCourse}
+						</button>
+					</>
+				}
+			>
+				<div data-ev-id="ev_delete_modal_content" className="flex flex-col gap-4">
+					{enrollmentCount !== null && enrollmentCount > 0 && (
+						<div data-ev-id="ev_delete_warning" className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+							<p data-ev-id="ev_delete_warning_text" className="text-sm text-destructive">
+								{dict.studio.deleteWarningWithEnrollments.replace('{count}', String(enrollmentCount))}
+							</p>
+						</div>
+					)}
+
+					{enrollmentCount !== null && enrollmentCount > 0 && (
+						<div data-ev-id="ev_delete_confirm_input_wrapper">
+							<label data-ev-id="ev_delete_confirm_label" className="block text-sm font-medium text-foreground mb-1">
+								{dict.studio.typeTitleToConfirm}
+							</label>
+							<p data-ev-id="ev_delete_expected_title" className="text-sm font-mono text-muted-foreground mb-2" dir="ltr">
+								{course.title_en}
+							</p>
+							<input
+								data-ev-id="ev_delete_confirm_input"
+								type="text"
+								value={deleteConfirmText}
+								onChange={(e) => setDeleteConfirmText(e.target.value)}
+								className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-destructive"
+								dir="ltr"
+								autoComplete="off"
+							/>
+						</div>
+					)}
+
+					{(enrollmentCount === null || enrollmentCount === 0) && (
+						<p data-ev-id="ev_delete_simple_confirm" className="text-muted-foreground">
+							{dict.studio.deleteCourseDescription}
+						</p>
+					)}
+				</div>
+			</Modal>
 		</div>);
 
 }

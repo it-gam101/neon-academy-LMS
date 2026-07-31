@@ -113,6 +113,8 @@ export interface Dictionary {
 		uploadFailed: string;
 		cancel: string;
 		upload: string;
+		versionLabel: string;
+		entryLabel: string;
 	};
 	
 	// Roles
@@ -427,6 +429,18 @@ export interface Dictionary {
 		courseSaved: string;
 		editCourse: string;
 		backToStudio: string;
+		dangerZone: string;
+		archiveCourse: string;
+		archiveCourseDescription: string;
+		confirmArchive: string;
+		courseArchived: string;
+		deleteCourseDescription: string;
+		confirmDeleteCourse: string;
+		deleteWarningWithEnrollments: string;
+		typeTitleToConfirm: string;
+		deleteBlockedNotAdmin: string;
+		courseDeleted: string;
+		deleteFailed: string;
 	};
 	
 	// HR Analytics
@@ -674,6 +688,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			uploadFailed: 'Upload failed',
 			cancel: 'Cancel',
 			upload: 'Upload',
+			versionLabel: 'SCORM:',
+			entryLabel: 'Entry:',
 		},
 		
 		roles: {
@@ -979,6 +995,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			courseSaved: 'Course saved',
 			editCourse: 'Edit Course',
 			backToStudio: 'Back to Studio',
+			dangerZone: 'Danger Zone',
+			archiveCourse: 'Archive Course',
+			archiveCourseDescription: 'Archiving removes this course from the catalogue but keeps all learner progress intact.',
+			confirmArchive: 'Are you sure you want to archive this course?',
+			courseArchived: 'Course archived',
+			deleteCourseDescription: 'Permanently delete this course and all its modules.',
+			confirmDeleteCourse: 'Delete Course?',
+			deleteWarningWithEnrollments: 'This will permanently delete all learner progress, quiz attempts and scores for {count} enrolled learner(s). This action cannot be undone.',
+			typeTitleToConfirm: 'Type the course title to confirm:',
+			deleteBlockedNotAdmin: 'This course has enrolled learners. Only super admins can delete courses with active enrollments.',
+			courseDeleted: 'Course deleted',
+			deleteFailed: 'Failed to delete course',
 		},
 		
 		hrAnalytics: {
@@ -1212,6 +1240,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			uploadFailed: 'ההעלאה נכשלה',
 			cancel: 'ביטול',
 			upload: 'העלה',
+			versionLabel: 'SCORM:',
+			entryLabel: 'נקודת כניסה:',
 		},
 		
 		roles: {
@@ -1517,6 +1547,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			courseSaved: 'הקורס נשמר',
 			editCourse: 'ערוך קורס',
 			backToStudio: 'חזרה לסטודיו',
+			dangerZone: 'אזור סכנה',
+			archiveCourse: 'העבר לארכיון',
+			archiveCourseDescription: 'העברה לארכיון מסירה את הקורס מהקטלוג אך שומרת על כל התקדמות הלומדים.',
+			confirmArchive: 'האם אתה בטוח שברצונך להעביר קורס זה לארכיון?',
+			courseArchived: 'הקורס הועבר לארכיון',
+			deleteCourseDescription: 'מחק לצמיתות את הקורס וכל המודולים שלו.',
+			confirmDeleteCourse: 'למחוק קורס?',
+			deleteWarningWithEnrollments: 'פעולה זו תמחק לצמיתות את כל התקדמות הלמידה, ניסיונות המבחן והציונים של {count} לומד(ים) רשומים. לא ניתן לבטל פעולה זו.',
+			typeTitleToConfirm: 'הקלד את שם הקורס לאישור:',
+			deleteBlockedNotAdmin: 'לקורס זה יש לומדים רשומים. רק מנהלים ראשיים יכולים למחוק קורסים עם הרשמות פעילות.',
+			courseDeleted: 'הקורס נמחק',
+			deleteFailed: 'מחיקת הקורס נכשלה',
 		},
 		
 		hrAnalytics: {
