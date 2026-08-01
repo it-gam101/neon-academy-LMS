@@ -117,6 +117,33 @@ export interface Dictionary {
 		entryLabel: string;
 	};
 	
+	// Studio Blocks
+	studioBlocks: {
+		editContent: string;
+		blocks: string;
+		addHeading: string;
+		addText: string;
+		addVideo: string;
+		blockHeading: string;
+		blockText: string;
+		blockVideo: string;
+		videoUrl: string;
+		videoEmbedWarning: string;
+		caption: string;
+		moveUp: string;
+		moveDown: string;
+		deleteBlock: string;
+		confirmDeleteBlock: string;
+		incomplete: string;
+		missingHebrew: string;
+		missingEnglish: string;
+		noBlocks: string;
+		saveBlocks: string;
+		blocksSaved: string;
+		saveFailed: string;
+		formattingHint: string;
+	};
+	
 	// Roles
 	roles: {
 		super_admin: string;
@@ -692,6 +719,32 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			entryLabel: 'Entry:',
 		},
 		
+		studioBlocks: {
+			editContent: 'Edit Content',
+			blocks: 'blocks',
+			addHeading: 'Heading',
+			addText: 'Text',
+			addVideo: 'Video',
+			blockHeading: 'Heading',
+			blockText: 'Text',
+			blockVideo: 'Video',
+			videoUrl: 'Video URL (embed)',
+			videoEmbedWarning: 'Use an embed URL (e.g. youtube.com/embed/...), not a watch URL',
+			caption: 'Caption',
+			moveUp: 'Move up',
+			moveDown: 'Move down',
+			deleteBlock: 'Delete block',
+			confirmDeleteBlock: 'Click again to confirm',
+			incomplete: 'Incomplete',
+			missingHebrew: 'blocks missing Hebrew',
+			missingEnglish: 'blocks missing English',
+			noBlocks: 'No content blocks yet. Add a heading, text, or video.',
+			saveBlocks: 'Save Content',
+			blocksSaved: 'Content saved',
+			saveFailed: 'Failed to save content',
+			formattingHint: 'Supports **bold** and line breaks',
+		},
+		
 		roles: {
 			super_admin: 'Super Admin',
 			hr_manager: 'HR Manager',
@@ -1242,6 +1295,32 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			upload: 'העלה',
 			versionLabel: 'SCORM:',
 			entryLabel: 'נקודת כניסה:',
+		},
+		
+		studioBlocks: {
+			editContent: 'עריכת תוכן',
+			blocks: 'בלוקים',
+			addHeading: 'כותרת',
+			addText: 'טקסט',
+			addVideo: 'וידאו',
+			blockHeading: 'כותרת',
+			blockText: 'טקסט',
+			blockVideo: 'וידאו',
+			videoUrl: 'כתובת וידאו (הטמעה)',
+			videoEmbedWarning: 'השתמש בכתובת הטמעה (למשל youtube.com/embed/...), לא בכתובת צפייה',
+			caption: 'כיתוב',
+			moveUp: 'הזז למעלה',
+			moveDown: 'הזז למטה',
+			deleteBlock: 'מחק בלוק',
+			confirmDeleteBlock: 'לחץ שוב לאישור',
+			incomplete: 'לא הושלם',
+			missingHebrew: 'בלוקים חסרי עברית',
+			missingEnglish: 'בלוקים חסרי אנגלית',
+			noBlocks: 'אין בלוקי תוכן עדיין. הוסף כותרת, טקסט או וידאו.',
+			saveBlocks: 'שמור תוכן',
+			blocksSaved: 'התוכן נשמר',
+			saveFailed: 'שמירת התוכן נכשלה',
+			formattingHint: 'תומך ב-**מודגש** ומעברי שורה',
 		},
 		
 		roles: {

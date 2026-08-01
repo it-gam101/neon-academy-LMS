@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, GripVertical, Settings, Package, Archive, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, Settings, Package, Archive, AlertTriangle, Pencil, ChevronUp, ChevronDown } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,7 @@ import type { Tables } from '@/integrations/supabase/helpers';
 import { useProfile } from '@/hooks/useProfile';
 import { QuizQuestionEditor } from '@/components/studio/QuizQuestionEditor';
 import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
+import { LessonBlockEditor } from '@/components/studio/LessonBlockEditor';
 
 type Course = Tables<'courses'>;
 type Module = Tables<'modules'>;
@@ -55,12 +56,25 @@ export default function StudioEditor() {
   const [savingQuizSettings, setSavingQuizSettings] = useState(false);
   const [quizQuestionCounts, setQuizQuestionCounts] = useState<Record<string, number>>({});
 
+  // Lesson content state
+  const [showLessonEditorModal, setShowLessonEditorModal] = useState(false);
+  const [editingLessonModuleId, setEditingLessonModuleId] = useState<string | null>(null);
+  const [lessonBlockCounts, setLessonBlockCounts] = useState<Record<string, number>>({});
+  const [reordering, setReordering] = useState(false);
+
   // Stable callback for question count updates
   const handleQuestionCountChange = useCallback((count: number) => {
     if (editingQuizModuleId) {
       setQuizQuestionCounts((prev) => ({ ...prev, [editingQuizModuleId]: count }));
     }
   }, [editingQuizModuleId]);
+
+  // Stable callback for lesson block count updates
+  const handleBlockCountChange = useCallback((count: number) => {
+    if (editingLessonModuleId) {
+      setLessonBlockCounts((prev) => ({ ...prev, [editingLessonModuleId]: count }));
+    }
+  }, [editingLessonModuleId]);
 
   // Form state
   const [titleEn, setTitleEn] = useState('');
@@ -127,10 +141,10 @@ export default function StudioEditor() {
     if (!supabase || !courseId) return;
 
     const fetchEnrollmentCount = async () => {
-      const { count, error } = await supabase
-        .from('enrollments')
-        .select('id', { count: 'exact', head: true })
-        .eq('course_id', courseId);
+      const { count, error } = await supabase.
+      from('enrollments').
+      select('id', { count: 'exact', head: true }).
+      eq('course_id', courseId);
 
       if (!error && count !== null) {
         setEnrollmentCount(count);
@@ -276,25 +290,72 @@ export default function StudioEditor() {
     setSavingQuizSettings(false);
   };
 
+  const handleOpenLessonEditor = (moduleId: string) => {
+    setEditingLessonModuleId(moduleId);
+    setShowLessonEditorModal(true);
+  };
+
+  const handleMoveModule = async (index: number, direction: 'up' | 'down') => {
+    if (!supabase || !courseId) return;
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= modules.length) return;
+
+    setReordering(true);
+
+    const currentModule = modules[index];
+    const targetModule = modules[newIndex];
+    const currentOrder = currentModule.sort_order;
+    const targetOrder = targetModule.sort_order;
+
+    // Swap sort_orders
+    const [result1, result2] = await Promise.all([
+    supabase.from('modules').update({ sort_order: targetOrder }).eq('id', currentModule.id).select(),
+    supabase.from('modules').update({ sort_order: currentOrder }).eq('id', targetModule.id).select()]
+    );
+
+    const error1 = result1.error;
+    const error2 = result2.error;
+    const data1 = result1.data;
+    const data2 = result2.data;
+
+    if (error1 || error2) {
+      const msg = (error1 as {message?: string;})?.message || (error2 as {message?: string;})?.message || 'Reorder failed';
+      console.error('Reorder error:', error1 || error2);
+      showToast('error', msg);
+    } else if (!data1 || data1.length === 0 || !data2 || data2.length === 0) {
+      showToast('error', dict.studio.deleteFailed);
+    } else {
+      // Update local state
+      setModules((prev) => {
+        const newModules = [...prev];
+        newModules[index] = { ...currentModule, sort_order: targetOrder };
+        newModules[newIndex] = { ...targetModule, sort_order: currentOrder };
+        return newModules.sort((a, b) => a.sort_order - b.sort_order);
+      });
+    }
+
+    setReordering(false);
+  };
+
   // Danger zone handlers
   const canManage = profile && course && (
-    profile.role === 'super_admin' ||
-    profile.role === 'hr_manager' ||
-    course.created_by === profile.id
-  );
+  profile.role === 'super_admin' ||
+  profile.role === 'hr_manager' ||
+  course.created_by === profile.id);
+
 
   const handleArchive = async () => {
     if (!supabase || !courseId) return;
     setArchiving(true);
 
-    const { data, error } = await supabase
-      .from('courses')
-      .update({ status: 'archived', updated_at: new Date().toISOString() })
-      .eq('id', courseId)
-      .select();
+    const { data, error } = await supabase.
+    from('courses').
+    update({ status: 'archived', updated_at: new Date().toISOString() }).
+    eq('id', courseId).
+    select();
 
     if (error) {
-      const msg = (error as { message?: string })?.message || JSON.stringify(error);
+      const msg = (error as {message?: string;})?.message || JSON.stringify(error);
       console.error('Archive error:', error);
       showToast('error', msg);
     } else if (!data || data.length === 0) {
@@ -310,14 +371,14 @@ export default function StudioEditor() {
     if (!supabase || !courseId) return;
     setDeleting(true);
 
-    const { data, error } = await supabase
-      .from('courses')
-      .delete()
-      .eq('id', courseId)
-      .select();
+    const { data, error } = await supabase.
+    from('courses').
+    delete().
+    eq('id', courseId).
+    select();
 
     if (error) {
-      const msg = (error as { message?: string })?.message || JSON.stringify(error);
+      const msg = (error as {message?: string;})?.message || JSON.stringify(error);
       console.error('Delete error:', error);
       showToast('error', msg);
       setDeleting(false);
@@ -540,23 +601,41 @@ export default function StudioEditor() {
             key={mod.id}
             className="flex items-center gap-3 p-3 bg-background border border-border rounded-lg">
 
-									<GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
+									{/* Reorder buttons */}
+									<div data-ev-id="ev_073cad7fe4" className="flex flex-col">
+										<button data-ev-id="ev_be56e8ddc6"
+                onClick={() => handleMoveModule(index, 'up')}
+                disabled={index === 0 || reordering}
+                className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title={dict.studioBlocks.moveUp}>
+
+											<ChevronUp className="w-4 h-4" />
+										</button>
+										<button data-ev-id="ev_81a2065527"
+                onClick={() => handleMoveModule(index, 'down')}
+                disabled={index === modules.length - 1 || reordering}
+                className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title={dict.studioBlocks.moveDown}>
+
+											<ChevronDown className="w-4 h-4" />
+										</button>
+									</div>
 									<div data-ev-id="ev_8dca9d6384" className="w-8 h-8 rounded bg-muted flex items-center justify-center">
-										{mod.module_type === 'quiz' ? (
-                <FileQuestion className="w-4 h-4 text-muted-foreground" />
-                ) : mod.module_type === 'scorm_package' ? (
-                <Package className="w-4 h-4 text-muted-foreground" />
-                ) : (
+										{mod.module_type === 'quiz' ?
+                <FileQuestion className="w-4 h-4 text-muted-foreground" /> :
+                mod.module_type === 'scorm_package' ?
+                <Package className="w-4 h-4 text-muted-foreground" /> :
+
                 <BookOpen className="w-4 h-4 text-muted-foreground" />
-                )}
+                }
 									</div>
 									<div data-ev-id="ev_0fd824dbbd" className="flex-1">
 										<span data-ev-id="ev_7bc8188839" className="text-sm text-muted-foreground">
-											{mod.module_type === 'quiz' 
-												? `${dict.course.quiz} ${index + 1}${quizQuestionCounts[mod.id] ? ` (${quizQuestionCounts[mod.id]} ${locale === 'he' ? 'שאלות' : 'Q'})` : ''}` 
-												: mod.module_type === 'scorm_package'
-												? `SCORM ${index + 1}`
-												: `${dict.course.lesson} ${index + 1}`}
+											{mod.module_type === 'quiz' ?
+                  `${dict.course.quiz} ${index + 1}${quizQuestionCounts[mod.id] ? ` (${quizQuestionCounts[mod.id]} ${locale === 'he' ? 'שאלות' : 'Q'})` : ''}` :
+                  mod.module_type === 'scorm_package' ?
+                  `SCORM ${index + 1}` :
+                  `${dict.course.lesson} ${index + 1}${lessonBlockCounts[mod.id] ? ` (${lessonBlockCounts[mod.id]} ${dict.studioBlocks.blocks})` : ''}`}
 										</span>
 										<p data-ev-id="ev_d6adc26529" className="font-medium text-foreground">
 											{locale === 'he' ? mod.title_he : mod.title_en}
@@ -568,6 +647,14 @@ export default function StudioEditor() {
               className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
               title={dict.studio.quizSettings}>
                 <Settings className="w-4 h-4" />
+              </button>
+              }
+									{mod.module_type === 'lesson' &&
+              <button data-ev-id="ev_lesson_edit_btn"
+              onClick={() => handleOpenLessonEditor(mod.id)}
+              className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+              title={dict.studioBlocks.editContent}>
+                <Pencil className="w-4 h-4" />
               </button>
               }
 									<button data-ev-id="ev_e2850d52d2"
@@ -620,18 +707,18 @@ export default function StudioEditor() {
 				</div>
 
 				{/* Danger Zone */}
-				{canManage && (
-					<div data-ev-id="ev_danger_zone" className="mt-8 p-6 bg-card border border-destructive/30 rounded-lg">
+				{canManage &&
+        <div data-ev-id="ev_danger_zone" className="mt-8 p-6 bg-card border border-destructive/30 rounded-lg">
 						<div data-ev-id="ev_dz_header" className="flex items-center gap-2 mb-4">
 							<AlertTriangle className="w-5 h-5 text-destructive" />
 							<h2 data-ev-id="ev_dz_title" className="text-lg font-semibold text-foreground">{dict.studio.dangerZone}</h2>
 						</div>
 
-						{enrollmentCount !== null && (
-							<p data-ev-id="ev_dz_count" className="text-sm text-muted-foreground mb-4">
+						{enrollmentCount !== null &&
+          <p data-ev-id="ev_dz_count" className="text-sm text-muted-foreground mb-4">
 								{locale === 'he' ? `${enrollmentCount} לומדים רשומים` : `${enrollmentCount} enrolled learner(s)`}
 							</p>
-						)}
+          }
 
 						<div data-ev-id="ev_dz_actions" className="flex flex-col gap-4">
 							{/* Archive option - always available */}
@@ -643,19 +730,19 @@ export default function StudioEditor() {
 									</p>
 								</div>
 								<button
-									data-ev-id="ev_dz_archive_btn"
-									onClick={handleArchive}
-									disabled={archiving || course.status === 'archived'}
-									className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
-								>
+                data-ev-id="ev_dz_archive_btn"
+                onClick={handleArchive}
+                disabled={archiving || course.status === 'archived'}
+                className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50">
+
 									<Archive className="w-4 h-4" />
 									{archiving ? dict.common.loading : course.status === 'archived' ? dict.common.archived : dict.studio.archiveCourse}
 								</button>
 							</div>
 
 							{/* Delete option */}
-							{enrollmentCount === 0 ? (
-								<div data-ev-id="ev_dz_delete" className="flex items-center justify-between p-4 bg-destructive/10 rounded-lg">
+							{enrollmentCount === 0 ?
+            <div data-ev-id="ev_dz_delete" className="flex items-center justify-between p-4 bg-destructive/10 rounded-lg">
 									<div data-ev-id="ev_dz_delete_info">
 										<h3 data-ev-id="ev_dz_delete_title" className="font-medium text-destructive">{dict.tooltips.deleteCourse}</h3>
 										<p data-ev-id="ev_dz_delete_desc" className="text-sm text-muted-foreground mt-1">
@@ -663,16 +750,16 @@ export default function StudioEditor() {
 										</p>
 									</div>
 									<button
-										data-ev-id="ev_dz_delete_btn"
-										onClick={() => setShowDeleteModal(true)}
-										className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors"
-									>
+                data-ev-id="ev_dz_delete_btn"
+                onClick={() => setShowDeleteModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors">
+
 										<Trash2 className="w-4 h-4" />
 										{dict.tooltips.deleteCourse}
 									</button>
-								</div>
-							) : profile?.role === 'super_admin' ? (
-								<div data-ev-id="ev_dz_force_delete" className="flex items-center justify-between p-4 bg-destructive/10 rounded-lg">
+								</div> :
+            profile?.role === 'super_admin' ?
+            <div data-ev-id="ev_dz_force_delete" className="flex items-center justify-between p-4 bg-destructive/10 rounded-lg">
 									<div data-ev-id="ev_dz_force_info">
 										<h3 data-ev-id="ev_dz_force_title" className="font-medium text-destructive">{dict.tooltips.deleteCourse}</h3>
 										<p data-ev-id="ev_dz_force_desc" className="text-sm text-muted-foreground mt-1">
@@ -680,22 +767,22 @@ export default function StudioEditor() {
 										</p>
 									</div>
 									<button
-										data-ev-id="ev_dz_force_btn"
-										onClick={() => setShowDeleteModal(true)}
-										className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors"
-									>
+                data-ev-id="ev_dz_force_btn"
+                onClick={() => setShowDeleteModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors">
+
 										<Trash2 className="w-4 h-4" />
 										{dict.tooltips.deleteCourse}
 									</button>
-								</div>
-							) : (
-								<p data-ev-id="ev_dz_blocked" className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
+								</div> :
+
+            <p data-ev-id="ev_dz_blocked" className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
 									{dict.studio.deleteBlockedNotAdmin}
 								</p>
-							)}
+            }
 						</div>
 					</div>
-				)}
+        }
 			</div>
 
 			{/* Publish confirmation modal */}
@@ -811,60 +898,73 @@ export default function StudioEditor() {
 			</Modal>
 
 			{/* SCORM upload modal */}
-			{showScormUploadModal && (
-				<ScormUploadModal
-					courseId={courseId!}
-					sortOrder={modules.length + 1}
-					onClose={() => setShowScormUploadModal(false)}
-					onUploaded={(mod) => {
-						setModules((prev) => [...prev, mod]);
-						setShowScormUploadModal(false);
-					}}
-				/>
-			)}
+			{showScormUploadModal &&
+      <ScormUploadModal
+        courseId={courseId!}
+        sortOrder={modules.length + 1}
+        onClose={() => setShowScormUploadModal(false)}
+        onUploaded={(mod) => {
+          setModules((prev) => [...prev, mod]);
+          setShowScormUploadModal(false);
+        }} />
+
+      }
+
+			{/* Lesson content editor modal */}
+			<Modal
+        isOpen={showLessonEditorModal}
+        onClose={() => setShowLessonEditorModal(false)}
+        title={dict.studioBlocks.editContent}
+        size="lg">
+				{editingLessonModuleId &&
+        <LessonBlockEditor
+          moduleId={editingLessonModuleId}
+          onBlockCountChange={handleBlockCountChange} />
+        }
+			</Modal>
 
 			{/* Delete confirmation modal */}
 			<Modal
-				isOpen={showDeleteModal}
-				onClose={() => {
-					setShowDeleteModal(false);
-					setDeleteConfirmText('');
-				}}
-				title={dict.studio.confirmDeleteCourse}
-				footer={
-					<>
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteConfirmText('');
+        }}
+        title={dict.studio.confirmDeleteCourse}
+        footer={
+        <>
 						<button
-							data-ev-id="ev_delete_cancel_btn"
-							onClick={() => {
-								setShowDeleteModal(false);
-								setDeleteConfirmText('');
-							}}
-							className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors"
-						>
+            data-ev-id="ev_delete_cancel_btn"
+            onClick={() => {
+              setShowDeleteModal(false);
+              setDeleteConfirmText('');
+            }}
+            className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+
 							{dict.common.cancel}
 						</button>
 						<button
-							data-ev-id="ev_delete_confirm_btn"
-							onClick={handleDelete}
-							disabled={deleting || (enrollmentCount !== null && enrollmentCount > 0 && deleteConfirmText !== course.title_en)}
-							className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors disabled:opacity-50"
-						>
+            data-ev-id="ev_delete_confirm_btn"
+            onClick={handleDelete}
+            disabled={deleting || enrollmentCount !== null && enrollmentCount > 0 && deleteConfirmText !== course.title_en}
+            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors disabled:opacity-50">
+
 							{deleting ? dict.common.loading : dict.tooltips.deleteCourse}
 						</button>
 					</>
-				}
-			>
+        }>
+
 				<div data-ev-id="ev_delete_modal_content" className="flex flex-col gap-4">
-					{enrollmentCount !== null && enrollmentCount > 0 && (
-						<div data-ev-id="ev_delete_warning" className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+					{enrollmentCount !== null && enrollmentCount > 0 &&
+          <div data-ev-id="ev_delete_warning" className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
 							<p data-ev-id="ev_delete_warning_text" className="text-sm text-destructive">
 								{dict.studio.deleteWarningWithEnrollments.replace('{count}', String(enrollmentCount))}
 							</p>
 						</div>
-					)}
+          }
 
-					{enrollmentCount !== null && enrollmentCount > 0 && (
-						<div data-ev-id="ev_delete_confirm_input_wrapper">
+					{enrollmentCount !== null && enrollmentCount > 0 &&
+          <div data-ev-id="ev_delete_confirm_input_wrapper">
 							<label data-ev-id="ev_delete_confirm_label" className="block text-sm font-medium text-foreground mb-1">
 								{dict.studio.typeTitleToConfirm}
 							</label>
@@ -872,22 +972,22 @@ export default function StudioEditor() {
 								{course.title_en}
 							</p>
 							<input
-								data-ev-id="ev_delete_confirm_input"
-								type="text"
-								value={deleteConfirmText}
-								onChange={(e) => setDeleteConfirmText(e.target.value)}
-								className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-destructive"
-								dir="ltr"
-								autoComplete="off"
-							/>
-						</div>
-					)}
+              data-ev-id="ev_delete_confirm_input"
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-destructive"
+              dir="ltr"
+              autoComplete="off" />
 
-					{(enrollmentCount === null || enrollmentCount === 0) && (
-						<p data-ev-id="ev_delete_simple_confirm" className="text-muted-foreground">
+						</div>
+          }
+
+					{(enrollmentCount === null || enrollmentCount === 0) &&
+          <p data-ev-id="ev_delete_simple_confirm" className="text-muted-foreground">
 							{dict.studio.deleteCourseDescription}
 						</p>
-					)}
+          }
 				</div>
 			</Modal>
 		</div>);

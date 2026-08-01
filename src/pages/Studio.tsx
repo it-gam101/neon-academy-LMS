@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Plus, BookOpen, Edit, Eye, ChevronRight, ChevronLeft, ArrowLeft, ArrowRight, GripVertical, FileQuestion } from 'lucide-react';
+import { Plus, BookOpen, Edit, Eye, ChevronRight, ChevronLeft, ArrowLeft, ArrowRight, FileQuestion } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useCourses } from '@/hooks/useCourses';
