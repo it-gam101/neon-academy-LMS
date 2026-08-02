@@ -276,7 +276,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 									{/* English */}
 									<div data-ev-id="ev_458ee31bef">
 										<label data-ev-id="ev_425c34159d" className="block text-xs font-medium text-muted-foreground mb-1">
-											English
+											{dict.profile.english}
 										</label>
 										{block.type === 'heading' ?
                   <input data-ev-id="ev_f7cc3fdb99"
@@ -299,7 +299,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 									{/* Hebrew */}
 									<div data-ev-id="ev_e76a848660">
 										<label data-ev-id="ev_55cfe9bbfa" className="block text-xs font-medium text-muted-foreground mb-1">
-											עברית
+											{dict.profile.hebrew}
 										</label>
 										{block.type === 'heading' ?
                   <input data-ev-id="ev_addb3d038d"

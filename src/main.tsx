@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import App from './App';
 import { AppProviders } from './providers';
+import { ToastContainer } from '@/components/ui/Toast';
 import './index.css';
 
 /**
@@ -15,6 +16,9 @@ createRoot(document.getElementById('root')!).render(
 			<BrowserRouter>
 				<App />
 			</BrowserRouter>
+			{/* Mounts the single subscriber for showToast(). Without this every
+			    showToast() call in the app is a silent no-op. */}
+			<ToastContainer />
 		</AppProviders>
 	</StrictMode>,
 );

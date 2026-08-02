@@ -41,7 +41,7 @@ export function ToastContainer() {
   };
 
   return (
-    <div data-ev-id="ev_726582da0d" className="fixed bottom-4 inset-inline-end-4 z-50 flex flex-col gap-2">
+    <div data-ev-id="ev_726582da0d" className="fixed bottom-4 end-4 z-50 flex flex-col gap-2">
 			{toasts.map((toast) =>
       <div data-ev-id="ev_f084afc5d0"
       key={toast.id}
