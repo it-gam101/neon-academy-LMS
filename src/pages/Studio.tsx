@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Plus, BookOpen, Edit, Eye, ChevronRight, ChevronLeft, ArrowLeft, ArrowRight, FileQuestion } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useCourses } from '@/hooks/useCourses';
 import { supabase } from '@/integrations/supabase/client';
+import { useProfile } from '@/hooks/useProfile';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -14,9 +15,44 @@ import { showToast } from '@/components/ui/Toast';
 export default function Studio() {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
-  const { courses, categories, loading, error, refetch, getLocalizedTitle, getLocalizedCategoryName } = useCourses({ onlyOwn: true });
+  const { profile } = useProfile();
   const navigate = useNavigate();
   const Chevron = locale === 'he' ? ChevronLeft : ChevronRight;
+
+  // Scope toggle for org-wide viewers
+  const isOrgWide = profile?.role === 'super_admin' || profile?.role === 'hr_manager';
+  const [scope, setScope] = useState<'mine' | 'all'>('mine');
+  const [ownerNames, setOwnerNames] = useState<Map<string, string>>(new Map());
+
+  const { courses, categories, loading, error, refetch, getLocalizedTitle, getLocalizedCategoryName } = useCourses({
+    onlyOwn: !isOrgWide || scope === 'mine'
+  });
+
+  // Fetch owner names when showing all courses
+  useEffect(() => {
+    if (!supabase || scope !== 'all' || courses.length === 0) {
+      setOwnerNames(new Map());
+      return;
+    }
+
+    const creatorIds = [...new Set(courses.map((c) => c.created_by).filter(Boolean))] as string[];
+    if (creatorIds.length === 0) return;
+
+    const fetchOwners = async () => {
+      const { data } = await supabase.
+      from('profiles').
+      select('id, full_name').
+      in('id', creatorIds);
+
+      if (data) {
+        const nameMap = new Map<string, string>();
+        data.forEach((p) => nameMap.set(p.id, p.full_name || ''));
+        setOwnerNames(nameMap);
+      }
+    };
+
+    fetchOwners();
+  }, [scope, courses]);
 
   const handleCreateCourse = async () => {
     if (!supabase) return;
@@ -72,13 +108,38 @@ export default function Studio() {
 						<h1 data-ev-id="ev_e8a8de4b97" className="text-3xl font-bold text-foreground mb-2">{dict.studio.title}</h1>
 						<p data-ev-id="ev_d2516c3383" className="text-muted-foreground">{dict.studio.description}</p>
 					</div>
-					<button data-ev-id="ev_20d39d9b23"
-          onClick={handleCreateCourse}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+					<div data-ev-id="ev_7729f9197b" className="flex items-center gap-3">
+						{isOrgWide &&
+            <div data-ev-id="ev_0ad9b52c05" className="flex items-center bg-muted rounded-lg p-1">
+								<button data-ev-id="ev_1773e1bd08"
+              onClick={() => setScope('mine')}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              scope === 'mine' ?
+              'bg-background text-foreground shadow-sm' :
+              'text-muted-foreground hover:text-foreground'}`
+              }>
 
-						<Plus className="w-4 h-4" />
-						{dict.studio.createCourse}
-					</button>
+									{dict.studio.scopeMine}
+								</button>
+								<button data-ev-id="ev_9fdefee281"
+              onClick={() => setScope('all')}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              scope === 'all' ?
+              'bg-background text-foreground shadow-sm' :
+              'text-muted-foreground hover:text-foreground'}`
+              }>
+
+									{dict.studio.scopeAll}
+								</button>
+							</div>
+            }
+						<button data-ev-id="ev_20d39d9b23"
+            onClick={handleCreateCourse}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+							<Plus className="w-4 h-4" />
+							{dict.studio.createCourse}
+						</button>
+					</div>
 				</div>
 
 				{error &&
@@ -130,6 +191,12 @@ export default function Studio() {
                 }
 										{course.module_count !== undefined &&
                 <span data-ev-id="ev_1eef4aada0">{course.module_count} {dict.catalogue.modules}</span>
+                }
+										{scope === 'all' && course.created_by &&
+                <span data-ev-id="ev_cfc0d927b4" className="flex items-center gap-1">
+												<span data-ev-id="ev_8b4ae7f3f5" className="text-muted-foreground/70">{dict.studio.owner}:</span>
+												{ownerNames.get(course.created_by) || dict.studio.unknownOwner}
+											</span>
                 }
 									</div>
 								</div>

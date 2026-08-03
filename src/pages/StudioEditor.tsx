@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, Settings, Package, Archive, AlertTriangle, Pencil, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, Settings, Package, Archive, AlertTriangle, Pencil, ChevronUp, ChevronDown, Edit } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,6 +61,13 @@ export default function StudioEditor() {
   const [editingLessonModuleId, setEditingLessonModuleId] = useState<string | null>(null);
   const [lessonBlockCounts, setLessonBlockCounts] = useState<Record<string, number>>({});
   const [reordering, setReordering] = useState(false);
+
+  // Module title editing state
+  const [showModuleTitleModal, setShowModuleTitleModal] = useState(false);
+  const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [moduleTitleEn, setModuleTitleEn] = useState('');
+  const [moduleTitleHe, setModuleTitleHe] = useState('');
+  const [savingModuleTitle, setSavingModuleTitle] = useState(false);
 
   // Stable callback for question count updates
   const handleQuestionCountChange = useCallback((count: number) => {
@@ -293,6 +300,47 @@ export default function StudioEditor() {
   const handleOpenLessonEditor = (moduleId: string) => {
     setEditingLessonModuleId(moduleId);
     setShowLessonEditorModal(true);
+  };
+
+  const handleOpenModuleTitleEdit = (mod: Module) => {
+    setEditingModule(mod);
+    setModuleTitleEn(mod.title_en);
+    setModuleTitleHe(mod.title_he);
+    setShowModuleTitleModal(true);
+  };
+
+  const handleSaveModuleTitle = async () => {
+    if (!supabase || !editingModule) return;
+    const trimmedEn = moduleTitleEn.trim();
+    const trimmedHe = moduleTitleHe.trim();
+    if (!trimmedEn || !trimmedHe) return;
+
+    setSavingModuleTitle(true);
+
+    const { data, error } = await supabase.
+    from('modules').
+    update({ title_en: trimmedEn, title_he: trimmedHe }).
+    eq('id', editingModule.id).
+    select();
+
+    if (error) {
+      const msg = (error as {message?: string;})?.message || JSON.stringify(error);
+      console.error('Module title save error:', error);
+      showToast('error', msg);
+    } else if (!data || data.length === 0) {
+      showToast('error', dict.studio.deleteFailed);
+    } else {
+      // Update local module list
+      setModules((prev) =>
+      prev.map((m) =>
+      m.id === editingModule.id ? { ...m, title_en: trimmedEn, title_he: trimmedHe } : m
+      )
+      );
+      showToast('success', dict.studio.moduleTitleSaved);
+      setShowModuleTitleModal(false);
+    }
+
+    setSavingModuleTitle(false);
   };
 
   const handleMoveModule = async (index: number, direction: 'up' | 'down') => {
@@ -657,6 +705,12 @@ export default function StudioEditor() {
                 <Pencil className="w-4 h-4" />
               </button>
               }
+									<button data-ev-id="ev_7f1e5297ce"
+              onClick={() => handleOpenModuleTitleEdit(mod)}
+              className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+              title={dict.studio.editModuleTitle}>
+                <Edit className="w-4 h-4" />
+              </button>
 									<button data-ev-id="ev_e2850d52d2"
               onClick={() => handleDeleteModule(mod.id)}
               className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
@@ -909,6 +963,52 @@ export default function StudioEditor() {
         }} />
 
       }
+
+			{/* Module title edit modal */}
+			<Modal
+        isOpen={showModuleTitleModal}
+        onClose={() => setShowModuleTitleModal(false)}
+        title={dict.studio.editModuleTitle}
+        footer={
+        <>
+						<button data-ev-id="ev_61283b7509"
+          onClick={() => setShowModuleTitleModal(false)}
+          className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+							{dict.common.cancel}
+						</button>
+						<button data-ev-id="ev_3741032ad8"
+          onClick={handleSaveModuleTitle}
+          disabled={savingModuleTitle || !moduleTitleEn.trim() || !moduleTitleHe.trim()}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
+							{savingModuleTitle ? dict.common.loading : dict.common.save}
+						</button>
+					</>
+        }>
+				<div data-ev-id="ev_f6a7cf93d4" className="flex flex-col gap-4">
+					<div data-ev-id="ev_129bb259e4">
+						<label data-ev-id="ev_ea82794b01" className="block text-sm font-medium text-foreground mb-1">
+							{dict.studio.moduleTitleEn}
+						</label>
+						<input data-ev-id="ev_1f44b4da82"
+            type="text"
+            value={moduleTitleEn}
+            onChange={(e) => setModuleTitleEn(e.target.value)}
+            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            dir="ltr" />
+					</div>
+					<div data-ev-id="ev_d7bb431d91">
+						<label data-ev-id="ev_173a9224ee" className="block text-sm font-medium text-foreground mb-1">
+							{dict.studio.moduleTitleHe}
+						</label>
+						<input data-ev-id="ev_d06733eb65"
+            type="text"
+            value={moduleTitleHe}
+            onChange={(e) => setModuleTitleHe(e.target.value)}
+            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            dir="rtl" />
+					</div>
+				</div>
+			</Modal>
 
 			{/* Lesson content editor modal */}
 			<Modal

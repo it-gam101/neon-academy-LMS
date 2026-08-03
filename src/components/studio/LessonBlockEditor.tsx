@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Type, AlignLeft, Video } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Type, AlignLeft, Video, Check } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,9 +24,65 @@ function normaliseContent(content: {en: string;he: string;} | string | undefined
   return { en: content.en || '', he: content.he || '' };
 }
 
-// Check if URL looks like a non-embed YouTube URL
-function isWatchUrl(url: string): boolean {
-  return url.includes('watch?v=') || url.includes('youtu.be/');
+// Check if URL looks like a non-embed YouTube URL that can't be parsed
+function isUnparseableYouTubeUrl(url: string): boolean {
+  // If it's already an embed URL, it's fine
+  if (url.includes('/embed/')) return false;
+  // If it looks like YouTube but we can't extract an ID, warn
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    const id = extractYouTubeId(url);
+    return !id;
+  }
+  return false;
+}
+
+// Extract YouTube video ID from various URL formats
+function extractYouTubeId(url: string): string | null {
+  // Already embed format
+  const embedMatch = url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
+  if (embedMatch) return embedMatch[1];
+
+  // watch?v= format
+  const watchMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/);
+  if (watchMatch) return watchMatch[1];
+
+  // youtu.be format
+  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+  if (shortMatch) return shortMatch[1];
+
+  return null;
+}
+
+// Extract start time from URL params (t= or start=)
+function extractStartTime(url: string): number | null {
+  // Match t=90s, t=90, start=90
+  const match = url.match(/[?&](t|start)=(\d+)s?/);
+  if (match) return parseInt(match[2], 10);
+  return null;
+}
+
+// Convert YouTube URL to embed format
+function convertToEmbedUrl(url: string): {converted: string;wasConverted: boolean;} {
+  const trimmed = url.trim();
+  if (!trimmed) return { converted: '', wasConverted: false };
+
+  // Already an embed URL
+  if (trimmed.includes('/embed/')) {
+    return { converted: trimmed, wasConverted: false };
+  }
+
+  const videoId = extractYouTubeId(trimmed);
+  if (!videoId) {
+    return { converted: trimmed, wasConverted: false };
+  }
+
+  const startTime = extractStartTime(trimmed);
+  let embedUrl = `https://www.youtube.com/embed/${videoId}`;
+  if (startTime) {
+    embedUrl += `?start=${startTime}`;
+  }
+
+  return { converted: embedUrl, wasConverted: true };
 }
 
 export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockEditorProps) {
@@ -37,6 +93,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [convertedUrls, setConvertedUrls] = useState<Set<number>>(new Set());
 
   // Store callback in ref to avoid re-triggering fetch
   const onCountChangeRef = useRef(onBlockCountChange);
@@ -94,6 +151,23 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 
   const handleUpdateBlock = (index: number, updates: Partial<ContentBlock>) => {
     setBlocks((prev) => prev.map((b, i) => i === index ? { ...b, ...updates } : b));
+  };
+
+  const handleVideoUrlChange = (index: number, url: string) => {
+    const { converted, wasConverted } = convertToEmbedUrl(url);
+    handleUpdateBlock(index, { url: converted });
+
+    if (wasConverted) {
+      setConvertedUrls((prev) => new Set(prev).add(index));
+      // Clear the converted indicator after a few seconds
+      setTimeout(() => {
+        setConvertedUrls((prev) => {
+          const next = new Set(prev);
+          next.delete(index);
+          return next;
+        });
+      }, 3000);
+    }
   };
 
   const handleUpdateContent = (index: number, lang: 'en' | 'he', value: string) => {
@@ -257,17 +331,27 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 										<input data-ev-id="ev_ca1bcc5589"
                 type="url"
                 value={block.url || ''}
-                onChange={(e) => handleUpdateBlock(index, { url: e.target.value })}
+                onChange={(e) => handleVideoUrlChange(index, e.target.value)}
+                onBlur={(e) => handleVideoUrlChange(index, e.target.value)}
                 className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 dir="ltr"
                 placeholder="https://www.youtube.com/embed/..." />
 
-										{block.url && isWatchUrl(block.url) &&
+										{convertedUrls.has(index) &&
+                <p data-ev-id="ev_4051070cbc" className="mt-1 text-xs text-primary flex items-center gap-1">
+												<Check className="w-3 h-3" />
+												{dict.studioBlocks.videoUrlConverted}
+											</p>
+                }
+										{block.url && !convertedUrls.has(index) && isUnparseableYouTubeUrl(block.url) &&
                 <p data-ev-id="ev_ec908263ea" className="mt-1 text-xs text-amber-500 flex items-center gap-1">
 												<AlertTriangle className="w-3 h-3" />
 												{dict.studioBlocks.videoEmbedWarning}
 											</p>
                 }
+										<p data-ev-id="ev_790f059bb4" className="mt-1 text-xs text-muted-foreground">
+											{dict.studioBlocks.videoUrlHelperText}
+										</p>
 									</div>
               }
 

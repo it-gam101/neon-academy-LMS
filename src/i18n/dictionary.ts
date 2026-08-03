@@ -129,6 +129,8 @@ export interface Dictionary {
 		blockVideo: string;
 		videoUrl: string;
 		videoEmbedWarning: string;
+		videoUrlConverted: string;
+		videoUrlHelperText: string;
 		caption: string;
 		moveUp: string;
 		moveDown: string;
@@ -468,6 +470,12 @@ export interface Dictionary {
 		deleteBlockedNotAdmin: string;
 		courseDeleted: string;
 		deleteFailed: string;
+		editModuleTitle: string;
+		moduleTitleSaved: string;
+		scopeMine: string;
+		scopeAll: string;
+		owner: string;
+		unknownOwner: string;
 	};
 	
 	// HR Analytics
@@ -730,6 +738,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			blockVideo: 'Video',
 			videoUrl: 'Video URL (embed)',
 			videoEmbedWarning: 'Use an embed URL (e.g. youtube.com/embed/...), not a watch URL',
+			videoUrlConverted: 'Converted to embed URL',
+			videoUrlHelperText: 'Paste any YouTube link — a share link works and will be converted automatically. Final form: https://www.youtube.com/embed/VIDEO_ID',
 			caption: 'Caption',
 			moveUp: 'Move up',
 			moveDown: 'Move down',
@@ -1060,6 +1070,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			deleteBlockedNotAdmin: 'This course has enrolled learners. Only super admins can delete courses with active enrollments.',
 			courseDeleted: 'Course deleted',
 			deleteFailed: 'Failed to delete course',
+			editModuleTitle: 'Edit Module Title',
+			moduleTitleSaved: 'Module title saved',
+			scopeMine: 'Mine',
+			scopeAll: 'All Courses',
+			owner: 'Owner',
+			unknownOwner: 'Unknown',
 		},
 		
 		hrAnalytics: {
@@ -1308,6 +1324,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			blockVideo: 'וידאו',
 			videoUrl: 'כתובת וידאו (הטמעה)',
 			videoEmbedWarning: 'השתמש בכתובת הטמעה (למשל youtube.com/embed/...), לא בכתובת צפייה',
+			videoUrlConverted: 'הומר לכתובת הטמעה',
+			videoUrlHelperText: 'הדבק כתובת YouTube כלשהי — גם קישור שיתוף יעבוד ויומר אוטומטית. צורה סופית: https://www.youtube.com/embed/VIDEO_ID',
 			caption: 'כיתוב',
 			moveUp: 'הזז למעלה',
 			moveDown: 'הזז למטה',
@@ -1638,6 +1656,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			deleteBlockedNotAdmin: 'לקורס זה יש לומדים רשומים. רק מנהלים ראשיים יכולים למחוק קורסים עם הרשמות פעילות.',
 			courseDeleted: 'הקורס נמחק',
 			deleteFailed: 'מחיקת הקורס נכשלה',
+			editModuleTitle: 'ערוך כותרת מודול',
+			moduleTitleSaved: 'כותרת המודול נשמרה',
+			scopeMine: 'שלי',
+			scopeAll: 'כל הקורסים',
+			owner: 'בעלים',
+			unknownOwner: 'לא ידוע',
 		},
 		
 		hrAnalytics: {
