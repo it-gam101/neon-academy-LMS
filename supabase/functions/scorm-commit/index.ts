@@ -6,7 +6,7 @@ const allowedOrigins = [
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-	const allowedOrigin = origin && allowedOrigins.some(o => origin.startsWith(o)) ? origin : allowedOrigins[0];
+	const allowedOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
 	return {
 		'Access-Control-Allow-Origin': allowedOrigin,
 		'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -30,8 +30,21 @@ interface CmiExtracted {
 	suspend_data: string | null;
 }
 
+// scorm-again's renderCMIToJSONObject() wraps its output as { cmi: {...} }, and the
+// bridge posts that under its own `cmi` key, so payloads arrive as { cmi: { cmi: {...} } }.
+// Unwrap defensively and tolerate the already-unwrapped shape too, so a future bridge
+// change cannot silently re-break completion.
+function unwrapCmi(cmi: Record<string, unknown>): Record<string, unknown> {
+	const inner = cmi?.cmi;
+	if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+		return inner as Record<string, unknown>;
+	}
+	return cmi ?? {};
+}
+
 // Extract CMI fields based on SCORM version
-function extractCmiFields(cmi: Record<string, unknown>, scormVersion: string): CmiExtracted {
+function extractCmiFields(rawCmi: Record<string, unknown>, scormVersion: string): CmiExtracted {
+	const cmi = unwrapCmi(rawCmi);
 	if (scormVersion === '1.2') {
 		// SCORM 1.2 uses cmi.core.lesson_status for both completion and success
 		const core = (cmi.core as Record<string, unknown>) || {};

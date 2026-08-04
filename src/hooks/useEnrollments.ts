@@ -54,7 +54,9 @@ export function useEnrollments(userId?: string) {
 			);
 
 			if (fetchError) throw fetchError;
-			setEnrollments((data as EnrollmentWithCourse[]) || []);
+			// Filter out enrollments whose course embed returned null (e.g. archived courses)
+			const visible = ((data as EnrollmentWithCourse[]) || []).filter((e) => e.course != null);
+			setEnrollments(visible);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Failed to load enrollments';
 			setError(message === 'TIMEOUT' ? 'Request timed out. Please try again.' : message);
@@ -67,10 +69,13 @@ export function useEnrollments(userId?: string) {
 		fetchEnrollments();
 	}, [fetchEnrollments]);
 
-	const getLocalizedTitle = (enrollment: EnrollmentWithCourse) =>
-		locale === 'he' ? enrollment.course.title_he : enrollment.course.title_en;
+	const getLocalizedTitle = (enrollment: EnrollmentWithCourse) => {
+		if (!enrollment?.course) return '';
+		return locale === 'he' ? enrollment.course.title_he : enrollment.course.title_en;
+	};
 
 	const calculateProgress = (enrollment: EnrollmentWithCourse) => {
+		if (!enrollment?.course) return 0;
 		const totalModules = enrollment.course.modules?.length || 0;
 		if (totalModules === 0) return 0;
 		
@@ -82,6 +87,7 @@ export function useEnrollments(userId?: string) {
 	};
 
 	const isOverdue = (enrollment: EnrollmentWithCourse) => {
+		if (!enrollment?.course) return false;
 		if (enrollment.status === 'completed') return false;
 		if (!enrollment.due_at) return false;
 		return new Date(enrollment.due_at) < new Date();
