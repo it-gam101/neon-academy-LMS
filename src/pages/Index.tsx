@@ -130,9 +130,9 @@ export default function Index() {
             <h1 data-ev-id="ev_034017b2d2"
             ref={heroHeadingRef}
             tabIndex={-1}
-            className="text-3xl md:text-5xl font-bold text-foreground mb-6 text-balance outline-none">
+            className="text-3xl md:text-5xl font-bold text-foreground mb-6 text-balance outline-none">Corporate learning that speaks both your languages
 
-              {t.landing.heroTitle}
+
             </h1>
             <p data-ev-id="ev_38e89d6f2b" className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">
               {t.landing.heroSub}
