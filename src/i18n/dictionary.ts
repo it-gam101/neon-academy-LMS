@@ -1175,7 +1175,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		},
 		
 		landing: {
-			heroTitle: 'Corporate learning that speaks both your languages.',
+			heroTitle: 'Corporate learning that speaks both your languages',
 			heroSub: 'Neon Academy is a modern learning management system for teams that train in English and Hebrew - courses, quizzes, SCORM content, team assignments and compliance reporting, in one clean, fast platform.',
 			trust1: 'Bilingual EN·HE with true RTL',
 			trust2: 'SCORM 1.2 & 2004',
@@ -1761,7 +1761,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		},
 		
 		landing: {
-			heroTitle: 'למידה ארגונית שמדברת בשתי השפות שלכם.',
+			heroTitle: 'למידה ארגונית שמדברת בשתי השפות שלכם',
 			heroSub: 'אקדמיית ניאון היא מערכת ניהול למידה מודרנית לצוותים שלומדים בעברית ובאנגלית - קורסים, בחנים, תוכן SCORM, שיבוצי הדרכה אישיים וצוותיים, דוחות התקדמות, הכול בפלטפורמה אחת נקייה ומהירה.',
 			trust1: 'דו-לשונית עברית·אנגלית עם RTL אמיתי',
 			trust2: 'SCORM 1.2 ו-2004',

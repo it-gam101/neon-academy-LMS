@@ -49,7 +49,7 @@ function sanitizePath(path: string): string | null {
 	return path.replace(/\\/g, '/');
 }
 
-console.info('SCORM presign function started');
+console.info('SCORM presign function started [v2 cors-exact]');
 
 Deno.serve(async (req: Request) => {
 	const origin = req.headers.get('origin');

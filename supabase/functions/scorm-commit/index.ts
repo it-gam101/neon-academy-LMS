@@ -101,7 +101,7 @@ function extractCmiFields(rawCmi: Record<string, unknown>, scormVersion: string)
 	}
 }
 
-console.info('SCORM commit function started');
+console.info('SCORM commit function started [v2 unwrapCmi]');
 
 Deno.serve(async (req: Request) => {
 	const origin = req.headers.get('origin');

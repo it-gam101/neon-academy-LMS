@@ -63,7 +63,7 @@ function isValidUUID(str: string): boolean {
 	return uuidRegex.test(str);
 }
 
-console.info('SCORM finalize function started');
+console.info('SCORM finalize function started [v2 cors-exact]');
 
 Deno.serve(async (req: Request) => {
 	const origin = req.headers.get('origin');
