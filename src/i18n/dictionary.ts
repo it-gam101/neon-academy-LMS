@@ -71,6 +71,11 @@ export interface Dictionary {
 		language: string;
 		english: string;
 		hebrew: string;
+		changePassword: string;
+		newPassword: string;
+		savePassword: string;
+		passwordUpdated: string;
+		passwordsDoNotMatch: string;
 	};
 	
 	// SCORM
@@ -571,6 +576,9 @@ export interface Dictionary {
 		logoUrl: string;
 		defaultLocale: string;
 		settingsSaved: string;
+		newRegistrations: string;
+		newRegistrationsCta: string;
+		newBadge: string;
 	};
 	
 	// Breadcrumbs
@@ -614,6 +622,7 @@ export interface Dictionary {
 		enlargeImage: string;
 		toggleZoom: string;
 		backToOverview: string;
+		trySandbox: string;
 	};
 }
 
@@ -684,6 +693,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			language: 'Language',
 			english: 'English',
 			hebrew: 'עברית',
+			changePassword: 'Change password',
+			newPassword: 'New password',
+			savePassword: 'Update password',
+			passwordUpdated: 'Password updated',
+			passwordsDoNotMatch: 'Passwords do not match',
 		},
 		
 		scorm: {
@@ -1161,6 +1175,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			logoUrl: 'Logo URL',
 			defaultLocale: 'Default language',
 			settingsSaved: 'Settings saved',
+			newRegistrations: 'New registrations this week',
+			newRegistrationsCta: 'Review new users',
+			newBadge: 'New',
 		},
 		
 		breadcrumbs: {
@@ -1201,6 +1218,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			enlargeImage: 'Enlarge image',
 			toggleZoom: 'Toggle zoom',
 			backToOverview: 'Back to overview',
+			trySandbox: 'Try the SCORM sandbox',
 		},
 	},
 	
@@ -1270,6 +1288,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			language: 'שפה',
 			english: 'English',
 			hebrew: 'עברית',
+			changePassword: 'שינוי סיסמה',
+			newPassword: 'סיסמה חדשה',
+			savePassword: 'עדכון סיסמה',
+			passwordUpdated: 'הסיסמה עודכנה',
+			passwordsDoNotMatch: 'הסיסמאות אינן תואמות',
 		},
 		
 		scorm: {
@@ -1747,6 +1770,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			logoUrl: 'כתובת לוגו',
 			defaultLocale: 'שפת ברירת מחדל',
 			settingsSaved: 'ההגדרות נשמרו',
+			newRegistrations: 'הרשמות חדשות השבוע',
+			newRegistrationsCta: 'סקירת משתמשים חדשים',
+			newBadge: 'חדש',
 		},
 		
 		breadcrumbs: {
@@ -1787,6 +1813,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			enlargeImage: 'הגדלת תמונה',
 			toggleZoom: 'מיקוד תצוגה',
 			backToOverview: 'חזרה לעמוד הראשי',
+			trySandbox: 'התנסו בארגז החול של SCORM',
 		},
 	},
 };

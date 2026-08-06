@@ -3,6 +3,7 @@ import { Users, FolderTree, FileText, Building, Plus, Search, Edit, Trash2, Save
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
+import { isRecentlyRegistered } from '@/lib/newUsers';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Tabs } from '@/components/ui/Tabs';
@@ -214,8 +215,19 @@ export default function Admin() {
 				<Tabs tabs={tabs}>
 					{(activeTab) => {
             if (activeTab === 'users') {
+              const recentCount = users.filter((u) => isRecentlyRegistered(u.created_at)).length;
               return (
                 <div data-ev-id="ev_8334593acc">
+									{/* New registrations count */}
+									{recentCount > 0 &&
+                  <div data-ev-id="ev_b27a42b636" className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg flex items-center gap-2">
+											<span data-ev-id="ev_7d848f0718" className="text-sm font-medium text-foreground">{dict.admin.newRegistrations}</span>
+											<span data-ev-id="ev_1a88a8b772" className="px-2 py-0.5 bg-primary text-primary-foreground text-sm rounded-full font-semibold">
+												{recentCount}
+											</span>
+										</div>
+                  }
+
 									{/* Search */}
 									<div data-ev-id="ev_70710a46de" className="relative mb-4">
 										<Search className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -245,7 +257,12 @@ export default function Admin() {
                         <tr data-ev-id="ev_f996da3213" key={user.id}>
 														<td data-ev-id="ev_24d67d29a2" className="px-4 py-3">
 															<div data-ev-id="ev_abae895d91">
-																<p data-ev-id="ev_561dad075c" className="font-medium text-foreground">{user.full_name || '-'}</p>
+																<p data-ev-id="ev_561dad075c" className="font-medium text-foreground flex items-center gap-2">
+																	{user.full_name || '-'}
+																	{isRecentlyRegistered(user.created_at) &&
+                                <Badge variant="success">{dict.admin.newBadge}</Badge>
+                                }
+																</p>
 																<p data-ev-id="ev_c249aee36b" className="text-sm text-muted-foreground">{user.email}</p>
 															</div>
 														</td>
@@ -354,7 +371,7 @@ export default function Admin() {
 														{formatDateTime(log.at, locale)}
 													</td>
 													<td data-ev-id="ev_03d0ab43ec" className="px-4 py-3 text-foreground">
-														{(log.actor as { full_name?: string; email?: string } | null)?.full_name || (log.actor as { full_name?: string; email?: string } | null)?.email || '-'}
+														{(log.actor as {full_name?: string;email?: string;} | null)?.full_name || (log.actor as {full_name?: string;email?: string;} | null)?.email || '-'}
 													</td>
 													<td data-ev-id="ev_0c08e86104" className="px-4 py-3">
 														<Badge variant="info">{log.action}</Badge>

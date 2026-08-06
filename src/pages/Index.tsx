@@ -1,5 +1,7 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
+import { supabase } from '@/integrations/supabase/client';
+import { newUserWindowStartISO } from '@/lib/newUsers';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
 import { useEnrollments } from '@/hooks/useEnrollments';
@@ -80,10 +82,32 @@ export default function Index() {
   );
   const { courses, loading: coursesLoading, getLocalizedTitle: getCourseTitle } = useCourses({ onlyPublished: true });
 
+  const [newUserCount, setNewUserCount] = useState<number | null>(null);
+
   const userRole = profile?.role ?? 'employee';
   const visibleActions = quickActions.filter((action) =>
   action.allowedRoles.includes(userRole)
   );
+
+  // Fetch new registrations count for super_admin
+  useEffect(() => {
+    if (!supabase || !isAuthenticated || profile?.role !== 'super_admin') return;
+
+    const fetchNewUsers = async () => {
+      const { count, error } = await supabase.
+      from('profiles').
+      select('id', { count: 'exact', head: true }).
+      gte('created_at', newUserWindowStartISO());
+
+      if (error) {
+        console.error('Failed to fetch new user count:', error);
+        return;
+      }
+      setNewUserCount(count ?? 0);
+    };
+
+    fetchNewUsers();
+  }, [isAuthenticated, profile?.role]);
 
   // Get the most recent in-progress enrollment for "continue where you left off"
   const continueEnrollment = inProgress[0];
@@ -152,6 +176,11 @@ export default function Index() {
                 <Mail className="w-4 h-4" />
                 {t.landing.talkToUs}
               </a>
+              <Link
+                to="/sandbox"
+                className="px-6 py-3 border border-border text-foreground rounded-lg font-medium hover:bg-muted transition-colors focus-ring">
+                {t.landing.trySandbox}
+              </Link>
             </div>
 
             {/* Trust strip */}
@@ -467,6 +496,31 @@ export default function Index() {
             </div>
           </div> :
         null}
+
+        {/* New registrations card - super_admin only */}
+        {profile?.role === 'super_admin' && newUserCount !== null && newUserCount > 0 &&
+        <div data-ev-id="ev_5d03215638" className="mb-8">
+            <Link
+            to="/admin"
+            className="group flex items-center justify-between p-4 bg-card border border-border rounded-xl hover:border-primary/50 transition-all hover:shadow-md">
+              <div data-ev-id="ev_930220bae5" className="flex items-center gap-3">
+                <div data-ev-id="ev_60e3586aa5" className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-primary" />
+                </div>
+                <div data-ev-id="ev_11135fdfa4">
+                  <p data-ev-id="ev_3d6102ff8f" className="font-medium text-foreground flex items-center gap-2">
+                    {t.admin.newRegistrations}
+                    <span data-ev-id="ev_62715f19a9" className="px-2 py-0.5 bg-primary text-primary-foreground text-sm rounded-full font-semibold">
+                      {newUserCount}
+                    </span>
+                  </p>
+                  <p data-ev-id="ev_7801df722c" className="text-sm text-muted-foreground">{t.admin.newRegistrationsCta}</p>
+                </div>
+              </div>
+              <ChevronForward className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            </Link>
+          </div>
+        }
 
         {/* Quick actions grid */}
         <div data-ev-id="ev_a5fcc18e61" className="mb-4">
