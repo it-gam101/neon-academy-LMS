@@ -174,7 +174,7 @@ export default function ResetPassword() {
 						<button data-ev-id="ev_50b751bc16"
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-inline-end-3 top-[38px] text-foreground-muted hover:text-foreground transition-colors focus-ring rounded"
+            className="absolute end-3 top-[38px] text-foreground-muted hover:text-foreground transition-colors focus-ring rounded"
             tabIndex={-1}>
 
 							{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

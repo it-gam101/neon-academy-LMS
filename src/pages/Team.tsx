@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { BackButton } from '@/components/ui/BackButton';
 import { showToast } from '@/components/ui/Toast';
@@ -29,6 +30,7 @@ export default function Team() {
 
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [revokingEnrollmentId, setRevokingEnrollmentId] = useState<string | null>(null);
   const [assigningTo, setAssigningTo] = useState<string[]>([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -195,16 +197,7 @@ export default function Team() {
                     {enrollment.assigned_by && enrollment.status === 'not_started' && (
                       <button
                         data-ev-id="ev_265d31965b"
-                        onClick={async () => {
-                          if (confirm(dict.team.confirmRevokeMessage)) {
-                            const { error } = await revokeEnrollment(enrollment.id);
-                            if (error) {
-                              showToast('error', error);
-                            } else {
-                              showToast('success', dict.team.revokeSuccess);
-                            }
-                          }
-                        }}
+                        onClick={() => setRevokingEnrollmentId(enrollment.id)}
                         className="text-sm text-destructive hover:underline"
                       >
                         {dict.team.revokeEnrollment}
@@ -486,6 +479,27 @@ export default function Team() {
 					</div>
 				</div>
       </Modal>
+
+			{/* Revoke Enrollment Confirm Dialog */}
+			<ConfirmDialog
+				isOpen={revokingEnrollmentId !== null}
+				title={dict.team.confirmRevokeMessage}
+				message={dict.team.confirmRevokeMessage}
+				confirmLabel={dict.common.delete}
+				destructive
+				onConfirm={async () => {
+					if (revokingEnrollmentId) {
+						const { error } = await revokeEnrollment(revokingEnrollmentId);
+						if (error) {
+							showToast('error', error);
+						} else {
+							showToast('success', dict.team.revokeSuccess);
+						}
+					}
+					setRevokingEnrollmentId(null);
+				}}
+				onCancel={() => setRevokingEnrollmentId(null)}
+			/>
     </>
   );
 }

@@ -125,7 +125,7 @@ export function ModuleList({ courseId, modules, enrolled, enrollmentId }: Module
               className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all group-hover:shadow-md relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 
 								{/* Leading accent */}
-								<div data-ev-id="ev_7cc9978516" className="absolute inset-block-start-0 inset-block-end-0 inset-inline-start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
+								<div data-ev-id="ev_7cc9978516" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
 
 								{/* Status indicator */}
 								{getStatusIcon(mod)}

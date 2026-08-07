@@ -58,7 +58,7 @@ export default function MyLearning() {
           to={`/course/${continueEnrollment.course_id}`}
           className="group block bg-card border border-border rounded-lg p-6 mb-8 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 relative">
 
-						<div data-ev-id="ev_0cfe95060b" className="absolute inset-block-start-0 inset-block-end-0 inset-inline-start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
+						<div data-ev-id="ev_0cfe95060b" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
 						
 						<div data-ev-id="ev_4e73d9db8c" className="flex items-center gap-4">
 							<div data-ev-id="ev_6395dfd786" className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -111,7 +111,7 @@ export default function MyLearning() {
                   to={`/course/${enrollment.course_id}`}
                   className="group flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all relative">
 
-											<div data-ev-id="ev_6ee4161168" className="absolute inset-block-start-0 inset-block-end-0 inset-inline-start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
+											<div data-ev-id="ev_6ee4161168" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
 
 											{/* Thumbnail */}
 											<div data-ev-id="ev_fe6ad626c3" className="w-16 h-16 rounded-lg bg-muted overflow-hidden flex-shrink-0">

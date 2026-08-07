@@ -166,7 +166,7 @@ export default function Studio() {
             to={`/studio/${course.id}`}
             className="group flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all relative">
 
-								<div data-ev-id="ev_2137b3c806" className="absolute inset-block-start-0 inset-block-end-0 inset-inline-start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
+								<div data-ev-id="ev_2137b3c806" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
 
 								{/* Thumbnail */}
 								<div data-ev-id="ev_941d7cf170" className="w-20 h-20 rounded-lg bg-muted overflow-hidden flex-shrink-0">

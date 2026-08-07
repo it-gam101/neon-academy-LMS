@@ -72,9 +72,7 @@ export interface Dictionary {
 		english: string;
 		hebrew: string;
 		changePassword: string;
-		newPassword: string;
 		savePassword: string;
-		passwordUpdated: string;
 		passwordsDoNotMatch: string;
 	};
 	
@@ -694,9 +692,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			english: 'English',
 			hebrew: 'עברית',
 			changePassword: 'Change password',
-			newPassword: 'New password',
 			savePassword: 'Update password',
-			passwordUpdated: 'Password updated',
 			passwordsDoNotMatch: 'Passwords do not match',
 		},
 		
@@ -1289,9 +1285,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			english: 'English',
 			hebrew: 'עברית',
 			changePassword: 'שינוי סיסמה',
-			newPassword: 'סיסמה חדשה',
 			savePassword: 'עדכון סיסמה',
-			passwordUpdated: 'הסיסמה עודכנה',
 			passwordsDoNotMatch: 'הסיסמאות אינן תואמות',
 		},
 		

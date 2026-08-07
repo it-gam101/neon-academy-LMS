@@ -33,7 +33,7 @@ export function CourseCard({ course, onEnroll, enrolling, progressPercent }: Cou
   return (
     <div data-ev-id="ev_5bbd3425f7" className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 relative">
 			{/* Leading edge accent */}
-			<div data-ev-id="ev_4628b547e6" className="absolute inset-block-start-0 inset-block-end-0 inset-inline-start-0 w-1 bg-transparent group-hover:bg-primary group-focus-within:bg-primary transition-colors" />
+			<div data-ev-id="ev_4628b547e6" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary group-focus-within:bg-primary transition-colors" />
 			
 			{/* Thumbnail */}
 			<div data-ev-id="ev_b5c01ba48c" className="relative h-40 bg-muted overflow-hidden">
@@ -50,7 +50,7 @@ export function CourseCard({ course, onEnroll, enrolling, progressPercent }: Cou
         }
 				
 				{/* Badges */}
-				<div data-ev-id="ev_b19792ea52" className="absolute top-3 inset-inline-start-3 flex flex-wrap gap-2">
+				<div data-ev-id="ev_b19792ea52" className="absolute top-3 start-3 flex flex-wrap gap-2">
 					{course.is_mandatory &&
           <Badge variant="danger">{dict.catalogue.mandatory}</Badge>
           }

@@ -9,6 +9,7 @@ import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 import { formatDateTime } from '@/utils/formatDate';
 import type { Tables } from '@/integrations/supabase/helpers';
@@ -33,6 +34,7 @@ export default function Admin() {
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isNewCategory, setIsNewCategory] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -144,7 +146,7 @@ export default function Admin() {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (!supabase || !confirm(dict.admin.confirmDeleteCategory)) return;
+    if (!supabase) return;
 
     const { error } = await supabase.
     from('course_categories').
@@ -157,6 +159,7 @@ export default function Admin() {
       showToast('success', dict.admin.categoryDeleted);
       setCategories((prev) => prev.filter((c) => c.id !== id));
     }
+    setDeletingCategoryId(null);
   };
 
   const [savingSettings, setSavingSettings] = useState(false);
@@ -339,7 +342,7 @@ export default function Admin() {
 														<Edit className="w-4 h-4 text-muted-foreground" />
 													</button>
 													<button data-ev-id="ev_6a3fa2a30e"
-                        onClick={() => handleDeleteCategory(cat.id)}
+                        onClick={() => setDeletingCategoryId(cat.id)}
                         className="p-2 hover:bg-muted rounded-lg transition-colors">
 
 														<Trash2 className="w-4 h-4 text-destructive" />
@@ -600,5 +603,16 @@ export default function Admin() {
 					</div>
         }
 			</Modal>
+
+			{/* Delete Category Confirm Dialog */}
+			<ConfirmDialog
+				isOpen={deletingCategoryId !== null}
+				title={dict.admin.confirmDeleteCategory}
+				message={dict.admin.confirmDeleteCategory}
+				confirmLabel={dict.common.delete}
+				destructive
+				onConfirm={() => deletingCategoryId && handleDeleteCategory(deletingCategoryId)}
+				onCancel={() => setDeletingCategoryId(null)}
+			/>
 		</div>);
 }

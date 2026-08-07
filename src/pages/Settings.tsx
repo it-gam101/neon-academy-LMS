@@ -37,7 +37,7 @@ export default function SettingsPage() {
       return;
     }
 
-    showToast('success', t.profile.passwordUpdated);
+    showToast('success', t.auth.passwordUpdated);
     setNewPassword('');
     setConfirmPassword('');
   };
@@ -85,7 +85,7 @@ export default function SettingsPage() {
 				<form data-ev-id="ev_e3388f10ae" onSubmit={handleChangePassword} className="flex flex-col gap-4 max-w-md">
 					<div data-ev-id="ev_6098c6124d">
 						<label data-ev-id="ev_bced241b64" className="block text-sm font-medium text-foreground mb-1">
-							{t.profile.newPassword}
+							{t.auth.newPassword}
 						</label>
 						<input data-ev-id="ev_185310d75f"
             type="password"

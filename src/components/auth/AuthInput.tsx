@@ -30,7 +30,7 @@ export function AuthInput({
 			</label>
 			<div data-ev-id="ev_0571395400" className="relative">
 				{icon &&
-        <span data-ev-id="ev_7d4151bf7b" className="absolute inset-inline-start-3 top-1/2 -translate-y-1/2 text-foreground-muted">
+        <span data-ev-id="ev_7d4151bf7b" className="absolute start-3 top-1/2 -translate-y-1/2 text-foreground-muted">
 						{icon}
 					</span>
         }

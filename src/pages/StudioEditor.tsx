@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { BackButton } from '@/components/ui/BackButton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -48,6 +49,7 @@ export default function StudioEditor() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [archiving, setArchiving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
 
   // Quiz settings state
   const [showQuizSettingsModal, setShowQuizSettingsModal] = useState(false);
@@ -240,7 +242,7 @@ export default function StudioEditor() {
   };
 
   const handleDeleteModule = async (moduleId: string) => {
-    if (!supabase || !confirm(dict.studio.confirmDeleteModule)) return;
+    if (!supabase) return;
 
     const { error } = await supabase.
     from('modules').
@@ -252,6 +254,7 @@ export default function StudioEditor() {
     } else {
       setModules((prev) => prev.filter((m) => m.id !== moduleId));
     }
+    setDeletingModuleId(null);
   };
 
   const handleOpenQuizSettings = async (moduleId: string) => {
@@ -712,7 +715,7 @@ export default function StudioEditor() {
                 <Edit className="w-4 h-4" />
               </button>
 									<button data-ev-id="ev_e2850d52d2"
-              onClick={() => handleDeleteModule(mod.id)}
+              onClick={() => setDeletingModuleId(mod.id)}
               className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
               title={dict.studio.deleteModule}>
 
@@ -1090,6 +1093,17 @@ export default function StudioEditor() {
           }
 				</div>
 			</Modal>
+
+			{/* Delete Module Confirm Dialog */}
+			<ConfirmDialog
+				isOpen={deletingModuleId !== null}
+				title={dict.studio.confirmDeleteModule}
+				message={dict.studio.confirmDeleteModule}
+				confirmLabel={dict.common.delete}
+				destructive
+				onConfirm={() => deletingModuleId && handleDeleteModule(deletingModuleId)}
+				onCancel={() => setDeletingModuleId(null)}
+			/>
 		</div>);
 
 }

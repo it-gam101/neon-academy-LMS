@@ -50,7 +50,7 @@ export function AppShell({ children, hideLoginButton = false }: AppShellProps) {
 			{profileError && isAuthenticated &&
       <div
         data-ev-id="ev_profile_error_toast"
-        className="fixed bottom-4 inset-inline-start-4 z-50 bg-destructive/10 border border-destructive/30 rounded-lg p-4 shadow-lg max-w-sm animate-in slide-in-from-bottom-5"
+        className="fixed bottom-4 start-4 z-50 bg-destructive/10 border border-destructive/30 rounded-lg p-4 shadow-lg max-w-sm animate-in slide-in-from-bottom-5"
         role="alert">
 
 					<p data-ev-id="ev_ea1d150649" className="text-sm text-foreground mb-2">{t.common.profileLoadError}</p>

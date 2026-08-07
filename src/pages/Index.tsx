@@ -408,7 +408,7 @@ export default function Index() {
             to={`/course/${continueEnrollment.course_id}`}
             className="group block bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 relative">
 
-              <div data-ev-id="ev_208155eddf" className="absolute inset-block-start-0 inset-block-end-0 inset-inline-start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-xl" />
+              <div data-ev-id="ev_208155eddf" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-xl" />
               <div data-ev-id="ev_9cb8e5823c" className="flex items-center gap-4">
                 <div data-ev-id="ev_3606c3da4c" className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <PlayCircle className="w-7 h-7 text-primary" />

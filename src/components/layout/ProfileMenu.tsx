@@ -81,7 +81,7 @@ export function ProfileMenu() {
 			{isOpen &&
       <div data-ev-id="ev_67bdd5badb"
       className={
-      `absolute inset-inline-end-0 top-full mt-2 w-64 ` +
+      `absolute end-0 top-full mt-2 w-64 ` +
       `bg-card border border-card-border rounded-xl shadow-lg ` +
       `overflow-hidden z-50`
       }

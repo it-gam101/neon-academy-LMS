@@ -43,7 +43,7 @@ export function Tabs({ tabs, defaultTab, onChange, children }: TabsProps) {
 							</span>
           }
 						{activeTab === tab.id &&
-          <span data-ev-id="ev_47877e4054" className="absolute bottom-0 inset-inline-start-0 inset-inline-end-0 h-0.5 bg-primary" />
+          <span data-ev-id="ev_47877e4054" className="absolute bottom-0 start-0 end-0 h-0.5 bg-primary" />
           }
 					</button>
         )}
