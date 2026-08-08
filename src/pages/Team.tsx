@@ -28,9 +28,12 @@ export default function Team() {
   const Chevron = locale === 'he' ? ChevronLeft : ChevronRight;
   const BackArrow = locale === 'he' ? ArrowRight : ArrowLeft;
 
-  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [revokingEnrollmentId, setRevokingEnrollmentId] = useState<string | null>(null);
+
+  // Derive selectedMember from members array to stay in sync after fetches
+  const selectedMember = selectedMemberId ? members.find((m) => m.id === selectedMemberId) ?? null : null;
   const [assigningTo, setAssigningTo] = useState<string[]>([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -113,7 +116,7 @@ export default function Team() {
 
         <button
           data-ev-id="ev_8724ac6f5a"
-          onClick={() => setSelectedMember(null)}
+          onClick={() => setSelectedMemberId(null)}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors focus-ring rounded-lg py-1"
         >
           {dict.team.backToTeam}
@@ -381,7 +384,7 @@ export default function Team() {
                           </button>
                           <button
                             data-ev-id="ev_2fab873a8b"
-                            onClick={() => setSelectedMember(member)}
+                            onClick={() => setSelectedMemberId(member.id)}
                             className="p-2 hover:bg-muted rounded-lg transition-colors"
                             title={dict.team.viewLearning}
                           >
@@ -483,7 +486,7 @@ export default function Team() {
 			{/* Revoke Enrollment Confirm Dialog */}
 			<ConfirmDialog
 				isOpen={revokingEnrollmentId !== null}
-				title={dict.team.confirmRevokeMessage}
+				title={dict.team.confirmRevoke}
 				message={dict.team.confirmRevokeMessage}
 				confirmLabel={dict.common.delete}
 				destructive

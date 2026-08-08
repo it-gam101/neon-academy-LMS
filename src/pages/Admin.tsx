@@ -607,7 +607,7 @@ export default function Admin() {
 			{/* Delete Category Confirm Dialog */}
 			<ConfirmDialog
 				isOpen={deletingCategoryId !== null}
-				title={dict.admin.confirmDeleteCategory}
+				title={dict.admin.deleteCategory}
 				message={dict.admin.confirmDeleteCategory}
 				confirmLabel={dict.common.delete}
 				destructive

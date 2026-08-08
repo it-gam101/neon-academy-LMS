@@ -11,7 +11,7 @@ import { showToast } from '@/components/ui/Toast';
 import { useState, useMemo, useEffect } from 'react';
 
 interface ContentBlock {
-  type: 'heading' | 'text' | 'video';
+  type: 'heading' | 'text' | 'video' | 'image' | 'pdf';
   content: {en: string;he: string;} | string;
   url?: string;
 }
@@ -113,6 +113,22 @@ export default function ModulePage() {
 
 					</div>);
         }
+      case 'image':
+        if (!block.url) return null;
+        return (
+          <div data-ev-id="ev_image_block" key={index}>
+            <img data-ev-id="ev_b5207e2c89" src={block.url} alt={content} className="my-6 rounded-lg max-w-full h-auto" loading="lazy" />
+            {content && <p data-ev-id="ev_7ddb33984b" className="text-sm text-muted-foreground text-start mt-2">{content}</p>}
+          </div>);
+
+      case 'pdf':
+        if (!block.url) return null;
+        return (
+          <div data-ev-id="ev_pdf_block" key={index} className="my-6">
+            <iframe data-ev-id="ev_8130a6f278" src={block.url} className="w-full h-[400px] md:h-[600px] rounded-lg border border-border" title={content || 'PDF'} dir="ltr" />
+            <a data-ev-id="ev_73180695d4" href={block.url} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-primary hover:underline">{dict.studioBlocks.openPdf}</a>
+          </div>);
+
       case 'text':
       default:
         return (

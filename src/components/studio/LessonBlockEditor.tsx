@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Type, AlignLeft, Video, Check } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Type, AlignLeft, Video, Check, Image, FileText } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
 import type { Json } from '@/integrations/supabase/types';
+import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl } from '@/lib/contentSafety';
 
 interface ContentBlock {
-  type: 'heading' | 'text' | 'video';
+  type: 'heading' | 'text' | 'video' | 'image' | 'pdf';
   content: {en: string;he: string;};
   url?: string;
 }
@@ -94,6 +95,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [convertedUrls, setConvertedUrls] = useState<Set<number>>(new Set());
+  const [urlError, setUrlError] = useState<string | null>(null);
 
   // Store callback in ref to avoid re-triggering fetch
   const onCountChangeRef = useRef(onBlockCountChange);
@@ -142,10 +144,10 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
     onCountChangeRef.current?.(blocks.length);
   }, [blocks.length]);
 
-  const handleAddBlock = (type: 'heading' | 'text' | 'video') => {
+  const handleAddBlock = (type: 'heading' | 'text' | 'video' | 'image' | 'pdf') => {
     setBlocks((prev) => [
     ...prev,
-    { type, content: { en: '', he: '' }, url: type === 'video' ? '' : undefined }]
+    { type, content: { en: '', he: '' }, url: (type === 'video' || type === 'image' || type === 'pdf') ? '' : undefined }]
     );
   };
 
@@ -204,11 +206,34 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 
   const handleSave = async () => {
     if (!supabase || !moduleId) return;
+    setUrlError(null);
+
+    // Validate URLs before saving
+    for (const block of blocks) {
+      if (block.type === 'video' && block.url && !isAllowedVideoUrl(block.url)) {
+        setUrlError(dict.studioBlocks.invalidUrl);
+        return;
+      }
+      if ((block.type === 'image' || block.type === 'pdf') && block.url && !isAllowedMediaUrl(block.url)) {
+        setUrlError(dict.studioBlocks.invalidUrl);
+        return;
+      }
+    }
+
     setSaving(true);
+
+    // Strip HTML from content on save
+    const sanitizedBlocks = blocks.map((block) => ({
+      ...block,
+      content: {
+        en: stripHtmlToText(block.content.en),
+        he: stripHtmlToText(block.content.he),
+      },
+    }));
 
     const { data, error } = await supabase.
     from('modules').
-    update({ content_json: { blocks } as unknown as Json }).
+    update({ content_json: { blocks: sanitizedBlocks } as unknown as Json }).
     eq('id', moduleId).
     select();
 
@@ -280,10 +305,14 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 										{block.type === 'heading' && <Type className="w-4 h-4 text-primary" />}
 										{block.type === 'text' && <AlignLeft className="w-4 h-4 text-primary" />}
 										{block.type === 'video' && <Video className="w-4 h-4 text-primary" />}
+										{block.type === 'image' && <Image className="w-4 h-4 text-primary" />}
+										{block.type === 'pdf' && <FileText className="w-4 h-4 text-primary" />}
 										<span data-ev-id="ev_9254071c3e" className="text-sm font-medium text-foreground">
 											{block.type === 'heading' && dict.studioBlocks.blockHeading}
 											{block.type === 'text' && dict.studioBlocks.blockText}
 											{block.type === 'video' && dict.studioBlocks.blockVideo}
+											{block.type === 'image' && dict.studioBlocks.blockImage}
+											{block.type === 'pdf' && dict.studioBlocks.blockPdf}
 										</span>
 										{isIncomplete &&
                   <span data-ev-id="ev_a51894aa23" className="text-xs text-amber-500 px-2 py-0.5 bg-amber-500/10 rounded">
@@ -352,6 +381,22 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 										<p data-ev-id="ev_790f059bb4" className="mt-1 text-xs text-muted-foreground">
 											{dict.studioBlocks.videoUrlHelperText}
 										</p>
+									</div>
+              }
+
+								{/* Media URL field for image and pdf */}
+								{(block.type === 'image' || block.type === 'pdf') &&
+              <div data-ev-id="ev_media_url_field" className="mb-3">
+										<label data-ev-id="ev_media_url_label" className="block text-xs font-medium text-muted-foreground mb-1">
+											{dict.studioBlocks.mediaUrl}
+										</label>
+										<input data-ev-id="ev_media_url_input"
+                type="url"
+                value={block.url || ''}
+                onChange={(e) => handleUpdateBlock(index, { url: e.target.value })}
+                className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                dir="ltr"
+                placeholder="https://..." />
 									</div>
               }
 
@@ -439,8 +484,26 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 					<Plus className="w-4 h-4" />
 					{dict.studioBlocks.addVideo}
 				</button>
+				<button data-ev-id="ev_add_image_btn"
+        onClick={() => handleAddBlock('image')}
+        className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+
+					<Image className="w-4 h-4" />
+					{dict.studioBlocks.addImage}
+				</button>
+				<button data-ev-id="ev_add_pdf_btn"
+        onClick={() => handleAddBlock('pdf')}
+        className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+
+					<FileText className="w-4 h-4" />
+					{dict.studioBlocks.addPdf}
+				</button>
 
 				<div data-ev-id="ev_99c8ddf16c" className="flex-1" />
+
+				{urlError &&
+        <p data-ev-id="ev_url_error" className="text-sm text-destructive">{urlError}</p>
+        }
 
 				<button data-ev-id="ev_cc2ae891f5"
         onClick={handleSave}

@@ -1097,7 +1097,7 @@ export default function StudioEditor() {
 			{/* Delete Module Confirm Dialog */}
 			<ConfirmDialog
 				isOpen={deletingModuleId !== null}
-				title={dict.studio.confirmDeleteModule}
+				title={dict.studio.deleteModule}
 				message={dict.studio.confirmDeleteModule}
 				confirmLabel={dict.common.delete}
 				destructive

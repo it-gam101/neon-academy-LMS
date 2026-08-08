@@ -147,6 +147,13 @@ export interface Dictionary {
 		blocksSaved: string;
 		saveFailed: string;
 		formattingHint: string;
+		addImage: string;
+		addPdf: string;
+		blockImage: string;
+		blockPdf: string;
+		mediaUrl: string;
+		openPdf: string;
+		invalidUrl: string;
 	};
 	
 	// Roles
@@ -547,6 +554,7 @@ export interface Dictionary {
 		categoryNameEn: string;
 		categoryNameHe: string;
 		sortOrder: string;
+		deleteCategory: string;
 		confirmDeleteCategory: string;
 		categorySaved: string;
 		categoryDeleted: string;
@@ -763,6 +771,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			blocksSaved: 'Content saved',
 			saveFailed: 'Failed to save content',
 			formattingHint: 'Supports **bold** and line breaks',
+			addImage: 'Image',
+			addPdf: 'PDF',
+			blockImage: 'Image',
+			blockPdf: 'PDF',
+			mediaUrl: 'File URL',
+			openPdf: 'Open PDF in a new tab',
+			invalidUrl: 'This URL is not allowed. Videos must be a youtube.com/embed link; files must be an https address.',
 		},
 		
 		roles: {
@@ -1147,6 +1162,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			categoryNameEn: 'Name (English)',
 			categoryNameHe: 'Name (Hebrew)',
 			sortOrder: 'Sort order',
+			deleteCategory: 'Delete Category?',
 			confirmDeleteCategory: 'Are you sure you want to delete this category?',
 			categorySaved: 'Category saved',
 			categoryDeleted: 'Category deleted',
@@ -1356,6 +1372,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			blocksSaved: 'התוכן נשמר',
 			saveFailed: 'שמירת התוכן נכשלה',
 			formattingHint: 'תומך ב-**מודגש** ומעברי שורה',
+			addImage: 'תמונה',
+			addPdf: 'PDF',
+			blockImage: 'תמונה',
+			blockPdf: 'PDF',
+			mediaUrl: 'כתובת הקובץ',
+			openPdf: 'פתיחת ה-PDF בלשונית חדשה',
+			invalidUrl: 'כתובת זו אינה מותרת. סרטונים חייבים להיות קישור youtube.com/embed; קבצים חייבים להיות בכתובת https.',
 		},
 		
 		roles: {
@@ -1740,6 +1763,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			categoryNameEn: 'שם (אנגלית)',
 			categoryNameHe: 'שם (עברית)',
 			sortOrder: 'סדר מיון',
+			deleteCategory: 'למחוק קטגוריה?',
 			confirmDeleteCategory: 'האם אתה בטוח שברצונך למחוק קטגוריה זו?',
 			categorySaved: 'הקטגוריה נשמרה',
 			categoryDeleted: 'הקטגוריה נמחקה',
