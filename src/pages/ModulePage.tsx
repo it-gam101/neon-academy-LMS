@@ -16,6 +16,27 @@ interface ContentBlock {
   url?: string;
 }
 
+// Sub-component to handle image error state
+function ImageBlock({ url, alt, dict }: {url: string;alt: string;dict: ReturnType<typeof getDictionary>;}) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <div data-ev-id="ev_90fa3a67e9" className="my-6 p-4 rounded-lg border border-border text-sm text-muted-foreground">
+        {dict.studioBlocks.imageLoadFailed}
+        <a data-ev-id="ev_fceb83c4ba" href={url} target="_blank" rel="noopener noreferrer" className="ms-2 text-primary hover:underline">{dict.studioBlocks.openInNewTab}</a>
+      </div>);
+
+  }
+
+  return (
+    <>
+      <img data-ev-id="ev_e477a3ee91" src={url} alt={alt} className="my-6 rounded-lg max-w-full h-auto" loading="lazy" onError={() => setFailed(true)} />
+      {alt && <p data-ev-id="ev_c41051e690" className="text-sm text-muted-foreground text-start mt-2">{alt}</p>}
+    </>);
+
+}
+
 export default function ModulePage() {
   const { courseId, moduleId } = useParams<{courseId: string;moduleId: string;}>();
   const navigate = useNavigate();
@@ -101,11 +122,11 @@ export default function ModulePage() {
 					</h2>);
 
       case 'video':{
-          const videoUrl = block.url || content;
+          if (!block.url) return null;
           return (
             <div data-ev-id="ev_ef8b1d53d1" key={index} className="my-6 aspect-video rounded-lg overflow-hidden bg-muted">
 						<iframe data-ev-id="ev_429d3d884f"
-              src={videoUrl}
+              src={block.url}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -117,8 +138,7 @@ export default function ModulePage() {
         if (!block.url) return null;
         return (
           <div data-ev-id="ev_image_block" key={index}>
-            <img data-ev-id="ev_b5207e2c89" src={block.url} alt={content} className="my-6 rounded-lg max-w-full h-auto" loading="lazy" />
-            {content && <p data-ev-id="ev_7ddb33984b" className="text-sm text-muted-foreground text-start mt-2">{content}</p>}
+            <ImageBlock url={block.url} alt={content} dict={dict} />
           </div>);
 
       case 'pdf':

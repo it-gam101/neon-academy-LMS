@@ -16,6 +16,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
   const { locale } = useLocale();
   const dict = getDictionary(locale);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const mouseDownTargetRef = useRef<EventTarget | null>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -58,8 +59,9 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
     <dialog data-ev-id="ev_30d40a296c"
     ref={dialogRef}
     className="backdrop:bg-black/50 bg-transparent p-0 m-auto"
+    onMouseDown={(e) => { mouseDownTargetRef.current = e.target; }}
     onClick={(e) => {
-      if (e.target === dialogRef.current) onClose();
+      if (e.target === dialogRef.current && mouseDownTargetRef.current === dialogRef.current) onClose();
     }}>
 
 			<div data-ev-id="ev_428a998929" className={`bg-card border border-border rounded-lg shadow-xl w-full ${sizeClasses[size]}`}>

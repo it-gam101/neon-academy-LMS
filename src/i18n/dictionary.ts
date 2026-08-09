@@ -154,6 +154,12 @@ export interface Dictionary {
 		mediaUrl: string;
 		openPdf: string;
 		invalidUrl: string;
+		discardChangesTitle: string;
+		discardChangesMessage: string;
+		discardConfirm: string;
+		unsupportedHost: string;
+		imageLoadFailed: string;
+		openInNewTab: string;
 	};
 	
 	// Roles
@@ -778,6 +784,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			mediaUrl: 'File URL',
 			openPdf: 'Open PDF in a new tab',
 			invalidUrl: 'This URL is not allowed. Videos must be a youtube.com/embed link; files must be an https address.',
+			discardChangesTitle: 'Discard changes?',
+			discardChangesMessage: 'Your unsaved changes to this lesson will be lost.',
+			discardConfirm: 'Discard',
+			unsupportedHost: 'This host blocks embedding, so the file will not display inside the course. Use a direct link to the file itself.',
+			imageLoadFailed: 'The image could not be loaded.',
+			openInNewTab: 'Open in a new tab',
 		},
 		
 		roles: {
@@ -1379,6 +1391,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			mediaUrl: 'כתובת הקובץ',
 			openPdf: 'פתיחת ה-PDF בלשונית חדשה',
 			invalidUrl: 'כתובת זו אינה מותרת. סרטונים חייבים להיות קישור youtube.com/embed; קבצים חייבים להיות בכתובת https.',
+			discardChangesTitle: 'לבטל את השינויים?',
+			discardChangesMessage: 'השינויים שלא נשמרו בשיעור זה יאבדו.',
+			discardConfirm: 'בטל שינויים',
+			unsupportedHost: 'מארח זה חוסם הטמעה, ולכן הקובץ לא יוצג בתוך הקורס. השתמשו בקישור ישיר לקובץ עצמו.',
+			imageLoadFailed: 'לא ניתן היה לטעון את התמונה.',
+			openInNewTab: 'פתיחה בלשונית חדשה',
 		},
 		
 		roles: {

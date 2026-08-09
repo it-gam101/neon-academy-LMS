@@ -58,6 +58,10 @@ export default function StudioEditor() {
   const [savingQuizSettings, setSavingQuizSettings] = useState(false);
   const [quizQuestionCounts, setQuizQuestionCounts] = useState<Record<string, number>>({});
 
+  // Lesson editor dirty tracking
+  const [lessonEditorDirty, setLessonEditorDirty] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
   // Lesson content state
   const [showLessonEditorModal, setShowLessonEditorModal] = useState(false);
   const [editingLessonModuleId, setEditingLessonModuleId] = useState<string | null>(null);
@@ -1016,15 +1020,28 @@ export default function StudioEditor() {
 			{/* Lesson content editor modal */}
 			<Modal
         isOpen={showLessonEditorModal}
-        onClose={() => setShowLessonEditorModal(false)}
+        onClose={() => { if (lessonEditorDirty) { setShowDiscardConfirm(true); } else { setShowLessonEditorModal(false); } }}
         title={dict.studioBlocks.editContent}
         size="lg">
 				{editingLessonModuleId &&
         <LessonBlockEditor
           moduleId={editingLessonModuleId}
-          onBlockCountChange={handleBlockCountChange} />
+          onBlockCountChange={handleBlockCountChange}
+          onSaved={() => { setLessonEditorDirty(false); setShowLessonEditorModal(false); }}
+          onDirtyChange={setLessonEditorDirty} />
         }
 			</Modal>
+
+			{/* Discard changes confirm dialog */}
+			<ConfirmDialog
+				isOpen={showDiscardConfirm}
+				title={dict.studioBlocks.discardChangesTitle}
+				message={dict.studioBlocks.discardChangesMessage}
+				confirmLabel={dict.studioBlocks.discardConfirm}
+				destructive
+				onConfirm={() => { setShowDiscardConfirm(false); setShowLessonEditorModal(false); setLessonEditorDirty(false); }}
+				onCancel={() => setShowDiscardConfirm(false)}
+			/>
 
 			{/* Delete confirmation modal */}
 			<Modal

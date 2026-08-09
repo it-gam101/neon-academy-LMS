@@ -5,7 +5,7 @@ import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
 import type { Json } from '@/integrations/supabase/types';
-import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl } from '@/lib/contentSafety';
+import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl, isNonEmbeddableHost } from '@/lib/contentSafety';
 
 interface ContentBlock {
   type: 'heading' | 'text' | 'video' | 'image' | 'pdf';
@@ -16,6 +16,8 @@ interface ContentBlock {
 interface LessonBlockEditorProps {
   moduleId: string;
   onBlockCountChange?: (count: number) => void;
+  onSaved?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 // Normalise legacy string content to bilingual object
@@ -86,7 +88,7 @@ function convertToEmbedUrl(url: string): {converted: string;wasConverted: boolea
   return { converted: embedUrl, wasConverted: true };
 }
 
-export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockEditorProps) {
+export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDirtyChange }: LessonBlockEditorProps) {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
 
@@ -96,6 +98,9 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [convertedUrls, setConvertedUrls] = useState<Set<number>>(new Set());
   const [urlError, setUrlError] = useState<string | null>(null);
+
+  // Dirty tracking for unsaved changes guard
+  const savedSnapshotRef = useRef<string>('[]');
 
   // Store callback in ref to avoid re-triggering fetch
   const onCountChangeRef = useRef(onBlockCountChange);
@@ -125,11 +130,12 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
         const rawBlocks = json.blocks || [];
         // Normalise all blocks
         const normalised: ContentBlock[] = rawBlocks.map((b) => ({
-          type: b.type as 'heading' | 'text' | 'video',
+          type: b.type as 'heading' | 'text' | 'video' | 'image' | 'pdf',
           content: normaliseContent(b.content as {en: string;he: string;} | string),
           url: b.url
         }));
         setBlocks(normalised);
+        savedSnapshotRef.current = JSON.stringify(normalised);
         onCountChangeRef.current?.(normalised.length);
       }
 
@@ -138,6 +144,12 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 
     fetchContent();
   }, [moduleId, dict.common.error]);
+
+  // Compute dirty state and notify parent
+  const isDirty = JSON.stringify(blocks) !== savedSnapshotRef.current;
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   // Notify parent of count changes
   useEffect(() => {
@@ -245,6 +257,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
       showToast('error', dict.studioBlocks.saveFailed || dict.common.error);
     } else {
       showToast('success', dict.studioBlocks.blocksSaved);
+      savedSnapshotRef.current = JSON.stringify(sanitizedBlocks);
+      onSaved?.();
     }
 
     setSaving(false);
@@ -381,6 +395,11 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
 										<p data-ev-id="ev_790f059bb4" className="mt-1 text-xs text-muted-foreground">
 											{dict.studioBlocks.videoUrlHelperText}
 										</p>
+										{block.url && isNonEmbeddableHost(block.url) &&
+                <p data-ev-id="ev_video_unsupported_host" className="mt-1 text-sm text-destructive">
+												{dict.studioBlocks.unsupportedHost}
+											</p>
+                }
 									</div>
               }
 
@@ -397,6 +416,11 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange }: LessonBlockE
                 className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 dir="ltr"
                 placeholder="https://..." />
+										{block.url && isNonEmbeddableHost(block.url) &&
+                <p data-ev-id="ev_media_unsupported_host" className="mt-1 text-sm text-destructive">
+												{dict.studioBlocks.unsupportedHost}
+											</p>
+                }
 									</div>
               }
 
