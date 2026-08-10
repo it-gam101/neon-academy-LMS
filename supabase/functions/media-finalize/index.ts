@@ -5,6 +5,7 @@ const allowedOrigins = [
 	'https://neon-academy.sticklight.app',
 	'https://academy.vibe-coding4elearning.com',
 	'http://localhost:5173',
+	'https://f2446c28-ba8f-49f3-86a8-9fd01bcb6af6.preview.sticklight.com',
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
@@ -209,6 +210,24 @@ Deno.serve(async (req: Request) => {
 
 		if (insertError) {
 			console.error('Media asset insert error:', insertError);
+
+			// Handle duplicate key (idempotent retry) — return existing row
+			const pgCode = (insertError as { code?: string })?.code;
+			if (pgCode === '23505') {
+				const { data: existingAsset, error: selectError } = await supabaseService
+					.from('media_assets')
+					.select()
+					.eq('r2_key', key)
+					.single();
+
+				if (!selectError && existingAsset) {
+					return new Response(
+						JSON.stringify(existingAsset),
+						{ status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+					);
+				}
+			}
+
 			return new Response(
 				JSON.stringify({ error: 'Failed to create media asset record' }),
 				{ status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

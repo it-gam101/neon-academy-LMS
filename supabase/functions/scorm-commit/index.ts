@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const allowedOrigins = [
 	'https://neon-academy.sticklight.app',
 	'https://academy.vibe-coding4elearning.com',
+	'https://f2446c28-ba8f-49f3-86a8-9fd01bcb6af6.preview.sticklight.com',
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
