@@ -156,14 +156,23 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
     onCountChangeRef.current?.(blocks.length);
   }, [blocks.length]);
 
+  // Auto-reset delete confirmation after 3 seconds
+  useEffect(() => {
+    if (deleteConfirm === null) return;
+    const t = setTimeout(() => setDeleteConfirm(null), 3000);
+    return () => clearTimeout(t);
+  }, [deleteConfirm]);
+
   const handleAddBlock = (type: 'heading' | 'text' | 'video' | 'image' | 'pdf') => {
+    setDeleteConfirm(null);
     setBlocks((prev) => [
     ...prev,
-    { type, content: { en: '', he: '' }, url: (type === 'video' || type === 'image' || type === 'pdf') ? '' : undefined }]
+    { type, content: { en: '', he: '' }, url: type === 'video' || type === 'image' || type === 'pdf' ? '' : undefined }]
     );
   };
 
   const handleUpdateBlock = (index: number, updates: Partial<ContentBlock>) => {
+    setDeleteConfirm(null);
     setBlocks((prev) => prev.map((b, i) => i === index ? { ...b, ...updates } : b));
   };
 
@@ -196,6 +205,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= blocks.length) return;
 
+    setDeleteConfirm(null);
     setBlocks((prev) => {
       const newBlocks = [...prev];
       [newBlocks[index], newBlocks[newIndex]] = [newBlocks[newIndex], newBlocks[index]];
@@ -239,8 +249,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
       ...block,
       content: {
         en: stripHtmlToText(block.content.en),
-        he: stripHtmlToText(block.content.he),
-      },
+        he: stripHtmlToText(block.content.he)
+      }
     }));
 
     const { data, error } = await supabase.
@@ -358,10 +368,13 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
                   'text-destructive bg-destructive/10 rounded' :
                   'text-muted-foreground hover:text-destructive'}`
                   }
-                  title={deleteConfirm === index ? dict.studioBlocks.confirmDeleteBlock : dict.studioBlocks.deleteBlock}>
+                  title={dict.studioBlocks.deleteBlock}>
 
 											<Trash2 className="w-4 h-4" />
 										</button>
+										{deleteConfirm === index &&
+                  <span data-ev-id="ev_2437f5c5fb" className="text-xs text-destructive ms-1">{dict.studioBlocks.confirmDeleteBlock}</span>
+                  }
 									</div>
 								</div>
 

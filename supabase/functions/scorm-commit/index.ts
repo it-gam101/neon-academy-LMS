@@ -42,6 +42,28 @@ function unwrapCmi(cmi: Record<string, unknown>): Record<string, unknown> {
 	return cmi ?? {};
 }
 
+// Normalise score to 0–100 percentage, handling min/max and out-of-range values
+function normaliseScore(scoreObj: Record<string, unknown>): number | null {
+	const rawN = scoreObj.raw != null ? Number(scoreObj.raw) : NaN;
+	if (!Number.isFinite(rawN)) return null;
+
+	const minN = scoreObj.min != null && Number.isFinite(Number(scoreObj.min)) ? Number(scoreObj.min) : 0;
+	const maxN = scoreObj.max != null && Number.isFinite(Number(scoreObj.max)) ? Number(scoreObj.max) : 100;
+
+	// Unusable scale — treat raw as an already-computed percentage, clamped.
+	if (maxN <= minN) {
+		console.error('[scorm-commit] unusable score scale, clamping raw as percentage:', JSON.stringify(scoreObj));
+		return Math.min(100, Math.max(0, rawN));
+	}
+
+	if (rawN > maxN || rawN < minN) {
+		console.error('[scorm-commit] score out of declared range — bad publisher:', JSON.stringify(scoreObj));
+	}
+
+	const pct = ((rawN - minN) / (maxN - minN)) * 100;
+	return Math.round(Math.min(100, Math.max(0, pct)) * 100) / 100;
+}
+
 // Extract CMI fields based on SCORM version
 function extractCmiFields(rawCmi: Record<string, unknown>, scormVersion: string): CmiExtracted {
 	const cmi = unwrapCmi(rawCmi);
@@ -83,7 +105,7 @@ function extractCmiFields(rawCmi: Record<string, unknown>, scormVersion: string)
 		return {
 			completion_status: completionStatus,
 			success_status: successStatus,
-			score_raw: scoreObj.raw != null ? Number(scoreObj.raw) : null,
+			score_raw: normaliseScore(scoreObj),
 			total_time: (core.total_time as string) || null,
 			suspend_data: (cmi.suspend_data as string) || null,
 		};
@@ -94,7 +116,7 @@ function extractCmiFields(rawCmi: Record<string, unknown>, scormVersion: string)
 		return {
 			completion_status: (cmi.completion_status as string) || null,
 			success_status: (cmi.success_status as string) || null,
-			score_raw: scoreObj.raw != null ? Number(scoreObj.raw) : null,
+			score_raw: normaliseScore(scoreObj),
 			total_time: (cmi.total_time as string) || null,
 			suspend_data: (cmi.suspend_data as string) || null,
 		};

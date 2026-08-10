@@ -97,6 +97,7 @@ export interface Dictionary {
 		packagePicker: string;
 		defaultPackage: string;
 		packageLoadError: string;
+		backToAcademy: string;
 	};
 	
 	// Studio Upload
@@ -729,6 +730,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			packagePicker: 'Package',
 			defaultPackage: 'MBTI Micro-Course (default)',
 			packageLoadError: 'Failed to load packages',
+			backToAcademy: 'Back to Academy',
 		},
 		
 		studioUpload: {
@@ -1336,6 +1338,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			packagePicker: 'חבילה',
 			defaultPackage: 'קורס MBTI מקוצר (ברירת מחדל)',
 			packageLoadError: 'טעינת החבילות נכשלה',
+			backToAcademy: 'חזרה לאקדמיה',
 		},
 		
 		studioUpload: {

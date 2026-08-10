@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router';
 import { AlertCircle, Loader2, RefreshCw, Package } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { useAuth } from '@/hooks/useAuth';
@@ -55,7 +56,7 @@ const PICKER_ROLES = ['super_admin', 'hr_manager', 'instructor'];
 
 export default function Sandbox() {
   const { locale } = useLocale();
-  const { profile } = useAuth();
+  const { profile, isAuthenticated } = useAuth();
   const dict = getDictionary(locale);
 
   const [bridgeReady, setBridgeReady] = useState(false);
@@ -257,7 +258,7 @@ export default function Sandbox() {
           <div data-ev-id="ev_563cabe32e" className="flex items-start justify-between gap-3 flex-wrap">
             <div data-ev-id="ev_51128fa7b7" className="min-w-0">
               <div data-ev-id="ev_326efd7679" className="flex items-center gap-3">
-                <h1 data-ev-id="ev_2288484974" className="text-xl font-semibold text-foreground">{dict.sandbox.title}</h1>
+                <Link to="/" className="text-xl font-semibold text-foreground hover:text-primary transition-colors">{dict.sandbox.title}</Link>
                 <Badge>
                   <Package className="w-3 h-3 me-1" />
                   SCORM {displayVersion}
@@ -289,6 +290,11 @@ export default function Sandbox() {
                 </div>
               }
               <LanguageToggle />
+              {isAuthenticated ? (
+                <Link to="/" className="px-4 py-2 rounded-lg font-medium text-sm border border-border text-foreground hover:bg-muted transition-colors focus-ring">{dict.sandbox.backToAcademy}</Link>
+              ) : (
+                <Link to="/auth/login" className="px-4 py-2 rounded-lg font-medium text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus-ring">{dict.auth.login}</Link>
+              )}
               <button data-ev-id="ev_48108b3bd0"
               onClick={handleReset}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
