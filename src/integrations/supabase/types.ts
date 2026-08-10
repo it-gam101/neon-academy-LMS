@@ -206,6 +206,50 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          kind: string
+          mime_type: string
+          owner_id: string | null
+          r2_key: string
+          size_bytes: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          kind: string
+          mime_type: string
+          owner_id?: string | null
+          r2_key: string
+          size_bytes: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          kind?: string
+          mime_type?: string
+          owner_id?: string | null
+          r2_key?: string
+          size_bytes?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_assets_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_progress: {
         Row: {
           created_at: string

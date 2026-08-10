@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Type, AlignLeft, Video, Check, Image, FileText } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Type, AlignLeft, Video, Check, Image, FileText, Upload, Loader2 } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,6 +98,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [convertedUrls, setConvertedUrls] = useState<Set<number>>(new Set());
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<{ index: number; message: string } | null>(null);
 
   // Dirty tracking for unsaved changes guard
   const savedSnapshotRef = useRef<string>('[]');
@@ -211,6 +213,74 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
       [newBlocks[index], newBlocks[newIndex]] = [newBlocks[newIndex], newBlocks[index]];
       return newBlocks;
     });
+  };
+
+  const handleFileUpload = async (index: number, file: File) => {
+    if (!supabase) return;
+
+    setUploadingIndex(index);
+    setUploadError(null);
+
+    try {
+      // Call media-presign
+      const { data: presignData, error: presignError } = await supabase.functions.invoke('media-presign', {
+        body: {
+          filename: file.name,
+          mimeType: file.type,
+          size: file.size
+        }
+      });
+
+      if (presignError || !presignData?.uploadUrl) {
+        const msg = (presignError as { message?: string })?.message || presignData?.error || dict.studioBlocks.uploadFailed;
+        console.error('Presign error:', presignError || presignData);
+        setUploadError({ index, message: msg });
+        setUploadingIndex(null);
+        return;
+      }
+
+      // PUT the file to R2
+      const uploadResponse = await fetch(presignData.uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        console.error('Upload to R2 failed:', uploadResponse.status, uploadResponse.statusText);
+        setUploadError({ index, message: dict.studioBlocks.uploadFailed });
+        setUploadingIndex(null);
+        return;
+      }
+
+      // Call media-finalize
+      const { data: finalizeData, error: finalizeError } = await supabase.functions.invoke('media-finalize', {
+        body: {
+          key: presignData.key,
+          filename: presignData.filename || file.name,
+          mimeType: file.type,
+          size: file.size,
+        },
+      });
+
+      if (finalizeError || !finalizeData?.url) {
+        const msg = (finalizeError as { message?: string })?.message || finalizeData?.error || dict.studioBlocks.uploadFailed;
+        console.error('Finalize error:', finalizeError || finalizeData);
+        setUploadError({ index, message: msg });
+        setUploadingIndex(null);
+        return;
+      }
+
+      // Set the block's URL to the public URL
+      handleUpdateBlock(index, { url: finalizeData.url });
+      setUploadingIndex(null);
+    } catch (err) {
+      console.error('Upload error:', err);
+      setUploadError({ index, message: (err as { message?: string })?.message || dict.studioBlocks.uploadFailed });
+      setUploadingIndex(null);
+    }
   };
 
   const handleDeleteBlock = (index: number) => {
@@ -419,6 +489,41 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 								{/* Media URL field for image and pdf */}
 								{(block.type === 'image' || block.type === 'pdf') &&
               <div data-ev-id="ev_media_url_field" className="mb-3">
+										{/* File upload control */}
+										<div data-ev-id="ev_5f68215120" className="flex items-center gap-3 mb-2">
+											<label data-ev-id="ev_192f7afb84" className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors cursor-pointer text-sm font-medium">
+												{uploadingIndex === index ?
+                    <>
+														<Loader2 className="w-4 h-4 animate-spin" />
+														{dict.studioBlocks.uploading}
+													</> :
+
+                    <>
+														<Upload className="w-4 h-4" />
+														{dict.studioBlocks.uploadFile}
+													</>
+                    }
+												<input data-ev-id="ev_4c7f64f729"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+                    className="hidden"
+                    disabled={uploadingIndex !== null}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleFileUpload(index, file);
+                      }
+                      e.target.value = '';
+                    }} />
+
+											</label>
+											<span data-ev-id="ev_37615337b0" className="text-xs text-muted-foreground">{dict.studioBlocks.orUseUrl}</span>
+										</div>
+										{uploadError?.index === index &&
+                <p data-ev-id="ev_5ea3d70d18" className="mb-2 text-sm text-destructive">
+												{dict.studioBlocks.uploadFailed}: {uploadError.message}
+											</p>
+                }
 										<label data-ev-id="ev_media_url_label" className="block text-xs font-medium text-muted-foreground mb-1">
 											{dict.studioBlocks.mediaUrl}
 										</label>

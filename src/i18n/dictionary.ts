@@ -161,6 +161,10 @@ export interface Dictionary {
 		unsupportedHost: string;
 		imageLoadFailed: string;
 		openInNewTab: string;
+		uploadFile: string;
+		uploading: string;
+		uploadFailed: string;
+		orUseUrl: string;
 	};
 	
 	// Roles
@@ -792,6 +796,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			unsupportedHost: 'This host blocks embedding, so the file will not display inside the course. Use a direct link to the file itself.',
 			imageLoadFailed: 'The image could not be loaded.',
 			openInNewTab: 'Open in a new tab',
+			uploadFile: 'Upload a file',
+			uploading: 'Uploading…',
+			uploadFailed: 'Upload failed',
+			orUseUrl: 'or paste a link',
 		},
 		
 		roles: {
@@ -1400,6 +1408,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			unsupportedHost: 'מארח זה חוסם הטמעה, ולכן הקובץ לא יוצג בתוך הקורס. השתמשו בקישור ישיר לקובץ עצמו.',
 			imageLoadFailed: 'לא ניתן היה לטעון את התמונה.',
 			openInNewTab: 'פתיחה בלשונית חדשה',
+			uploadFile: 'העלאת קובץ',
+			uploading: 'מעלה…',
+			uploadFailed: 'ההעלאה נכשלה',
+			orUseUrl: 'או הדביקו קישור',
 		},
 		
 		roles: {
