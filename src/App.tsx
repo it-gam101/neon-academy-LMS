@@ -18,6 +18,7 @@ import Catalogue from '@/pages/Catalogue';
 import MyLearning from '@/pages/MyLearning';
 import Team from '@/pages/Team';
 import Studio from '@/pages/Studio';
+import MediaLibrary from '@/pages/MediaLibrary';
 import StudioEditor from '@/pages/StudioEditor';
 import HRAnalytics from '@/pages/HRAnalytics';
 import Admin from '@/pages/Admin';
@@ -101,6 +102,11 @@ export default function App() {
 				<Route path="/studio" element={
 					<ProtectedRoute allowedRoles={['super_admin', 'hr_manager', 'instructor']}>
 						<Studio />
+					</ProtectedRoute>
+				} />
+				<Route path="/studio/media" element={
+					<ProtectedRoute allowedRoles={['super_admin', 'hr_manager', 'instructor']}>
+						<MediaLibrary />
 					</ProtectedRoute>
 				} />
 				<Route path="/studio/:courseId" element={

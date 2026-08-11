@@ -4,6 +4,8 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
+import { Modal } from '@/components/ui/Modal';
+import { functionErrorMessage } from '@/lib/functionError';
 import type { Json } from '@/integrations/supabase/types';
 import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl, isNonEmbeddableHost } from '@/lib/contentSafety';
 
@@ -99,7 +101,9 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
   const [convertedUrls, setConvertedUrls] = useState<Set<number>>(new Set());
   const [urlError, setUrlError] = useState<string | null>(null);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
-  const [uploadError, setUploadError] = useState<{ index: number; message: string } | null>(null);
+  const [uploadError, setUploadError] = useState<{index: number;message: string;} | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState<{index: number;kind: 'image' | 'pdf';} | null>(null);
+  const [libraryAssets, setLibraryAssets] = useState<Array<{id: string;url: string;filename: string;kind: 'image' | 'pdf';}>>([]);
 
   // Dirty tracking for unsaved changes guard
   const savedSnapshotRef = useRef<string>('[]');
@@ -164,6 +168,28 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
     const t = setTimeout(() => setDeleteConfirm(null), 3000);
     return () => clearTimeout(t);
   }, [deleteConfirm]);
+
+  // Fetch library assets when modal opens
+  useEffect(() => {
+    if (!libraryOpen || !supabase) return;
+
+    const fetchLibraryAssets = async () => {
+      const { data, error } = await supabase.
+      from('media_assets').
+      select('id, url, filename, kind').
+      eq('kind', libraryOpen.kind).
+      order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to load library assets:', error);
+        setLibraryAssets([]);
+      } else {
+        setLibraryAssets((data || []) as Array<{id: string;url: string;filename: string;kind: 'image' | 'pdf';}>);
+      }
+    };
+
+    fetchLibraryAssets();
+  }, [libraryOpen]);
 
   const handleAddBlock = (type: 'heading' | 'text' | 'video' | 'image' | 'pdf') => {
     setDeleteConfirm(null);
@@ -232,8 +258,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
       });
 
       if (presignError || !presignData?.uploadUrl) {
-        const msg = (presignError as { message?: string })?.message || presignData?.error || dict.studioBlocks.uploadFailed;
         console.error('Presign error:', presignError || presignData);
+        const msg = presignError ? await functionErrorMessage(presignError, dict.studioBlocks.uploadFailed) : presignData?.error || dict.studioBlocks.uploadFailed;
         setUploadError({ index, message: msg });
         setUploadingIndex(null);
         return;
@@ -244,8 +270,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
         method: 'PUT',
         body: file,
         headers: {
-          'Content-Type': file.type,
-        },
+          'Content-Type': file.type
+        }
       });
 
       if (!uploadResponse.ok) {
@@ -261,13 +287,13 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
           key: presignData.key,
           filename: presignData.filename || file.name,
           mimeType: file.type,
-          size: file.size,
-        },
+          size: file.size
+        }
       });
 
       if (finalizeError || !finalizeData?.url) {
-        const msg = (finalizeError as { message?: string })?.message || finalizeData?.error || dict.studioBlocks.uploadFailed;
         console.error('Finalize error:', finalizeError || finalizeData);
+        const msg = finalizeError ? await functionErrorMessage(finalizeError, dict.studioBlocks.uploadFailed) : finalizeData?.error || dict.studioBlocks.uploadFailed;
         setUploadError({ index, message: msg });
         setUploadingIndex(null);
         return;
@@ -278,7 +304,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
       setUploadingIndex(null);
     } catch (err) {
       console.error('Upload error:', err);
-      setUploadError({ index, message: (err as { message?: string })?.message || dict.studioBlocks.uploadFailed });
+      const msg = await functionErrorMessage(err, dict.studioBlocks.uploadFailed);
+      setUploadError({ index, message: msg });
       setUploadingIndex(null);
     }
   };
@@ -517,6 +544,13 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
                     }} />
 
 											</label>
+											<button data-ev-id="ev_c72a42e5ae"
+                  type="button"
+                  onClick={() => setLibraryOpen({ index, kind: block.type as 'image' | 'pdf' })}
+                  disabled={uploadingIndex !== null}
+                  className="px-3 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors text-sm font-medium disabled:opacity-50">
+												{dict.media.chooseFromLibrary}
+											</button>
 											<span data-ev-id="ev_37615337b0" className="text-xs text-muted-foreground">{dict.studioBlocks.orUseUrl}</span>
 										</div>
 										{uploadError?.index === index &&
@@ -655,6 +689,42 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 					{saving ? dict.common.loading : dict.studioBlocks.saveBlocks}
 				</button>
 			</div>
+
+			{/* Library selection modal */}
+			<Modal
+        isOpen={!!libraryOpen}
+        onClose={() => setLibraryOpen(null)}
+        title={dict.media.chooseFromLibrary}>
+
+				{libraryAssets.length === 0 ?
+        <p data-ev-id="ev_a7a0f23d45" className="text-center text-muted-foreground py-8">{dict.media.empty}</p> :
+
+        <div data-ev-id="ev_39ee1f2664" className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto">
+						{libraryAssets.map((asset) =>
+          <button data-ev-id="ev_06cf53ef2d"
+          key={asset.id}
+          type="button"
+          onClick={() => {
+            if (libraryOpen) {
+              handleUpdateBlock(libraryOpen.index, { url: asset.url });
+              setLibraryOpen(null);
+            }
+          }}
+          className="bg-muted border border-border rounded-lg overflow-hidden hover:border-primary transition-colors text-start">
+
+								<div data-ev-id="ev_83291b4ec8" className="aspect-square flex items-center justify-center bg-muted">
+									{asset.kind === 'image' ?
+              <img data-ev-id="ev_7788910be5" src={asset.url} alt={asset.filename} className="w-full h-full object-cover" /> :
+
+              <FileText className="w-8 h-8 text-muted-foreground" />
+              }
+								</div>
+								<p data-ev-id="ev_61ec305c00" className="p-2 text-xs truncate text-foreground">{asset.filename}</p>
+							</button>
+          )}
+					</div>
+        }
+			</Modal>
 		</div>);
 
 }

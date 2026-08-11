@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Plus, BookOpen, Edit, Eye, ChevronRight, ChevronLeft, ArrowLeft, ArrowRight, FileQuestion } from 'lucide-react';
+import { Plus, BookOpen, Edit, Eye, ChevronRight, ChevronLeft, ArrowLeft, ArrowRight, FileQuestion, Image } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useCourses } from '@/hooks/useCourses';
@@ -133,6 +133,12 @@ export default function Studio() {
 								</button>
 							</div>
             }
+						<Link
+            to="/studio/media"
+            className="flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors">
+							<Image className="w-4 h-4" />
+							{dict.media.title}
+						</Link>
 						<button data-ev-id="ev_20d39d9b23"
             onClick={handleCreateCourse}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">

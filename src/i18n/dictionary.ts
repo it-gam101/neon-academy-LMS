@@ -167,6 +167,19 @@ export interface Dictionary {
 		orUseUrl: string;
 	};
 	
+	// Media Library
+	media: {
+		title: string;
+		images: string;
+		pdfs: string;
+		empty: string;
+		chooseFromLibrary: string;
+		deleteTitle: string;
+		deleteMessage: string;
+		deleted: string;
+		uploadedBy: string;
+	};
+	
 	// Roles
 	roles: {
 		super_admin: string;
@@ -802,6 +815,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			orUseUrl: 'or paste a link',
 		},
 		
+		media: {
+			title: 'Media Library',
+			images: 'Images',
+			pdfs: 'PDFs',
+			empty: 'No files uploaded yet',
+			chooseFromLibrary: 'Choose from library',
+			deleteTitle: 'Delete file?',
+			deleteMessage: 'This permanently deletes the file. Lessons that already use it will stop displaying it.',
+			deleted: 'File deleted',
+			uploadedBy: 'Uploaded by',
+		},
+		
 		roles: {
 			super_admin: 'Super Admin',
 			hr_manager: 'HR Manager',
@@ -1412,6 +1437,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			uploading: 'מעלה…',
 			uploadFailed: 'ההעלאה נכשלה',
 			orUseUrl: 'או הדביקו קישור',
+		},
+		
+		media: {
+			title: 'ספריית מדיה',
+			images: 'תמונות',
+			pdfs: 'קובצי PDF',
+			empty: 'עדיין לא הועלו קבצים',
+			chooseFromLibrary: 'בחירה מהספרייה',
+			deleteTitle: 'למחוק את הקובץ?',
+			deleteMessage: 'פעולה זו מוחקת את הקובץ לצמיתות. שיעורים שכבר משתמשים בו יפסיקו להציג אותו.',
+			deleted: 'הקובץ נמחק',
+			uploadedBy: 'הועלה על ידי',
 		},
 		
 		roles: {
