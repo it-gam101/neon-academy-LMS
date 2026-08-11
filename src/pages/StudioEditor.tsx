@@ -50,6 +50,7 @@ export default function StudioEditor() {
   const [archiving, setArchiving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
+  const [moduleDeleteWarningCount, setModuleDeleteWarningCount] = useState<number | null>(null);
 
   // Quiz settings state
   const [showQuizSettingsModal, setShowQuizSettingsModal] = useState(false);
@@ -245,6 +246,52 @@ export default function StudioEditor() {
     }
   };
 
+  const handleOpenModuleDeleteConfirm = async (moduleId: string) => {
+    if (!supabase) {
+      setDeletingModuleId(moduleId);
+      return;
+    }
+
+    // Fetch learner progress counts for this module
+    let totalCount = 0;
+    let hadError = false;
+
+    const { count: progressCount, error: progressError } = await supabase.
+    from('module_progress').
+    select('id', { count: 'exact', head: true }).
+    eq('module_id', moduleId);
+
+    if (progressError) {
+      console.error('Failed to count module_progress:', progressError);
+      hadError = true;
+    } else {
+      totalCount += progressCount ?? 0;
+    }
+
+    const { count: regCount, error: regError } = await supabase.
+    from('scorm_registrations').
+    select('id', { count: 'exact', head: true }).
+    eq('module_id', moduleId);
+
+    if (regError) {
+      console.error('Failed to count scorm_registrations:', regError);
+      hadError = true;
+    } else {
+      totalCount += regCount ?? 0;
+    }
+
+    // If had error, show warning but don't imply zero
+    if (hadError) {
+      setModuleDeleteWarningCount(-1); // -1 indicates "show warning, unknown count"
+    } else if (totalCount > 0) {
+      setModuleDeleteWarningCount(totalCount);
+    } else {
+      setModuleDeleteWarningCount(null);
+    }
+
+    setDeletingModuleId(moduleId);
+  };
+
   const handleDeleteModule = async (moduleId: string) => {
     if (!supabase) return;
 
@@ -259,6 +306,7 @@ export default function StudioEditor() {
       setModules((prev) => prev.filter((m) => m.id !== moduleId));
     }
     setDeletingModuleId(null);
+    setModuleDeleteWarningCount(null);
   };
 
   const handleOpenQuizSettings = async (moduleId: string) => {
@@ -719,7 +767,7 @@ export default function StudioEditor() {
                 <Edit className="w-4 h-4" />
               </button>
 									<button data-ev-id="ev_e2850d52d2"
-              onClick={() => setDeletingModuleId(mod.id)}
+              onClick={() => handleOpenModuleDeleteConfirm(mod.id)}
               className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
               title={dict.studio.deleteModule}>
 
@@ -1020,28 +1068,28 @@ export default function StudioEditor() {
 			{/* Lesson content editor modal */}
 			<Modal
         isOpen={showLessonEditorModal}
-        onClose={() => { if (lessonEditorDirty) { setShowDiscardConfirm(true); } else { setShowLessonEditorModal(false); } }}
+        onClose={() => {if (lessonEditorDirty) {setShowDiscardConfirm(true);} else {setShowLessonEditorModal(false);}}}
         title={dict.studioBlocks.editContent}
         size="lg">
 				{editingLessonModuleId &&
         <LessonBlockEditor
           moduleId={editingLessonModuleId}
           onBlockCountChange={handleBlockCountChange}
-          onSaved={() => { setLessonEditorDirty(false); setShowLessonEditorModal(false); }}
+          onSaved={() => {setLessonEditorDirty(false);setShowLessonEditorModal(false);}}
           onDirtyChange={setLessonEditorDirty} />
         }
 			</Modal>
 
 			{/* Discard changes confirm dialog */}
 			<ConfirmDialog
-				isOpen={showDiscardConfirm}
-				title={dict.studioBlocks.discardChangesTitle}
-				message={dict.studioBlocks.discardChangesMessage}
-				confirmLabel={dict.studioBlocks.discardConfirm}
-				destructive
-				onConfirm={() => { setShowDiscardConfirm(false); setShowLessonEditorModal(false); setLessonEditorDirty(false); }}
-				onCancel={() => setShowDiscardConfirm(false)}
-			/>
+        isOpen={showDiscardConfirm}
+        title={dict.studioBlocks.discardChangesTitle}
+        message={dict.studioBlocks.discardChangesMessage}
+        confirmLabel={dict.studioBlocks.discardConfirm}
+        destructive
+        onConfirm={() => {setShowDiscardConfirm(false);setShowLessonEditorModal(false);setLessonEditorDirty(false);}}
+        onCancel={() => setShowDiscardConfirm(false)} />
+
 
 			{/* Delete confirmation modal */}
 			<Modal
@@ -1113,14 +1161,24 @@ export default function StudioEditor() {
 
 			{/* Delete Module Confirm Dialog */}
 			<ConfirmDialog
-				isOpen={deletingModuleId !== null}
-				title={dict.studio.deleteModule}
-				message={dict.studio.confirmDeleteModule}
-				confirmLabel={dict.common.delete}
-				destructive
-				onConfirm={() => deletingModuleId && handleDeleteModule(deletingModuleId)}
-				onCancel={() => setDeletingModuleId(null)}
-			/>
+        isOpen={deletingModuleId !== null}
+        title={dict.studio.deleteModule}
+        message={
+        <>
+            {dict.studio.confirmDeleteModule}
+            {moduleDeleteWarningCount !== null &&
+          <p data-ev-id="ev_55e27775f2" className="mt-2 text-destructive font-medium">
+                {dict.studio.deleteModuleWarning}
+                {moduleDeleteWarningCount > 0 && <span data-ev-id="ev_453ed58754" className="ms-1">{moduleDeleteWarningCount}</span>}
+              </p>
+          }
+          </>
+        }
+        confirmLabel={dict.common.delete}
+        destructive
+        onConfirm={() => deletingModuleId && handleDeleteModule(deletingModuleId)}
+        onCancel={() => {setDeletingModuleId(null);setModuleDeleteWarningCount(null);}} />
+
 		</div>);
 
 }

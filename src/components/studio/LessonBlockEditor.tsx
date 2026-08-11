@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Type, AlignLeft, Video, Check, Image, FileText, Upload, Loader2 } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, ChevronLeft, AlertTriangle, Type, AlignLeft, Video, Check, Image, FileText, Upload, Loader2, ChevronsUpDown, ChevronsDownUp } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +10,7 @@ import type { Json } from '@/integrations/supabase/types';
 import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl, isNonEmbeddableHost } from '@/lib/contentSafety';
 
 interface ContentBlock {
+  id: string;
   type: 'heading' | 'text' | 'video' | 'image' | 'pdf';
   content: {en: string;he: string;};
   url?: string;
@@ -97,7 +98,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [convertedUrls, setConvertedUrls] = useState<Set<number>>(new Set());
   const [urlError, setUrlError] = useState<string | null>(null);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
@@ -134,8 +136,9 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
       } else if (data?.content_json) {
         const json = data.content_json as {blocks?: Array<{type: string;content: unknown;url?: string;}>;};
         const rawBlocks = json.blocks || [];
-        // Normalise all blocks
+        // Normalise all blocks, generating ids for legacy blocks that have none
         const normalised: ContentBlock[] = rawBlocks.map((b) => ({
+          id: (b as { id?: string }).id ?? crypto.randomUUID(),
           type: b.type as 'heading' | 'text' | 'video' | 'image' | 'pdf',
           content: normaliseContent(b.content as {en: string;he: string;} | string),
           url: b.url
@@ -195,7 +198,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
     setDeleteConfirm(null);
     setBlocks((prev) => [
     ...prev,
-    { type, content: { en: '', he: '' }, url: type === 'video' || type === 'image' || type === 'pdf' ? '' : undefined }]
+    { id: crypto.randomUUID(), type, content: { en: '', he: '' }, url: type === 'video' || type === 'image' || type === 'pdf' ? '' : undefined }]
     );
   };
 
@@ -310,18 +313,54 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
     }
   };
 
-  const handleDeleteBlock = (index: number) => {
+  const handleDeleteBlock = (blockId: string, index: number) => {
     const block = blocks[index];
     const hasContent = block.content.en || block.content.he || block.url;
 
-    if (hasContent && deleteConfirm !== index) {
-      setDeleteConfirm(index);
+    if (hasContent && deleteConfirm !== blockId) {
+      setDeleteConfirm(blockId);
       return;
     }
 
-    setBlocks((prev) => prev.filter((_, i) => i !== index));
+    setBlocks((prev) => prev.filter((b) => b.id !== blockId));
     setDeleteConfirm(null);
   };
+
+  const toggleCollapse = (blockId: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(blockId)) {
+        next.delete(blockId);
+      } else {
+        next.add(blockId);
+      }
+      return next;
+    });
+  };
+
+  const collapseAll = () => {
+    setCollapsed(new Set(blocks.map((b) => b.id)));
+  };
+
+  const expandAll = () => {
+    setCollapsed(new Set());
+  };
+
+  const getBlockSummary = (block: ContentBlock): string => {
+    if (block.type === 'heading' || block.type === 'text') {
+      const content = locale === 'he' ? block.content.he : block.content.en;
+      if (!content) return dict.studioBlocks.emptyBlock;
+      return content.length > 60 ? content.slice(0, 60) + '…' : content;
+    }
+    if (block.type === 'video' || block.type === 'image' || block.type === 'pdf') {
+      if (!block.url) return dict.studioBlocks.noFileYet;
+      const parts = block.url.split('/');
+      return parts[parts.length - 1] || dict.studioBlocks.noFileYet;
+    }
+    return dict.studioBlocks.emptyBlock;
+  };
+
+  const CollapsedChevron = locale === 'he' ? ChevronLeft : ChevronRight;
 
   const handleSave = async () => {
     if (!supabase || !moduleId) return;
@@ -401,6 +440,28 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 				</div>
       }
 
+			{/* Collapse/Expand all buttons */}
+			{blocks.length > 0 &&
+      <div data-ev-id="ev_collapse_expand_btns" className="flex items-center gap-2">
+					<button data-ev-id="ev_collapse_all"
+          type="button"
+          onClick={collapseAll}
+          className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+
+						<ChevronsDownUp className="w-3.5 h-3.5" />
+						{dict.studioBlocks.collapseAll}
+					</button>
+					<button data-ev-id="ev_expand_all"
+          type="button"
+          onClick={expandAll}
+          className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+
+						<ChevronsUpDown className="w-3.5 h-3.5" />
+						{dict.studioBlocks.expandAll}
+					</button>
+				</div>
+      }
+
 			{/* Block list */}
 			{blocks.length === 0 ?
       <p data-ev-id="ev_598a5dad8f" className="text-center text-muted-foreground py-8">
@@ -412,32 +473,49 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
           const isIncomplete =
           block.content.en && !block.content.he ||
           block.content.he && !block.content.en;
+          const isCollapsed = collapsed.has(block.id);
 
           return (
             <div data-ev-id="ev_4de0529002"
-            key={index}
+            key={block.id}
             className={`p-4 bg-background border rounded-lg ${
             isIncomplete ? 'border-amber-500/50' : 'border-border'}${
-            deleteConfirm === index ? ' ring-2 ring-destructive' : ''}`
+            deleteConfirm === block.id ? ' ring-2 ring-destructive' : ''}`
             }>
 
 								{/* Block header */}
-								<div data-ev-id="ev_c438205030" className="flex items-center justify-between mb-3">
-									<div data-ev-id="ev_a7d61a501f" className="flex items-center gap-2">
-										{block.type === 'heading' && <Type className="w-4 h-4 text-primary" />}
-										{block.type === 'text' && <AlignLeft className="w-4 h-4 text-primary" />}
-										{block.type === 'video' && <Video className="w-4 h-4 text-primary" />}
-										{block.type === 'image' && <Image className="w-4 h-4 text-primary" />}
-										{block.type === 'pdf' && <FileText className="w-4 h-4 text-primary" />}
-										<span data-ev-id="ev_9254071c3e" className="text-sm font-medium text-foreground">
+								<div data-ev-id="ev_c438205030" className={`flex items-center justify-between${isCollapsed ? '' : ' mb-3'}`}>
+									<div data-ev-id="ev_a7d61a501f" className="flex items-center gap-2 min-w-0 flex-1">
+										<button data-ev-id="ev_collapse_toggle"
+                  type="button"
+                  onClick={() => toggleCollapse(block.id)}
+                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+
+											{isCollapsed ? <CollapsedChevron className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+										</button>
+										{block.type === 'heading' && <Type className="w-4 h-4 text-primary flex-shrink-0" />}
+										{block.type === 'text' && <AlignLeft className="w-4 h-4 text-primary flex-shrink-0" />}
+										{block.type === 'video' && <Video className="w-4 h-4 text-primary flex-shrink-0" />}
+										{block.type === 'image' && <Image className="w-4 h-4 text-primary flex-shrink-0" />}
+										{block.type === 'pdf' && <FileText className="w-4 h-4 text-primary flex-shrink-0" />}
+										<button data-ev-id="ev_type_label_toggle"
+                  type="button"
+                  onClick={() => toggleCollapse(block.id)}
+                  className="text-sm font-medium text-foreground hover:text-primary transition-colors flex-shrink-0">
+
 											{block.type === 'heading' && dict.studioBlocks.blockHeading}
 											{block.type === 'text' && dict.studioBlocks.blockText}
 											{block.type === 'video' && dict.studioBlocks.blockVideo}
 											{block.type === 'image' && dict.studioBlocks.blockImage}
 											{block.type === 'pdf' && dict.studioBlocks.blockPdf}
-										</span>
+										</button>
+										{isCollapsed &&
+                  <span data-ev-id="ev_block_summary" className="text-sm text-muted-foreground truncate">
+												{getBlockSummary(block)}
+											</span>
+                  }
 										{isIncomplete &&
-                  <span data-ev-id="ev_a51894aa23" className="text-xs text-amber-500 px-2 py-0.5 bg-amber-500/10 rounded">
+                  <span data-ev-id="ev_a51894aa23" className="text-xs text-amber-500 px-2 py-0.5 bg-amber-500/10 rounded flex-shrink-0">
 												{dict.studioBlocks.incomplete}
 											</span>
                   }
@@ -460,9 +538,9 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 											<ChevronDown className="w-4 h-4" />
 										</button>
 										<button data-ev-id="ev_0d1f5896a2"
-                  onClick={() => handleDeleteBlock(index)}
+                  onClick={() => handleDeleteBlock(block.id, index)}
                   className={`p-1.5 transition-colors ${
-                  deleteConfirm === index ?
+                  deleteConfirm === block.id ?
                   'text-destructive bg-destructive/10 rounded' :
                   'text-muted-foreground hover:text-destructive'}`
                   }
@@ -470,12 +548,15 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 
 											<Trash2 className="w-4 h-4" />
 										</button>
-										{deleteConfirm === index &&
+										{deleteConfirm === block.id &&
                   <span data-ev-id="ev_2437f5c5fb" className="text-xs text-destructive ms-1">{dict.studioBlocks.confirmDeleteBlock}</span>
                   }
 									</div>
 								</div>
 
+								{/* Block body - hidden when collapsed */}
+								{!isCollapsed &&
+              <>
 								{/* Video URL field */}
 								{block.type === 'video' &&
               <div data-ev-id="ev_d34addcec9" className="mb-3">
@@ -631,6 +712,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
               <p data-ev-id="ev_10be20b955" className="mt-2 text-xs text-muted-foreground">
 										{dict.studioBlocks.formattingHint}
 									</p>
+              }
+              </>
               }
 							</div>);
 

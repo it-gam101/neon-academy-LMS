@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import { Modal } from '@/components/ui/Modal';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
   title: string;
-  message: string;
+  message: ReactNode;
   confirmLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
@@ -47,7 +48,7 @@ export function ConfirmDialog({
 
   return (
     <Modal isOpen={isOpen} onClose={onCancel} title={title} footer={footer}>
-      <p data-ev-id="ev_347bc46565" className="text-foreground">{message}</p>
+      <div data-ev-id="ev_347bc46565" className="text-foreground">{message}</div>
     </Modal>);
 
 }

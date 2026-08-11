@@ -165,6 +165,10 @@ export interface Dictionary {
 		uploading: string;
 		uploadFailed: string;
 		orUseUrl: string;
+		collapseAll: string;
+		expandAll: string;
+		emptyBlock: string;
+		noFileYet: string;
 	};
 	
 	// Media Library
@@ -463,6 +467,7 @@ export interface Dictionary {
 		reorderModules: string;
 		deleteModule: string;
 		confirmDeleteModule: string;
+		deleteModuleWarning: string;
 		lessonContent: string;
 		addTextBlock: string;
 		addHeadingBlock: string;
@@ -821,6 +826,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			uploading: 'Uploading…',
 			uploadFailed: 'Upload failed',
 			orUseUrl: 'or paste a link',
+			collapseAll: 'Collapse all',
+			expandAll: 'Expand all',
+			emptyBlock: 'Empty',
+			noFileYet: 'No file selected',
 		},
 		
 		media: {
@@ -1109,6 +1118,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			reorderModules: 'Drag to reorder',
 			deleteModule: 'Delete Module',
 			confirmDeleteModule: 'Are you sure you want to delete this module?',
+			deleteModuleWarning: 'This will also permanently delete learner progress records for this module:',
 			lessonContent: 'Lesson Content',
 			addTextBlock: 'Add Text',
 			addHeadingBlock: 'Add Heading',
@@ -1453,6 +1463,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			uploading: 'מעלה…',
 			uploadFailed: 'ההעלאה נכשלה',
 			orUseUrl: 'או הדביקו קישור',
+			collapseAll: 'כווץ הכול',
+			expandAll: 'הרחב הכול',
+			emptyBlock: 'ריק',
+			noFileYet: 'לא נבחר קובץ',
 		},
 		
 		media: {
@@ -1741,6 +1755,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			reorderModules: 'גרור לסידור מחדש',
 			deleteModule: 'מחק מודול',
 			confirmDeleteModule: 'האם אתה בטוח שברצונך למחוק מודול זה?',
+			deleteModuleWarning: 'פעולה זו תמחק לצמיתות גם רשומות התקדמות של לומדים עבור מודול זה:',
 			lessonContent: 'תוכן השיעור',
 			addTextBlock: 'הוסף טקסט',
 			addHeadingBlock: 'הוסף כותרת',
