@@ -39,6 +39,10 @@ export default function StudioEditor() {
 
   // SCORM upload state
   const [showScormUploadModal, setShowScormUploadModal] = useState(false);
+  const [showScormChooser, setShowScormChooser] = useState(false);
+  const [availablePackages, setAvailablePackages] = useState<Array<{id: string;title: string;scorm_version: string;created_at: string;}>>([]);
+  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [addingFromLibrary, setAddingFromLibrary] = useState(false);
 
   // Profile for permission checks
   const { profile } = useProfile();
@@ -307,6 +311,58 @@ export default function StudioEditor() {
     }
     setDeletingModuleId(null);
     setModuleDeleteWarningCount(null);
+  };
+
+  const handleOpenScormChooser = async () => {
+    if (!supabase) return;
+    setLoadingPackages(true);
+    setShowScormChooser(true);
+
+    const { data, error } = await supabase.
+    from('scorm_packages').
+    select('id, title, scorm_version, created_at').
+    eq('is_public_sandbox', false).
+    order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Failed to load packages:', error);
+      setAvailablePackages([]);
+    } else {
+      setAvailablePackages(data ?? []);
+    }
+    setLoadingPackages(false);
+  };
+
+  const handleSelectExistingPackage = async (pkg: {id: string;title: string;}) => {
+    if (!supabase || !courseId) return;
+    setAddingFromLibrary(true);
+
+    const sortOrder = modules.length + 1;
+    const { data, error } = await supabase.
+    from('modules').
+    insert({
+      course_id: courseId,
+      title_en: pkg.title,
+      title_he: pkg.title,
+      module_type: 'scorm_package',
+      scorm_package_id: pkg.id,
+      sort_order: sortOrder
+    }).
+    select().
+    single();
+
+    if (error) {
+      console.error('Failed to add SCORM module:', error);
+      showToast('error', error?.message || dict.common.error);
+    } else if (!data) {
+      // RLS blocked - insert returned no rows
+      showToast('error', dict.common.error);
+    } else {
+      setModules((prev) => [...prev, data]);
+      setShowScormChooser(false);
+      showToast('success', dict.studioUpload.success);
+    }
+    setAddingFromLibrary(false);
   };
 
   const handleOpenQuizSettings = async (moduleId: string) => {
@@ -684,7 +740,7 @@ export default function StudioEditor() {
 								{dict.studio.addQuiz}
 							</button>
 							<button data-ev-id="ev_add_scorm_btn"
-              onClick={() => setShowScormUploadModal(true)}
+              onClick={handleOpenScormChooser}
               className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 
 								<Package className="w-4 h-4" />
@@ -1178,6 +1234,60 @@ export default function StudioEditor() {
         destructive
         onConfirm={() => deletingModuleId && handleDeleteModule(deletingModuleId)}
         onCancel={() => {setDeletingModuleId(null);setModuleDeleteWarningCount(null);}} />
+
+			{/* SCORM Chooser Modal */}
+			<Modal
+        isOpen={showScormChooser}
+        onClose={() => setShowScormChooser(false)}
+        title={dict.studioUpload.addScorm}>
+
+				<div data-ev-id="ev_scorm_chooser" className="flex flex-col gap-4">
+					{/* Upload new option */}
+					<button data-ev-id="ev_upload_new_scorm"
+          type="button"
+          onClick={() => {
+            setShowScormChooser(false);
+            setShowScormUploadModal(true);
+          }}
+          className="flex items-center gap-3 p-4 text-start bg-muted border border-border rounded-lg hover:border-primary transition-colors">
+
+						<Package className="w-6 h-6 text-primary flex-shrink-0" />
+						<span data-ev-id="ev_upload_new_label" className="font-medium text-foreground">{dict.studioUpload.uploadNew}</span>
+					</button>
+
+					{/* Divider */}
+					<div data-ev-id="ev_scorm_divider" className="flex items-center gap-2">
+						<div data-ev-id="ev_c0bfe2ac21" className="flex-1 border-t border-border" />
+						<span data-ev-id="ev_or_label" className="text-xs text-muted-foreground">{dict.studioUpload.chooseExisting}</span>
+						<div data-ev-id="ev_c98aae6530" className="flex-1 border-t border-border" />
+					</div>
+
+					{/* Existing packages list */}
+					{loadingPackages ?
+          <p data-ev-id="ev_loading_packages" className="text-center text-muted-foreground py-4">{dict.common.loading}</p> :
+          availablePackages.length === 0 ?
+          <p data-ev-id="ev_no_packages" className="text-center text-muted-foreground py-4">{dict.studioUpload.noPackages}</p> :
+          <div data-ev-id="ev_packages_list" className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+							{availablePackages.map((pkg) =>
+            <button data-ev-id="ev_pkg_item"
+            key={pkg.id}
+            type="button"
+            disabled={addingFromLibrary}
+            onClick={() => handleSelectExistingPackage(pkg)}
+            className="flex items-center gap-3 p-3 text-start bg-background border border-border rounded-lg hover:border-primary transition-colors disabled:opacity-50">
+
+									<div data-ev-id="ev_pkg_info" className="flex-1 min-w-0">
+										<p data-ev-id="ev_pkg_title" className="font-medium text-foreground truncate">{pkg.title}</p>
+										<p data-ev-id="ev_pkg_meta" className="text-xs text-muted-foreground">
+											{pkg.scorm_version} • {new Date(pkg.created_at).toLocaleDateString(locale)}
+										</p>
+									</div>
+								</button>
+            )}
+						</div>
+          }
+				</div>
+			</Modal>
 
 		</div>);
 

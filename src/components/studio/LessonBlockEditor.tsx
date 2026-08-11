@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, ChevronLeft, AlertTriangle, Type, AlignLeft, Video, Check, Image, FileText, Upload, Loader2, ChevronsUpDown, ChevronsDownUp } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, ChevronLeft, AlertTriangle, Type, AlignLeft, Video, Check, Image, FileText, Upload, Loader2, ChevronsUpDown, ChevronsDownUp, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +25,38 @@ interface LessonBlockEditorProps {
   onBlockCountChange?: (count: number) => void;
   onSaved?: () => void;
   onDirtyChange?: (dirty: boolean) => void;
+}
+
+interface SortableBlockProps {
+  block: ContentBlock;
+  children: (props: {
+    listeners: ReturnType<typeof useSortable>['listeners'];
+    attributes: ReturnType<typeof useSortable>['attributes'];
+    isDragging: boolean;
+  }) => React.ReactNode;
+}
+
+function SortableBlock({ block, children }: SortableBlockProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: block.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined
+  };
+
+  return (
+    <div data-ev-id="ev_04253dd058" ref={setNodeRef} style={style}>
+      {children({ listeners, attributes, isDragging })}
+    </div>);
+
 }
 
 // Normalise legacy string content to bilingual object
@@ -138,7 +174,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
         const rawBlocks = json.blocks || [];
         // Normalise all blocks, generating ids for legacy blocks that have none
         const normalised: ContentBlock[] = rawBlocks.map((b) => ({
-          id: (b as { id?: string }).id ?? crypto.randomUUID(),
+          id: (b as {id?: string;}).id ?? crypto.randomUUID(),
           type: b.type as 'heading' | 'text' | 'video' | 'image' | 'pdf',
           content: normaliseContent(b.content as {en: string;he: string;} | string),
           url: b.url
@@ -362,6 +398,28 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 
   const CollapsedChevron = locale === 'he' ? ChevronLeft : ChevronRight;
 
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setDeleteConfirm(null);
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setBlocks((prev) => {
+        const oldIndex = prev.findIndex((b) => b.id === active.id);
+        const newIndex = prev.findIndex((b) => b.id === over.id);
+        return arrayMove(prev, oldIndex, newIndex);
+      });
+    }
+  };
+
   const handleSave = async () => {
     if (!supabase || !moduleId) return;
     setUrlError(null);
@@ -444,17 +502,17 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 			{blocks.length > 0 &&
       <div data-ev-id="ev_collapse_expand_btns" className="flex items-center gap-2">
 					<button data-ev-id="ev_collapse_all"
-          type="button"
-          onClick={collapseAll}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        type="button"
+        onClick={collapseAll}
+        className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
 
 						<ChevronsDownUp className="w-3.5 h-3.5" />
 						{dict.studioBlocks.collapseAll}
 					</button>
 					<button data-ev-id="ev_expand_all"
-          type="button"
-          onClick={expandAll}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        type="button"
+        onClick={expandAll}
+        className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
 
 						<ChevronsUpDown className="w-3.5 h-3.5" />
 						{dict.studioBlocks.expandAll}
@@ -468,7 +526,9 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 					{dict.studioBlocks.noBlocks}
 				</p> :
 
-      <div data-ev-id="ev_7efba52169" className="flex flex-col gap-3">
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+          <div data-ev-id="ev_7efba52169" className="flex flex-col gap-3">
 					{blocks.map((block, index) => {
           const isIncomplete =
           block.content.en && !block.content.he ||
@@ -476,16 +536,28 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
           const isCollapsed = collapsed.has(block.id);
 
           return (
+            <SortableBlock key={block.id} block={block}>
+              {({ listeners, attributes, isDragging }) => (
             <div data-ev-id="ev_4de0529002"
-            key={block.id}
             className={`p-4 bg-background border rounded-lg ${
             isIncomplete ? 'border-amber-500/50' : 'border-border'}${
-            deleteConfirm === block.id ? ' ring-2 ring-destructive' : ''}`
+            deleteConfirm === block.id ? ' ring-2 ring-destructive' : ''}${
+            isDragging ? ' opacity-50' : ''}`
             }>
 
 								{/* Block header */}
 								<div data-ev-id="ev_c438205030" className={`flex items-center justify-between${isCollapsed ? '' : ' mb-3'}`}>
 									<div data-ev-id="ev_a7d61a501f" className="flex items-center gap-2 min-w-0 flex-1">
+										{/* Drag handle */}
+										<button data-ev-id="ev_drag_handle"
+                  type="button"
+                  {...listeners}
+                  {...attributes}
+                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                  aria-label={dict.studioBlocks.dragHandle}>
+
+											<GripVertical className="w-4 h-4" />
+										</button>
 										<button data-ev-id="ev_collapse_toggle"
                   type="button"
                   onClick={() => toggleCollapse(block.id)}
@@ -559,104 +631,104 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
               <>
 								{/* Video URL field */}
 								{block.type === 'video' &&
-              <div data-ev-id="ev_d34addcec9" className="mb-3">
+                <div data-ev-id="ev_d34addcec9" className="mb-3">
 										<label data-ev-id="ev_77da9332c0" className="block text-xs font-medium text-muted-foreground mb-1">
 											{dict.studioBlocks.videoUrl}
 										</label>
 										<input data-ev-id="ev_ca1bcc5589"
-                type="url"
-                value={block.url || ''}
-                onChange={(e) => handleVideoUrlChange(index, e.target.value)}
-                onBlur={(e) => handleVideoUrlChange(index, e.target.value)}
-                className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                dir="ltr"
-                placeholder="https://www.youtube.com/embed/..." />
+                  type="url"
+                  value={block.url || ''}
+                  onChange={(e) => handleVideoUrlChange(index, e.target.value)}
+                  onBlur={(e) => handleVideoUrlChange(index, e.target.value)}
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  dir="ltr"
+                  placeholder="https://www.youtube.com/embed/..." />
 
 										{convertedUrls.has(index) &&
-                <p data-ev-id="ev_4051070cbc" className="mt-1 text-xs text-primary flex items-center gap-1">
+                  <p data-ev-id="ev_4051070cbc" className="mt-1 text-xs text-primary flex items-center gap-1">
 												<Check className="w-3 h-3" />
 												{dict.studioBlocks.videoUrlConverted}
 											</p>
-                }
+                  }
 										{block.url && !convertedUrls.has(index) && isUnparseableYouTubeUrl(block.url) &&
-                <p data-ev-id="ev_ec908263ea" className="mt-1 text-xs text-amber-500 flex items-center gap-1">
+                  <p data-ev-id="ev_ec908263ea" className="mt-1 text-xs text-amber-500 flex items-center gap-1">
 												<AlertTriangle className="w-3 h-3" />
 												{dict.studioBlocks.videoEmbedWarning}
 											</p>
-                }
+                  }
 										<p data-ev-id="ev_790f059bb4" className="mt-1 text-xs text-muted-foreground">
 											{dict.studioBlocks.videoUrlHelperText}
 										</p>
 										{block.url && isNonEmbeddableHost(block.url) &&
-                <p data-ev-id="ev_video_unsupported_host" className="mt-1 text-sm text-destructive">
+                  <p data-ev-id="ev_video_unsupported_host" className="mt-1 text-sm text-destructive">
 												{dict.studioBlocks.unsupportedHost}
 											</p>
-                }
+                  }
 									</div>
-              }
+                }
 
 								{/* Media URL field for image and pdf */}
 								{(block.type === 'image' || block.type === 'pdf') &&
-              <div data-ev-id="ev_media_url_field" className="mb-3">
+                <div data-ev-id="ev_media_url_field" className="mb-3">
 										{/* File upload control */}
 										<div data-ev-id="ev_5f68215120" className="flex items-center gap-3 mb-2">
 											<label data-ev-id="ev_192f7afb84" className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors cursor-pointer text-sm font-medium">
 												{uploadingIndex === index ?
-                    <>
+                      <>
 														<Loader2 className="w-4 h-4 animate-spin" />
 														{dict.studioBlocks.uploading}
 													</> :
 
-                    <>
+                      <>
 														<Upload className="w-4 h-4" />
 														{dict.studioBlocks.uploadFile}
 													</>
-                    }
-												<input data-ev-id="ev_4c7f64f729"
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
-                    className="hidden"
-                    disabled={uploadingIndex !== null}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleFileUpload(index, file);
                       }
-                      e.target.value = '';
-                    }} />
+												<input data-ev-id="ev_4c7f64f729"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+                      className="hidden"
+                      disabled={uploadingIndex !== null}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleFileUpload(index, file);
+                        }
+                        e.target.value = '';
+                      }} />
 
 											</label>
 											<button data-ev-id="ev_c72a42e5ae"
-                  type="button"
-                  onClick={() => setLibraryOpen({ index, kind: block.type as 'image' | 'pdf' })}
-                  disabled={uploadingIndex !== null}
-                  className="px-3 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors text-sm font-medium disabled:opacity-50">
+                    type="button"
+                    onClick={() => setLibraryOpen({ index, kind: block.type as 'image' | 'pdf' })}
+                    disabled={uploadingIndex !== null}
+                    className="px-3 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors text-sm font-medium disabled:opacity-50">
 												{dict.media.chooseFromLibrary}
 											</button>
 											<span data-ev-id="ev_37615337b0" className="text-xs text-muted-foreground">{dict.studioBlocks.orUseUrl}</span>
 										</div>
 										{uploadError?.index === index &&
-                <p data-ev-id="ev_5ea3d70d18" className="mb-2 text-sm text-destructive">
+                  <p data-ev-id="ev_5ea3d70d18" className="mb-2 text-sm text-destructive">
 												{dict.studioBlocks.uploadFailed}: {uploadError.message}
 											</p>
-                }
+                  }
 										<label data-ev-id="ev_media_url_label" className="block text-xs font-medium text-muted-foreground mb-1">
 											{dict.studioBlocks.mediaUrl}
 										</label>
 										<input data-ev-id="ev_media_url_input"
-                type="url"
-                value={block.url || ''}
-                onChange={(e) => handleUpdateBlock(index, { url: e.target.value })}
-                className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                dir="ltr"
-                placeholder="https://..." />
+                  type="url"
+                  value={block.url || ''}
+                  onChange={(e) => handleUpdateBlock(index, { url: e.target.value })}
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  dir="ltr"
+                  placeholder="https://..." />
 										{block.url && isNonEmbeddableHost(block.url) &&
-                <p data-ev-id="ev_media_unsupported_host" className="mt-1 text-sm text-destructive">
+                  <p data-ev-id="ev_media_unsupported_host" className="mt-1 text-sm text-destructive">
 												{dict.studioBlocks.unsupportedHost}
 											</p>
-                }
+                  }
 									</div>
-              }
+                }
 
 								{/* Content fields - side by side on wide, stacked on narrow */}
 								<div data-ev-id="ev_b598b2379e" className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -666,21 +738,21 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 											{dict.profile.english}
 										</label>
 										{block.type === 'heading' ?
-                  <input data-ev-id="ev_f7cc3fdb99"
-                  type="text"
-                  value={block.content.en}
-                  onChange={(e) => handleUpdateContent(index, 'en', e.target.value)}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  dir="ltr" /> :
+                    <input data-ev-id="ev_f7cc3fdb99"
+                    type="text"
+                    value={block.content.en}
+                    onChange={(e) => handleUpdateContent(index, 'en', e.target.value)}
+                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    dir="ltr" /> :
 
 
-                  <textarea data-ev-id="ev_44eb50b182"
-                  value={block.content.en}
-                  onChange={(e) => handleUpdateContent(index, 'en', e.target.value)}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
-                  dir="ltr" />
+                    <textarea data-ev-id="ev_44eb50b182"
+                    value={block.content.en}
+                    onChange={(e) => handleUpdateContent(index, 'en', e.target.value)}
+                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
+                    dir="ltr" />
 
-                  }
+                    }
 									</div>
 
 									{/* Hebrew */}
@@ -689,36 +761,41 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 											{dict.profile.hebrew}
 										</label>
 										{block.type === 'heading' ?
-                  <input data-ev-id="ev_addb3d038d"
-                  type="text"
-                  value={block.content.he}
-                  onChange={(e) => handleUpdateContent(index, 'he', e.target.value)}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  dir="rtl" /> :
+                    <input data-ev-id="ev_addb3d038d"
+                    type="text"
+                    value={block.content.he}
+                    onChange={(e) => handleUpdateContent(index, 'he', e.target.value)}
+                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    dir="rtl" /> :
 
 
-                  <textarea data-ev-id="ev_c320f834d1"
-                  value={block.content.he}
-                  onChange={(e) => handleUpdateContent(index, 'he', e.target.value)}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
-                  dir="rtl" />
+                    <textarea data-ev-id="ev_c320f834d1"
+                    value={block.content.he}
+                    onChange={(e) => handleUpdateContent(index, 'he', e.target.value)}
+                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
+                    dir="rtl" />
 
-                  }
+                    }
 									</div>
 								</div>
 
 								{/* Formatting hint for text blocks */}
 								{block.type === 'text' &&
-              <p data-ev-id="ev_10be20b955" className="mt-2 text-xs text-muted-foreground">
+                <p data-ev-id="ev_10be20b955" className="mt-2 text-xs text-muted-foreground">
 										{dict.studioBlocks.formattingHint}
 									</p>
-              }
+                }
               </>
               }
-							</div>);
+							</div>
+              )}
+            </SortableBlock>
+          );
 
         })}
 				</div>
+        </SortableContext>
+      </DndContext>
       }
 
 			{/* Add block buttons */}

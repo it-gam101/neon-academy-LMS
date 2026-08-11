@@ -119,6 +119,9 @@ export interface Dictionary {
 		upload: string;
 		versionLabel: string;
 		entryLabel: string;
+		uploadNew: string;
+		chooseExisting: string;
+		noPackages: string;
 	};
 	
 	// Studio Blocks
@@ -169,6 +172,7 @@ export interface Dictionary {
 		expandAll: string;
 		emptyBlock: string;
 		noFileYet: string;
+		dragHandle: string;
 	};
 	
 	// Media Library
@@ -781,6 +785,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			upload: 'Upload',
 			versionLabel: 'SCORM:',
 			entryLabel: 'Entry:',
+			uploadNew: 'Upload a new package',
+			chooseExisting: 'Choose an existing package',
+			noPackages: 'No packages available yet',
 		},
 		
 		studioBlocks: {
@@ -830,6 +837,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			expandAll: 'Expand all',
 			emptyBlock: 'Empty',
 			noFileYet: 'No file selected',
+			dragHandle: 'Drag to reorder',
 		},
 		
 		media: {
@@ -1418,6 +1426,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			upload: 'העלה',
 			versionLabel: 'SCORM:',
 			entryLabel: 'נקודת כניסה:',
+			uploadNew: 'העלאת חבילה חדשה',
+			chooseExisting: 'בחירת חבילה קיימת',
+			noPackages: 'אין חבילות זמינות עדיין',
 		},
 		
 		studioBlocks: {
@@ -1467,6 +1478,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			expandAll: 'הרחב הכול',
 			emptyBlock: 'ריק',
 			noFileYet: 'לא נבחר קובץ',
+			dragHandle: 'גררו לשינוי הסדר',
 		},
 		
 		media: {
