@@ -145,7 +145,7 @@ export default function ModulePage() {
         if (!block.url) return null;
         return (
           <div data-ev-id="ev_pdf_block" key={index} className="my-6">
-            <iframe data-ev-id="ev_8130a6f278" src={`${block.url}#view=FitH`} className="w-full h-[400px] md:h-[600px] rounded-lg border border-border" title={content || 'PDF'} dir="ltr" />
+            <iframe data-ev-id="ev_8130a6f278" src={`${block.url}#view=FitH&pagemode=none&navpanes=0`} className="w-full h-[400px] md:h-[600px] rounded-lg border border-border" title={content || 'PDF'} dir="ltr" />
             <a data-ev-id="ev_73180695d4" href={block.url} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-primary hover:underline">{dict.studioBlocks.openPdf}</a>
           </div>);
 

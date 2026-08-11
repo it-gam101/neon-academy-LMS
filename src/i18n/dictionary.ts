@@ -178,6 +178,14 @@ export interface Dictionary {
 		deleteMessage: string;
 		deleted: string;
 		uploadedBy: string;
+		tabFiles: string;
+		tabPackages: string;
+		usedByModules: string;
+		learnerRecords: string;
+		packageInUse: string;
+		deletePackageTitle: string;
+		deletePackageMessage: string;
+		packageDeleted: string;
 	};
 	
 	// Roles
@@ -825,6 +833,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			deleteMessage: 'This permanently deletes the file. Lessons that already use it will stop displaying it.',
 			deleted: 'File deleted',
 			uploadedBy: 'Uploaded by',
+			tabFiles: 'Files',
+			tabPackages: 'SCORM Packages',
+			usedByModules: 'Used by modules',
+			learnerRecords: 'Learner records',
+			packageInUse: 'In use — cannot be deleted. Remove it from all modules first; learner records must be preserved.',
+			deletePackageTitle: 'Delete SCORM package?',
+			deletePackageMessage: 'This permanently deletes the package and all its files. Only unused packages can be deleted.',
+			packageDeleted: 'Package deleted',
 		},
 		
 		roles: {
@@ -1449,6 +1465,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			deleteMessage: 'פעולה זו מוחקת את הקובץ לצמיתות. שיעורים שכבר משתמשים בו יפסיקו להציג אותו.',
 			deleted: 'הקובץ נמחק',
 			uploadedBy: 'הועלה על ידי',
+			tabFiles: 'קבצים',
+			tabPackages: 'חבילות SCORM',
+			usedByModules: 'בשימוש במודולים',
+			learnerRecords: 'רשומות לומדים',
+			packageInUse: 'בשימוש — לא ניתן למחוק. הסירו אותה תחילה מכל המודולים; יש לשמר את רשומות הלומדים.',
+			deletePackageTitle: 'למחוק את חבילת ה-SCORM?',
+			deletePackageMessage: 'פעולה זו מוחקת לצמיתות את החבילה ואת כל קבציה. ניתן למחוק חבילות שאינן בשימוש בלבד.',
+			packageDeleted: 'החבילה נמחקה',
 		},
 		
 		roles: {

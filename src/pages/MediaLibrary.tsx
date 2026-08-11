@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
-import { Image, FileText, Trash2, Search, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Image, FileText, Trash2, Search, ArrowLeft, ArrowRight, Package } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useProfile } from '@/hooks/useProfile';
@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { showToast } from '@/components/ui/Toast';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Modal } from '@/components/ui/Modal';
 import { functionErrorMessage } from '@/lib/functionError';
 
 interface MediaAsset {
@@ -19,6 +19,14 @@ interface MediaAsset {
   url: string;
   filename: string;
   mime_type: string;
+  size_bytes: number;
+  created_at: string;
+}
+
+interface ScormPackage {
+  id: string;
+  title: string;
+  scorm_version: string;
   size_bytes: number;
   created_at: string;
 }
@@ -68,8 +76,19 @@ export default function MediaLibrary() {
   const [ownerNames, setOwnerNames] = useState<Map<string, string>>(new Map());
   const [deleteTarget, setDeleteTarget] = useState<MediaAsset | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'files' | 'packages'>('files');
+  const [packages, setPackages] = useState<ScormPackage[]>([]);
+  const [packagesLoading, setPackagesLoading] = useState(false);
+  const [moduleUsage, setModuleUsage] = useState<Map<string, number>>(new Map());
+  const [registrationUsage, setRegistrationUsage] = useState<Map<string, number>>(new Map());
+  const [deletePackageTarget, setDeletePackageTarget] = useState<ScormPackage | null>(null);
+  const [deletingPackage, setDeletingPackage] = useState(false);
+  const [deletePackageError, setDeletePackageError] = useState<string | null>(null);
 
   const isSuperAdmin = profile?.role === 'super_admin';
+  const isHrManager = profile?.role === 'hr_manager';
+  const canManagePackages = isSuperAdmin || isHrManager;
 
   // Fetch assets
   useEffect(() => {
@@ -123,6 +142,56 @@ export default function MediaLibrary() {
     fetchOwners();
   }, [isSuperAdmin, assets]);
 
+  // Fetch SCORM packages and usage counts for super_admin/hr_manager
+  useEffect(() => {
+    if (!supabase || !canManagePackages) return;
+
+    const fetchPackages = async () => {
+      setPackagesLoading(true);
+
+      const { data: pkgData, error: pkgErr } = await supabase
+        .from('scorm_packages')
+        .select('id, title, scorm_version, size_bytes, created_at')
+        .order('created_at', { ascending: false });
+
+      if (pkgErr) {
+        console.error('Failed to load SCORM packages:', pkgErr);
+      } else {
+        setPackages((pkgData as ScormPackage[]) || []);
+      }
+
+      // Fetch module usage counts
+      const { data: modData } = await supabase
+        .from('modules')
+        .select('scorm_package_id');
+
+      const modMap = new Map<string, number>();
+      (modData || []).forEach((m: { scorm_package_id: string | null }) => {
+        if (m.scorm_package_id) {
+          modMap.set(m.scorm_package_id, (modMap.get(m.scorm_package_id) || 0) + 1);
+        }
+      });
+      setModuleUsage(modMap);
+
+      // Fetch registration usage counts
+      const { data: regData } = await supabase
+        .from('scorm_registrations')
+        .select('package_id');
+
+      const regMap = new Map<string, number>();
+      (regData || []).forEach((r: { package_id: string | null }) => {
+        if (r.package_id) {
+          regMap.set(r.package_id, (regMap.get(r.package_id) || 0) + 1);
+        }
+      });
+      setRegistrationUsage(regMap);
+
+      setPackagesLoading(false);
+    };
+
+    fetchPackages();
+  }, [canManagePackages]);
+
   // Filtered assets
   const filteredAssets = useMemo(() => {
     return assets.filter((asset) => {
@@ -136,6 +205,7 @@ export default function MediaLibrary() {
     if (!supabase || !deleteTarget) return;
 
     setDeleting(true);
+    setDeleteError(null);
 
     try {
       const { error } = await supabase.functions.invoke('media-delete', {
@@ -145,19 +215,72 @@ export default function MediaLibrary() {
       if (error) {
         const msg = await functionErrorMessage(error, dict.common.error);
         console.error('Delete error:', error);
-        showToast('error', msg);
-      } else {
-        setAssets((prev) => prev.filter((a) => a.id !== deleteTarget.id));
-        showToast('success', dict.media.deleted);
+        setDeleteError(msg);
+        setDeleting(false);
+        return;
       }
+      
+      setAssets((prev) => prev.filter((a) => a.id !== deleteTarget.id));
+      showToast('success', dict.media.deleted);
+      setDeleteTarget(null);
     } catch (err) {
       const msg = await functionErrorMessage(err, dict.common.error);
       console.error('Delete exception:', err);
-      showToast('error', msg);
+      setDeleteError(msg);
     }
 
     setDeleting(false);
+  };
+
+  const handleDeletePackage = async () => {
+    if (!supabase || !deletePackageTarget) return;
+
+    setDeletingPackage(true);
+    setDeletePackageError(null);
+
+    try {
+      const { error } = await supabase.functions.invoke('scorm-package-delete', {
+        body: { id: deletePackageTarget.id }
+      });
+
+      if (error) {
+        const msg = await functionErrorMessage(error, dict.common.error);
+        console.error('Delete package error:', error);
+        setDeletePackageError(msg);
+        setDeletingPackage(false);
+        return;
+      }
+
+      setPackages((prev) => prev.filter((p) => p.id !== deletePackageTarget.id));
+      showToast('success', dict.media.packageDeleted);
+      setDeletePackageTarget(null);
+    } catch (err) {
+      const msg = await functionErrorMessage(err, dict.common.error);
+      console.error('Delete package exception:', err);
+      setDeletePackageError(msg);
+    }
+
+    setDeletingPackage(false);
+  };
+
+  const openDeleteDialog = (asset: MediaAsset) => {
+    setDeleteError(null);
+    setDeleteTarget(asset);
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteError(null);
     setDeleteTarget(null);
+  };
+
+  const openDeletePackageDialog = (pkg: ScormPackage) => {
+    setDeletePackageError(null);
+    setDeletePackageTarget(pkg);
+  };
+
+  const closeDeletePackageDialog = () => {
+    setDeletePackageError(null);
+    setDeletePackageTarget(null);
   };
 
   if (loading) {
@@ -185,6 +308,35 @@ export default function MediaLibrary() {
 				</div>
 			</div>
 
+			{/* Tab row for super_admin/hr_manager */}
+			{canManagePackages &&
+      <div data-ev-id="ev_media_tabs" className="flex items-center bg-muted rounded-lg p-1 mb-6">
+					<button data-ev-id="ev_tab_files"
+          onClick={() => setActiveTab('files')}
+          className={`px-4 py-2 text-sm rounded-md transition-colors ${
+          activeTab === 'files' ?
+          'bg-background text-foreground shadow-sm' :
+          'text-muted-foreground hover:text-foreground'}`
+          }>
+
+						{dict.media.tabFiles}
+					</button>
+					<button data-ev-id="ev_tab_packages"
+          onClick={() => setActiveTab('packages')}
+          className={`px-4 py-2 text-sm rounded-md transition-colors ${
+          activeTab === 'packages' ?
+          'bg-background text-foreground shadow-sm' :
+          'text-muted-foreground hover:text-foreground'}`
+          }>
+
+						{dict.media.tabPackages}
+					</button>
+				</div>
+      }
+
+			{/* Files tab content */}
+			{(!canManagePackages || activeTab === 'files') &&
+      <>
 			{/* Filters */}
 			<div data-ev-id="ev_4de62d9ea8" className="flex flex-col sm:flex-row gap-4 mb-6">
 				{/* Search */}
@@ -264,7 +416,7 @@ export default function MediaLibrary() {
 
 								{/* Delete button overlay */}
 								<button data-ev-id="ev_dd21be1b92"
-            onClick={() => setDeleteTarget(asset)}
+            onClick={() => openDeleteDialog(asset)}
             className="absolute top-2 end-2 p-1.5 bg-destructive text-destructive-foreground rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
             title={dict.common.delete}>
 
@@ -290,16 +442,121 @@ export default function MediaLibrary() {
         )}
 				</div>
       }
+      </>
+      }
 
-			{/* Delete confirmation */}
-			<ConfirmDialog
+			{/* SCORM Packages tab */}
+			{canManagePackages && activeTab === 'packages' &&
+      <div data-ev-id="ev_packages_section">
+					{packagesLoading ?
+          <LoadingSkeleton variant="list" count={4} /> :
+          packages.length === 0 ?
+          <EmptyState
+            icon={Package}
+            title={dict.common.noResults}
+            description="" /> :
+
+          <div data-ev-id="ev_packages_list" className="flex flex-col gap-3">
+							{packages.map((pkg) => {
+              const modCount = moduleUsage.get(pkg.id) || 0;
+              const regCount = registrationUsage.get(pkg.id) || 0;
+              const inUse = modCount > 0 || regCount > 0;
+
+              return (
+                <div data-ev-id="ev_package_row"
+                key={pkg.id}
+                className="p-4 bg-card border border-border rounded-lg flex items-center justify-between gap-4">
+
+										<div data-ev-id="ev_package_info" className="flex-1 min-w-0">
+											<p data-ev-id="ev_package_title" className="font-medium text-foreground truncate">{pkg.title}</p>
+											<p data-ev-id="ev_package_meta" className="text-xs text-muted-foreground mt-1">
+												{pkg.scorm_version} · {formatFileSize(pkg.size_bytes)} · {formatDate(pkg.created_at, locale)}
+											</p>
+											<p data-ev-id="ev_package_usage" className="text-xs text-muted-foreground mt-1">
+												{dict.media.usedByModules}: {modCount} · {dict.media.learnerRecords}: {regCount}
+											</p>
+										</div>
+
+										<div data-ev-id="ev_package_actions" className="flex items-center gap-3">
+											{inUse &&
+                      <span data-ev-id="ev_package_in_use" className="text-xs text-muted-foreground max-w-[200px]">
+													{dict.media.packageInUse}
+												</span>
+                      }
+											<button data-ev-id="ev_delete_package"
+                      onClick={() => openDeletePackageDialog(pkg)}
+                      disabled={inUse}
+                      className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={dict.common.delete}>
+
+												<Trash2 className="w-4 h-4" />
+											</button>
+										</div>
+									</div>);
+
+            })}
+						</div>
+          }
+				</div>
+      }
+
+			{/* File delete confirmation */}
+			<Modal
         isOpen={!!deleteTarget}
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
+        onClose={closeDeleteDialog}
         title={dict.media.deleteTitle}
-        message={dict.media.deleteMessage}
-        confirmLabel={deleting ? dict.common.loading : dict.common.delete}
-        destructive />
+        footer={
+          <div data-ev-id="ev_delete_footer" className="flex gap-3 justify-end">
+            <button data-ev-id="ev_delete_cancel"
+              type="button"
+              onClick={closeDeleteDialog}
+              className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
+              {dict.common.cancel}
+            </button>
+            <button data-ev-id="ev_delete_confirm"
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
+              {deleting ? dict.common.loading : dict.common.delete}
+            </button>
+          </div>
+        }>
+
+				<p data-ev-id="ev_delete_msg" className="text-foreground">{dict.media.deleteMessage}</p>
+				{deleteError &&
+        <p data-ev-id="ev_delete_error" className="text-sm text-destructive mt-3">{deleteError}</p>
+        }
+			</Modal>
+
+			{/* Package delete confirmation */}
+			<Modal
+        isOpen={!!deletePackageTarget}
+        onClose={closeDeletePackageDialog}
+        title={dict.media.deletePackageTitle}
+        footer={
+          <div data-ev-id="ev_delete_pkg_footer" className="flex gap-3 justify-end">
+            <button data-ev-id="ev_delete_pkg_cancel"
+              type="button"
+              onClick={closeDeletePackageDialog}
+              className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
+              {dict.common.cancel}
+            </button>
+            <button data-ev-id="ev_delete_pkg_confirm"
+              type="button"
+              onClick={handleDeletePackage}
+              disabled={deletingPackage}
+              className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
+              {deletingPackage ? dict.common.loading : dict.common.delete}
+            </button>
+          </div>
+        }>
+
+				<p data-ev-id="ev_delete_pkg_msg" className="text-foreground">{dict.media.deletePackageMessage}</p>
+				{deletePackageError &&
+        <p data-ev-id="ev_delete_pkg_error" className="text-sm text-destructive mt-3">{deletePackageError}</p>
+        }
+			</Modal>
 
 		</div>);
 

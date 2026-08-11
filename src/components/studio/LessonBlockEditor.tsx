@@ -417,7 +417,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
             <div data-ev-id="ev_4de0529002"
             key={index}
             className={`p-4 bg-background border rounded-lg ${
-            isIncomplete ? 'border-amber-500/50' : 'border-border'}`
+            isIncomplete ? 'border-amber-500/50' : 'border-border'}${
+            deleteConfirm === index ? ' ring-2 ring-destructive' : ''}`
             }>
 
 								{/* Block header */}
