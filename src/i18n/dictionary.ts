@@ -173,6 +173,8 @@ export interface Dictionary {
 		emptyBlock: string;
 		noFileYet: string;
 		dragHandle: string;
+		autosaving: string;
+		autosaved: string;
 	};
 	
 	// Media Library
@@ -838,6 +840,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			emptyBlock: 'Empty',
 			noFileYet: 'No file selected',
 			dragHandle: 'Drag to reorder',
+			autosaving: 'Saving…',
+			autosaved: 'Saved',
 		},
 		
 		media: {
@@ -1479,6 +1483,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			emptyBlock: 'ריק',
 			noFileYet: 'לא נבחר קובץ',
 			dragHandle: 'גררו לשינוי הסדר',
+			autosaving: 'שומר…',
+			autosaved: 'נשמר',
 		},
 		
 		media: {

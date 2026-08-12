@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, ChevronLeft, AlertTriangle, Type, AlignLeft, Video, Check, Image, FileText, Upload, Loader2, ChevronsUpDown, ChevronsDownUp, GripVertical } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, ChevronLeft, AlertTriangle, Type, AlignLeft, Video, Check as CheckIcon, Image, FileText, Upload, Loader2, ChevronsUpDown, ChevronsDownUp, GripVertical } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
@@ -142,9 +142,17 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
   const [uploadError, setUploadError] = useState<{index: number;message: string;} | null>(null);
   const [libraryOpen, setLibraryOpen] = useState<{index: number;kind: 'image' | 'pdf';} | null>(null);
   const [libraryAssets, setLibraryAssets] = useState<Array<{id: string;url: string;filename: string;kind: 'image' | 'pdf';}>>([]);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Dirty tracking for unsaved changes guard
   const savedSnapshotRef = useRef<string>('[]');
+  // Refs for autosave unmount flush
+  const blocksRef = useRef<ContentBlock[]>([]);
+  const pendingRef = useRef(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInFlightRef = useRef(false);
+  const savedIndicatorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Store callback in ref to avoid re-triggering fetch
   const onCountChangeRef = useRef(onBlockCountChange);
@@ -229,6 +237,115 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 
     fetchLibraryAssets();
   }, [libraryOpen]);
+
+  // Keep blocksRef in sync
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
+
+  // Persistence function used by both explicit Save and autosave
+  const persistBlocks = useCallback(async (blocksToSave: ContentBlock[], opts: { silent: boolean }) => {
+    if (!supabase || !moduleId) return { success: false, error: 'Not ready' };
+
+    // Strip HTML from content on save
+    const sanitizedBlocks = blocksToSave.map((block) => ({
+      ...block,
+      content: {
+        en: stripHtmlToText(block.content.en),
+        he: stripHtmlToText(block.content.he)
+      }
+    }));
+
+    const { data, error } = await supabase.
+    from('modules').
+    update({ content_json: { blocks: sanitizedBlocks } as unknown as Json }).
+    eq('id', moduleId).
+    select();
+
+    if (error) {
+      const msg = (error as {message?: string;})?.message || JSON.stringify(error);
+      console.error('Save error:', error);
+      return { success: false, error: msg };
+    } else if (!data || data.length === 0) {
+      return { success: false, error: dict.studioBlocks.saveFailed || dict.common.error };
+    } else {
+      savedSnapshotRef.current = JSON.stringify(sanitizedBlocks);
+      return { success: true, error: null };
+    }
+  }, [moduleId, dict.studioBlocks.saveFailed, dict.common.error]);
+
+  // Autosave effect (debounced 1500ms)
+  useEffect(() => {
+    // Don't autosave while loading initial content
+    if (loading) return;
+    // Don't autosave if nothing changed
+    if (JSON.stringify(blocks) === savedSnapshotRef.current) {
+      pendingRef.current = false;
+      return;
+    }
+
+    pendingRef.current = true;
+
+    // Clear any existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
+      // Don't start if save already in flight
+      if (saveInFlightRef.current) {
+        // Schedule another after the current one settles
+        pendingRef.current = true;
+        return;
+      }
+
+      saveInFlightRef.current = true;
+      pendingRef.current = false;
+      setSaveStatus('saving');
+      setSaveError(null);
+
+      const result = await persistBlocks(blocksRef.current, { silent: true });
+
+      saveInFlightRef.current = false;
+
+      if (result.success) {
+        setSaveStatus('saved');
+        // Clear saved indicator after 2 seconds
+        if (savedIndicatorTimerRef.current) clearTimeout(savedIndicatorTimerRef.current);
+        savedIndicatorTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
+      } else {
+        setSaveStatus('error');
+        setSaveError(result.error || dict.common.error);
+        console.error('Autosave failed:', result.error);
+      }
+
+      // If more changes came in while saving, schedule another autosave
+      if (pendingRef.current) {
+        debounceTimerRef.current = setTimeout(() => {
+          // Trigger re-check
+          pendingRef.current = true;
+        }, 1500);
+      }
+    }, 1500);
+  }, [blocks, loading, persistBlocks, dict.common.error]);
+
+  // Cleanup on unmount: flush pending autosave
+  useEffect(() => {
+    return () => {
+      // Clear timers
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      if (savedIndicatorTimerRef.current) clearTimeout(savedIndicatorTimerRef.current);
+
+      // Flush pending save using refs (NOT closures)
+      if (pendingRef.current && !saveInFlightRef.current) {
+        const currentBlocks = blocksRef.current;
+        if (JSON.stringify(currentBlocks) !== savedSnapshotRef.current) {
+          // Fire and forget - cannot await in cleanup
+          persistBlocks(currentBlocks, { silent: true });
+        }
+      }
+    };
+  }, [persistBlocks]);
 
   const handleAddBlock = (type: 'heading' | 'text' | 'video' | 'image' | 'pdf') => {
     setDeleteConfirm(null);
@@ -424,7 +541,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
     if (!supabase || !moduleId) return;
     setUrlError(null);
 
-    // Validate URLs before saving
+    // Validate URLs before saving (explicit Save blocks on invalid URLs)
     for (const block of blocks) {
       if (block.type === 'video' && block.url && !isAllowedVideoUrl(block.url)) {
         setUrlError(dict.studioBlocks.invalidUrl);
@@ -438,30 +555,21 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 
     setSaving(true);
 
-    // Strip HTML from content on save
-    const sanitizedBlocks = blocks.map((block) => ({
-      ...block,
-      content: {
-        en: stripHtmlToText(block.content.en),
-        he: stripHtmlToText(block.content.he)
-      }
-    }));
+    // Cancel pending autosave since we're doing an explicit save
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    pendingRef.current = false;
 
-    const { data, error } = await supabase.
-    from('modules').
-    update({ content_json: { blocks: sanitizedBlocks } as unknown as Json }).
-    eq('id', moduleId).
-    select();
+    const result = await persistBlocks(blocks, { silent: false });
 
-    if (error) {
-      const msg = (error as {message?: string;})?.message || JSON.stringify(error);
-      console.error('Save error:', error);
-      showToast('error', msg);
-    } else if (!data || data.length === 0) {
-      showToast('error', dict.studioBlocks.saveFailed || dict.common.error);
+    if (!result.success) {
+      showToast('error', result.error || dict.common.error);
     } else {
       showToast('success', dict.studioBlocks.blocksSaved);
-      savedSnapshotRef.current = JSON.stringify(sanitizedBlocks);
+      setSaveStatus('idle');
+      setSaveError(null);
       onSaved?.();
     }
 
@@ -646,7 +754,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 
 										{convertedUrls.has(index) &&
                   <p data-ev-id="ev_4051070cbc" className="mt-1 text-xs text-primary flex items-center gap-1">
-												<Check className="w-3 h-3" />
+												<CheckIcon className="w-3 h-3" />
 												{dict.studioBlocks.videoUrlConverted}
 											</p>
                   }
@@ -840,6 +948,25 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 
 				{urlError &&
         <p data-ev-id="ev_url_error" className="text-sm text-destructive">{urlError}</p>
+        }
+
+				{/* Autosave status indicator */}
+				{saveStatus === 'saving' &&
+        <span data-ev-id="ev_save_status_saving" className="flex items-center gap-1 text-sm text-muted-foreground">
+						<Loader2 className="w-4 h-4 animate-spin" />
+						{dict.studioBlocks.autosaving}
+					</span>
+        }
+				{saveStatus === 'saved' &&
+        <span data-ev-id="ev_save_status_saved" className="flex items-center gap-1 text-sm text-muted-foreground">
+						<CheckIcon className="w-4 h-4" />
+						{dict.studioBlocks.autosaved}
+					</span>
+        }
+				{saveStatus === 'error' && saveError &&
+        <span data-ev-id="ev_save_status_error" className="text-sm text-destructive">
+						{saveError}
+					</span>
         }
 
 				<button data-ev-id="ev_cc2ae891f5"

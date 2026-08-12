@@ -2,6 +2,7 @@ import { useParams, useNavigate, Link } from 'react-router';
 import { CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
+import { isAllowedVideoUrl, isAllowedMediaUrl } from '@/lib/contentSafety';
 import { useCourseModules } from '@/hooks/useCourseModules';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
@@ -122,7 +123,7 @@ export default function ModulePage() {
 					</h2>);
 
       case 'video':{
-          if (!block.url) return null;
+          if (!block.url || !isAllowedVideoUrl(block.url)) return null;
           return (
             <div data-ev-id="ev_ef8b1d53d1" key={index} className="my-6 aspect-video rounded-lg overflow-hidden bg-muted">
 						<iframe data-ev-id="ev_429d3d884f"
@@ -135,14 +136,21 @@ export default function ModulePage() {
 					</div>);
         }
       case 'image':
-        if (!block.url) return null;
+        if (!block.url || !isAllowedMediaUrl(block.url)) {
+          return (
+            <div data-ev-id="ev_image_block" key={index}>
+              <div data-ev-id="ev_image_invalid" className="my-6 p-4 rounded-lg border border-border text-sm text-muted-foreground">
+                {dict.studioBlocks.imageLoadFailed}
+              </div>
+            </div>);
+        }
         return (
           <div data-ev-id="ev_image_block" key={index}>
             <ImageBlock url={block.url} alt={content} dict={dict} />
           </div>);
 
       case 'pdf':
-        if (!block.url) return null;
+        if (!block.url || !isAllowedMediaUrl(block.url)) return null;
         return (
           <div data-ev-id="ev_pdf_block" key={index} className="my-6">
             <iframe data-ev-id="ev_8130a6f278" src={`${block.url}#view=FitH&pagemode=none&navpanes=0`} className="w-full h-[400px] md:h-[600px] rounded-lg border border-border" title={content || 'PDF'} dir="ltr" />
