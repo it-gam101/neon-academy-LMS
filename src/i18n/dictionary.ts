@@ -74,6 +74,10 @@ export interface Dictionary {
 		changePassword: string;
 		savePassword: string;
 		passwordsDoNotMatch: string;
+		memberSince: string;
+		avatarUrl: string;
+		managedByAdmin: string;
+		profileUpdated: string;
 	};
 	
 	// SCORM
@@ -745,6 +749,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			changePassword: 'Change password',
 			savePassword: 'Update password',
 			passwordsDoNotMatch: 'Passwords do not match',
+			memberSince: 'Member since',
+			avatarUrl: 'Avatar image URL',
+			managedByAdmin: 'Managed by your administrator',
+			profileUpdated: 'Profile updated',
 		},
 		
 		scorm: {
@@ -1388,6 +1396,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			changePassword: 'שינוי סיסמה',
 			savePassword: 'עדכון סיסמה',
 			passwordsDoNotMatch: 'הסיסמאות אינן תואמות',
+			memberSince: 'חבר מאז',
+			avatarUrl: 'כתובת תמונת פרופיל',
+			managedByAdmin: 'מנוהל על ידי מנהל המערכת',
+			profileUpdated: 'הפרופיל עודכן',
 		},
 		
 		scorm: {
