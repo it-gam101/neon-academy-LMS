@@ -21,6 +21,7 @@ interface PresignRequest {
 	filename: string;
 	mimeType: string;
 	size: number;
+	purpose?: 'media' | 'avatar'; // defaults to 'media'
 }
 
 // Allowed MIME types
@@ -35,6 +36,10 @@ const ALLOWED_MIME_TYPES = [
 // Size caps in bytes
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_PDF_SIZE = 25 * 1024 * 1024; // 25 MB
+
+// Avatar-specific constants (no SVG, no PDF — SVG can carry script)
+const AVATAR_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB
 
 const PRESIGN_EXPIRY = 600; // seconds
 
@@ -136,53 +141,85 @@ Deno.serve(async (req: Request) => {
 			);
 		}
 
-		// Check user role via user_roles table
-		const { data: roleData, error: roleError } = await supabaseService
-			.from('user_roles')
-			.select('role')
-			.eq('user_id', userId)
-			.single();
-
-		if (roleError || !roleData || !ALLOWED_ROLES.includes(roleData.role)) {
-			return new Response(
-				JSON.stringify({ error: 'Insufficient permissions' }),
-				{ status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-			);
-		}
-
-		// Parse request body
+		// Parse request body first to determine purpose
 		const body: PresignRequest = await req.json();
-		const { filename, mimeType, size } = body;
+		const { filename, mimeType, size, purpose = 'media' } = body;
 
-		// Validate MIME type
-		if (!mimeType || !ALLOWED_MIME_TYPES.includes(mimeType)) {
-			return new Response(
-				JSON.stringify({ error: `Unsupported file type. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}` }),
-				{ status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-			);
+		// Branch on purpose
+		let key: string;
+		let kind: string;
+		let sanitizedFilename: string;
+
+		if (purpose === 'avatar') {
+			// Avatar path: skip role check (any authenticated user), validate avatar constraints
+			if (!mimeType || !AVATAR_MIME_TYPES.includes(mimeType)) {
+				return new Response(
+					JSON.stringify({ error: `Unsupported avatar type. Allowed: ${AVATAR_MIME_TYPES.join(', ')}` }),
+					{ status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+				);
+			}
+
+			if (!size || size <= 0 || size > MAX_AVATAR_SIZE) {
+				return new Response(
+					JSON.stringify({ error: `Avatar size must be between 1 byte and ${MAX_AVATAR_SIZE / 1024 / 1024} MB` }),
+					{ status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+				);
+			}
+
+			// Get extension from MIME type (never trust client extension)
+			const ext = getExtensionFromMime(mimeType);
+
+			// Generate key: avatars/{userId}/{uuid}.{ext}
+			const fileId = crypto.randomUUID();
+			key = `avatars/${userId}/${fileId}.${ext}`;
+			kind = 'image';
+			sanitizedFilename = sanitizeFilename(filename);
+
+		} else {
+			// Default 'media' path: check role, validate media constraints (unchanged from original)
+			const { data: roleData, error: roleError } = await supabaseService
+				.from('user_roles')
+				.select('role')
+				.eq('user_id', userId)
+				.single();
+
+			if (roleError || !roleData || !ALLOWED_ROLES.includes(roleData.role)) {
+				return new Response(
+					JSON.stringify({ error: 'Insufficient permissions' }),
+					{ status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+				);
+			}
+
+			// Validate MIME type
+			if (!mimeType || !ALLOWED_MIME_TYPES.includes(mimeType)) {
+				return new Response(
+					JSON.stringify({ error: `Unsupported file type. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}` }),
+					{ status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+				);
+			}
+
+			// Validate size based on type
+			const maxSize = mimeType === 'application/pdf' ? MAX_PDF_SIZE : MAX_IMAGE_SIZE;
+			if (!size || size <= 0 || size > maxSize) {
+				return new Response(
+					JSON.stringify({ error: `File size must be between 1 byte and ${maxSize / 1024 / 1024} MB` }),
+					{ status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+				);
+			}
+
+			// Derive kind from MIME type
+			kind = mimeType === 'application/pdf' ? 'pdf' : 'image';
+
+			// Sanitize filename (for display only, not used in key)
+			sanitizedFilename = sanitizeFilename(filename);
+
+			// Get extension from MIME type (never trust client extension)
+			const ext = getExtensionFromMime(mimeType);
+
+			// Generate key: media/{userId}/{uuid}.{ext}
+			const fileId = crypto.randomUUID();
+			key = `media/${userId}/${fileId}.${ext}`;
 		}
-
-		// Validate size based on type
-		const maxSize = mimeType === 'application/pdf' ? MAX_PDF_SIZE : MAX_IMAGE_SIZE;
-		if (!size || size <= 0 || size > maxSize) {
-			return new Response(
-				JSON.stringify({ error: `File size must be between 1 byte and ${maxSize / 1024 / 1024} MB` }),
-				{ status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-			);
-		}
-
-		// Derive kind from MIME type
-		const kind = mimeType === 'application/pdf' ? 'pdf' : 'image';
-
-		// Sanitize filename (for display only, not used in key)
-		const sanitizedFilename = sanitizeFilename(filename);
-
-		// Get extension from MIME type (never trust client extension)
-		const ext = getExtensionFromMime(mimeType);
-
-		// Generate key: media/{userId}/{uuid}.{ext}
-		const fileId = crypto.randomUUID();
-		const key = `media/${userId}/${fileId}.${ext}`;
 
 		// Get R2 credentials from env
 		const R2_ACCOUNT_ID = Deno.env.get('R2_ACCOUNT_ID')!;
