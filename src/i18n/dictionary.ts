@@ -78,6 +78,11 @@ export interface Dictionary {
 		avatarUrl: string;
 		managedByAdmin: string;
 		profileUpdated: string;
+		uploadAvatar: string;
+		uploadingAvatar: string;
+		uploadedNotSaved: string;
+		orPasteUrl: string;
+		avatarTooLarge: string;
 	};
 	
 	// SCORM
@@ -753,6 +758,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			avatarUrl: 'Avatar image URL',
 			managedByAdmin: 'Managed by your administrator',
 			profileUpdated: 'Profile updated',
+			uploadAvatar: 'Upload an image',
+			uploadingAvatar: 'Uploading…',
+			uploadedNotSaved: 'Uploaded — press Save to apply',
+			orPasteUrl: 'or paste a link',
+			avatarTooLarge: 'Image must be under 2 MB',
 		},
 		
 		scorm: {
@@ -1400,6 +1410,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			avatarUrl: 'כתובת תמונת פרופיל',
 			managedByAdmin: 'מנוהל על ידי מנהל המערכת',
 			profileUpdated: 'הפרופיל עודכן',
+			uploadAvatar: 'העלאת תמונה',
+			uploadingAvatar: 'מעלה…',
+			uploadedNotSaved: 'הועלה — לחצו שמירה כדי להחיל',
+			orPasteUrl: 'או הדביקו קישור',
+			avatarTooLarge: 'התמונה חייבת להיות קטנה מ-2 MB',
 		},
 		
 		scorm: {
