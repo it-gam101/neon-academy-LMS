@@ -148,6 +148,9 @@ export default function Profile() {
   const handleSave = async () => {
     if (!supabase || !profile) return;
 
+    // Capture the PREVIOUS avatar_url BEFORE we update and refresh
+    const previousAvatarUrl = profile.avatar_url;
+
     setSaving(true);
 
     // Only update full_name and avatar_url — role, manager_id, department are READ-ONLY
@@ -169,6 +172,34 @@ export default function Profile() {
     } else {
       showToast('success', t.profile.profileUpdated);
       await refreshProfile();
+
+      // Clean up the old avatar object if it was an avatar we uploaded
+      // ⚠️ Cleanup failure must NEVER fail the save — fire and forget
+      const newAvatarUrl = avatarUrl.trim() || null;
+      if (
+        previousAvatarUrl &&
+        previousAvatarUrl !== newAvatarUrl
+      ) {
+        try {
+          const oldUrl = new URL(previousAvatarUrl);
+          const oldKey = oldUrl.pathname.slice(1); // Remove leading slash
+          
+          // Only delete if it's one of our avatar objects (not an external link)
+          if (oldKey.startsWith('avatars/')) {
+            supabase.functions.invoke('media-delete', {
+              body: { purpose: 'avatar', key: oldKey }
+            }).then(({ error: deleteError }) => {
+              if (deleteError) {
+                console.error('Failed to delete old avatar (non-blocking):', deleteError);
+              }
+            }).catch((err) => {
+              console.error('Failed to delete old avatar (non-blocking):', err);
+            });
+          }
+        } catch {
+          // URL parse failed — skip cleanup (external link or invalid)
+        }
+      }
     }
 
     setSaving(false);

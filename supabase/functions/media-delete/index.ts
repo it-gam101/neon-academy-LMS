@@ -18,11 +18,32 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
 }
 
 interface DeleteRequest {
-	id: string;
+	id?: string;
+	purpose?: 'avatar';
+	key?: string;
 }
 
-// Allowed roles for media management
+// Allowed roles for media management (id path only)
 const ALLOWED_ROLES = ['super_admin', 'hr_manager', 'instructor'];
+
+/**
+ * Validate avatar key: must be owned by this user, no path traversal.
+ * This is THE security boundary for avatar deletion.
+ */
+function isValidAvatarKey(key: unknown, userId: string): boolean {
+	if (typeof key !== 'string' || !key) return false;
+	// Must start with exact prefix for this user
+	if (!key.startsWith('avatars/' + userId + '/')) return false;
+	// Reject path traversal
+	if (key.includes('..')) return false;
+	// Reject backslash
+	if (key.includes('\\')) return false;
+	// Reject NUL byte
+	if (key.includes('\0')) return false;
+	// Reject leading slash
+	if (key.startsWith('/')) return false;
+	return true;
+}
 
 console.info('Media delete function started [v1 media-delete]');
 
@@ -78,6 +99,72 @@ Deno.serve(async (req: Request) => {
 
 		const userId = user.id;
 
+		// Parse request body FIRST to determine which path
+		const body: DeleteRequest = await req.json();
+		const { id, purpose, key } = body;
+
+		// ════════════════════════════════════════════════════════════════
+		// AVATAR DELETE PATH: purpose === 'avatar'
+		// No role check — any authenticated user can delete their own avatar.
+		// Key validation is the ENTIRE security boundary.
+		// ════════════════════════════════════════════════════════════════
+		if (purpose === 'avatar') {
+			// Strict key validation — reject if ANY check fails
+			if (!isValidAvatarKey(key, userId)) {
+				return new Response(
+					JSON.stringify({ error: 'Invalid avatar key' }),
+					{ status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+				);
+			}
+
+			// Get R2 credentials from env
+			const R2_ACCOUNT_ID = Deno.env.get('R2_ACCOUNT_ID')!;
+			const R2_ACCESS_KEY_ID = Deno.env.get('R2_ACCESS_KEY_ID')!;
+			const R2_SECRET_ACCESS_KEY = Deno.env.get('R2_SECRET_ACCESS_KEY')!;
+			const R2_BUCKET = Deno.env.get('R2_BUCKET')!;
+
+			// Create AWS client for DELETE request
+			const awsClient = new AwsClient({
+				accessKeyId: R2_ACCESS_KEY_ID,
+				secretAccessKey: R2_SECRET_ACCESS_KEY,
+			});
+
+			const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+			const deleteUrl = `${r2Endpoint}/${R2_BUCKET}/${key}`;
+
+			// Delete the R2 object
+			try {
+				const deleteRequest = await awsClient.sign(deleteUrl, { method: 'DELETE' });
+				const deleteResponse = await fetch(deleteRequest);
+
+				// 404 is SUCCESS (already gone). Any other non-2xx → 500.
+				if (!deleteResponse.ok && deleteResponse.status !== 404) {
+					console.error('R2 avatar delete failed:', deleteResponse.status, deleteResponse.statusText);
+					return new Response(
+						JSON.stringify({ error: 'Failed to delete avatar from storage' }),
+						{ status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+					);
+				}
+			} catch (r2Err) {
+				console.error('R2 avatar delete error:', r2Err);
+				return new Response(
+					JSON.stringify({ error: 'Failed to delete avatar from storage' }),
+					{ status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+				);
+			}
+
+			// Success — no media_assets row to touch
+			return new Response(
+				JSON.stringify({ success: true }),
+				{ status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+			);
+		}
+
+		// ════════════════════════════════════════════════════════════════
+		// MEDIA ASSET DELETE PATH: id provided (existing behavior)
+		// Role check applies here.
+		// ════════════════════════════════════════════════════════════════
+
 		// Check user role via user_roles table
 		const { data: roleData, error: roleError } = await supabaseService
 			.from('user_roles')
@@ -93,10 +180,6 @@ Deno.serve(async (req: Request) => {
 		}
 
 		const userRole = roleData.role;
-
-		// Parse request body
-		const body: DeleteRequest = await req.json();
-		const { id } = body;
 
 		if (!id || typeof id !== 'string') {
 			return new Response(
