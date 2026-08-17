@@ -12,6 +12,7 @@ import { Modal } from '@/components/ui/Modal';
 import { functionErrorMessage } from '@/lib/functionError';
 import type { Json } from '@/integrations/supabase/types';
 import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl, isNonEmbeddableHost } from '@/lib/contentSafety';
+import { lessonProblems, blockProblems, type ProblemCode } from '@/lib/completeness';
 
 interface ContentBlock {
   id: string;
@@ -244,7 +245,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
   }, [blocks]);
 
   // Persistence function used by both explicit Save and autosave
-  const persistBlocks = useCallback(async (blocksToSave: ContentBlock[], opts: { silent: boolean }) => {
+  const persistBlocks = useCallback(async (blocksToSave: ContentBlock[], opts: {silent: boolean;}) => {
     if (!supabase || !moduleId) return { success: false, error: 'Not ready' };
 
     // Strip HTML from content on save
@@ -576,9 +577,29 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
     setSaving(false);
   };
 
-  // Calculate incomplete blocks
-  const missingEnglish = blocks.filter((b) => b.content.he && !b.content.en).length;
-  const missingHebrew = blocks.filter((b) => b.content.en && !b.content.he).length;
+  // Compute all problems from the pure completeness model (derived state, never mutates blocks)
+  const allProblems = lessonProblems(blocks);
+  const problemsByBlock = new Map<string, ProblemCode[]>();
+  const countByCode = new Map<ProblemCode, number>();
+  for (const p of allProblems) {
+    // Per-block
+    const arr = problemsByBlock.get(p.blockId) ?? [];
+    arr.push(p.code);
+    problemsByBlock.set(p.blockId, arr);
+    // Per-code count
+    countByCode.set(p.code, (countByCode.get(p.code) ?? 0) + 1);
+  }
+
+  // Helper to map code to dict key
+  const problemLabel = (code: ProblemCode): string => {
+    switch (code) {
+      case 'missing_translation_he':return dict.studioBlocks.needsHebrew;
+      case 'missing_translation_en':return dict.studioBlocks.needsEnglish;
+      case 'empty_block':return dict.studioBlocks.warnEmpty;
+      case 'missing_url':return dict.studioBlocks.warnNoUrl;
+      case 'bad_url':return dict.studioBlocks.warnBadUrl;
+    }
+  };
 
   if (loading) {
     return (
@@ -590,18 +611,19 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 
   return (
     <div data-ev-id="ev_9b89a00d51" className="flex flex-col gap-4">
-			{/* Incompleteness summary */}
-			{(missingEnglish > 0 || missingHebrew > 0) &&
+			{/* Problem summary — lists counts per problem code, nothing when no problems */}
+			{allProblems.length > 0 &&
       <div data-ev-id="ev_10e1bb5fb5" className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-sm">
 					<AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
 					<span data-ev-id="ev_4a9d35af38" className="text-amber-500">
-						{missingHebrew > 0 &&
-          <span data-ev-id="ev_cd54f301c7">{missingHebrew} {dict.studioBlocks.missingHebrew}</span>
-          }
-						{missingHebrew > 0 && missingEnglish > 0 && ' • '}
-						{missingEnglish > 0 &&
-          <span data-ev-id="ev_c485db0374">{missingEnglish} {dict.studioBlocks.missingEnglish}</span>
-          }
+						{(['missing_translation_he', 'missing_translation_en', 'empty_block', 'missing_url', 'bad_url'] as ProblemCode[]).
+          filter((code) => (countByCode.get(code) ?? 0) > 0).
+          map((code, idx, arr) =>
+          <span data-ev-id="ev_a61a7cd218" key={code}>
+            {countByCode.get(code)} {problemLabel(code)}
+            {idx < arr.length - 1 && ' • '}
+          </span>
+          )}
 					</span>
 				</div>
       }
@@ -638,38 +660,37 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
         <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           <div data-ev-id="ev_7efba52169" className="flex flex-col gap-3">
 					{blocks.map((block, index) => {
-          const isIncomplete =
-          block.content.en && !block.content.he ||
-          block.content.he && !block.content.en;
-          const isCollapsed = collapsed.has(block.id);
+              const blockCodes = problemsByBlock.get(block.id) ?? [];
+              const hasProblems = blockCodes.length > 0;
+              const isCollapsed = collapsed.has(block.id);
 
-          return (
-            <SortableBlock key={block.id} block={block}>
-              {({ listeners, attributes, isDragging }) => (
-            <div data-ev-id="ev_4de0529002"
-            className={`p-4 bg-background border rounded-lg ${
-            isIncomplete ? 'border-amber-500/50' : 'border-border'}${
-            deleteConfirm === block.id ? ' ring-2 ring-destructive' : ''}${
-            isDragging ? ' opacity-50' : ''}`
-            }>
+              return (
+                <SortableBlock key={block.id} block={block}>
+              {({ listeners, attributes, isDragging }) =>
+                  <div data-ev-id="ev_4de0529002"
+                  className={`p-4 bg-background border rounded-lg ${
+                  hasProblems ? 'border-amber-500/50' : 'border-border'}${
+                  deleteConfirm === block.id ? ' ring-2 ring-destructive' : ''}${
+                  isDragging ? ' opacity-50' : ''}`
+                  }>
 
 								{/* Block header */}
 								<div data-ev-id="ev_c438205030" className={`flex items-center justify-between${isCollapsed ? '' : ' mb-3'}`}>
 									<div data-ev-id="ev_a7d61a501f" className="flex items-center gap-2 min-w-0 flex-1">
 										{/* Drag handle */}
 										<button data-ev-id="ev_drag_handle"
-                  type="button"
-                  {...listeners}
-                  {...attributes}
-                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
-                  aria-label={dict.studioBlocks.dragHandle}>
+                        type="button"
+                        {...listeners}
+                        {...attributes}
+                        className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                        aria-label={dict.studioBlocks.dragHandle}>
 
 											<GripVertical className="w-4 h-4" />
 										</button>
 										<button data-ev-id="ev_collapse_toggle"
-                  type="button"
-                  onClick={() => toggleCollapse(block.id)}
-                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                        type="button"
+                        onClick={() => toggleCollapse(block.id)}
+                        className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
 
 											{isCollapsed ? <CollapsedChevron className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
 										</button>
@@ -679,9 +700,9 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 										{block.type === 'image' && <Image className="w-4 h-4 text-primary flex-shrink-0" />}
 										{block.type === 'pdf' && <FileText className="w-4 h-4 text-primary flex-shrink-0" />}
 										<button data-ev-id="ev_type_label_toggle"
-                  type="button"
-                  onClick={() => toggleCollapse(block.id)}
-                  className="text-sm font-medium text-foreground hover:text-primary transition-colors flex-shrink-0">
+                        type="button"
+                        onClick={() => toggleCollapse(block.id)}
+                        className="text-sm font-medium text-foreground hover:text-primary transition-colors flex-shrink-0">
 
 											{block.type === 'heading' && dict.studioBlocks.blockHeading}
 											{block.type === 'text' && dict.studioBlocks.blockText}
@@ -690,153 +711,154 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 											{block.type === 'pdf' && dict.studioBlocks.blockPdf}
 										</button>
 										{isCollapsed &&
-                  <span data-ev-id="ev_block_summary" className="text-sm text-muted-foreground truncate">
+                        <span data-ev-id="ev_block_summary" className="text-sm text-muted-foreground truncate">
 												{getBlockSummary(block)}
 											</span>
-                  }
-										{isIncomplete &&
-                  <span data-ev-id="ev_a51894aa23" className="text-xs text-amber-500 px-2 py-0.5 bg-amber-500/10 rounded flex-shrink-0">
-												{dict.studioBlocks.incomplete}
+                        }
+										{/* Problem indicators — visible when collapsed */}
+										{blockCodes.map((code) => (
+                        <span key={code} data-ev-id="ev_block_problem" className="text-xs text-amber-500 px-2 py-0.5 bg-amber-500/10 rounded flex-shrink-0">
+												{problemLabel(code)}
 											</span>
-                  }
+                        ))}
 									</div>
 									<div data-ev-id="ev_8e46275211" className="flex items-center gap-1">
 										<button data-ev-id="ev_fd204f6ed8"
-                  onClick={() => handleMoveBlock(index, 'up')}
-                  disabled={index === 0}
-                  className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  title={dict.studioBlocks.moveUp}>
+                        onClick={() => handleMoveBlock(index, 'up')}
+                        disabled={index === 0}
+                        className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        title={dict.studioBlocks.moveUp}>
 
 											<ChevronUp className="w-4 h-4" />
 										</button>
 										<button data-ev-id="ev_0e918061b8"
-                  onClick={() => handleMoveBlock(index, 'down')}
-                  disabled={index === blocks.length - 1}
-                  className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  title={dict.studioBlocks.moveDown}>
+                        onClick={() => handleMoveBlock(index, 'down')}
+                        disabled={index === blocks.length - 1}
+                        className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        title={dict.studioBlocks.moveDown}>
 
 											<ChevronDown className="w-4 h-4" />
 										</button>
 										<button data-ev-id="ev_0d1f5896a2"
-                  onClick={() => handleDeleteBlock(block.id, index)}
-                  className={`p-1.5 transition-colors ${
-                  deleteConfirm === block.id ?
-                  'text-destructive bg-destructive/10 rounded' :
-                  'text-muted-foreground hover:text-destructive'}`
-                  }
-                  title={dict.studioBlocks.deleteBlock}>
+                        onClick={() => handleDeleteBlock(block.id, index)}
+                        className={`p-1.5 transition-colors ${
+                        deleteConfirm === block.id ?
+                        'text-destructive bg-destructive/10 rounded' :
+                        'text-muted-foreground hover:text-destructive'}`
+                        }
+                        title={dict.studioBlocks.deleteBlock}>
 
 											<Trash2 className="w-4 h-4" />
 										</button>
 										{deleteConfirm === block.id &&
-                  <span data-ev-id="ev_2437f5c5fb" className="text-xs text-destructive ms-1">{dict.studioBlocks.confirmDeleteBlock}</span>
-                  }
+                        <span data-ev-id="ev_2437f5c5fb" className="text-xs text-destructive ms-1">{dict.studioBlocks.confirmDeleteBlock}</span>
+                        }
 									</div>
 								</div>
 
 								{/* Block body - hidden when collapsed */}
 								{!isCollapsed &&
-              <>
+                    <>
 								{/* Video URL field */}
 								{block.type === 'video' &&
-                <div data-ev-id="ev_d34addcec9" className="mb-3">
+                      <div data-ev-id="ev_d34addcec9" className="mb-3">
 										<label data-ev-id="ev_77da9332c0" className="block text-xs font-medium text-muted-foreground mb-1">
 											{dict.studioBlocks.videoUrl}
 										</label>
 										<input data-ev-id="ev_ca1bcc5589"
-                  type="url"
-                  value={block.url || ''}
-                  onChange={(e) => handleVideoUrlChange(index, e.target.value)}
-                  onBlur={(e) => handleVideoUrlChange(index, e.target.value)}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  dir="ltr"
-                  placeholder="https://www.youtube.com/embed/..." />
+                        type="url"
+                        value={block.url || ''}
+                        onChange={(e) => handleVideoUrlChange(index, e.target.value)}
+                        onBlur={(e) => handleVideoUrlChange(index, e.target.value)}
+                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        dir="ltr"
+                        placeholder="https://www.youtube.com/embed/..." />
 
 										{convertedUrls.has(index) &&
-                  <p data-ev-id="ev_4051070cbc" className="mt-1 text-xs text-primary flex items-center gap-1">
+                        <p data-ev-id="ev_4051070cbc" className="mt-1 text-xs text-primary flex items-center gap-1">
 												<CheckIcon className="w-3 h-3" />
 												{dict.studioBlocks.videoUrlConverted}
 											</p>
-                  }
+                        }
 										{block.url && !convertedUrls.has(index) && isUnparseableYouTubeUrl(block.url) &&
-                  <p data-ev-id="ev_ec908263ea" className="mt-1 text-xs text-amber-500 flex items-center gap-1">
+                        <p data-ev-id="ev_ec908263ea" className="mt-1 text-xs text-amber-500 flex items-center gap-1">
 												<AlertTriangle className="w-3 h-3" />
 												{dict.studioBlocks.videoEmbedWarning}
 											</p>
-                  }
+                        }
 										<p data-ev-id="ev_790f059bb4" className="mt-1 text-xs text-muted-foreground">
 											{dict.studioBlocks.videoUrlHelperText}
 										</p>
 										{block.url && isNonEmbeddableHost(block.url) &&
-                  <p data-ev-id="ev_video_unsupported_host" className="mt-1 text-sm text-destructive">
+                        <p data-ev-id="ev_video_unsupported_host" className="mt-1 text-sm text-destructive">
 												{dict.studioBlocks.unsupportedHost}
 											</p>
-                  }
+                        }
 									</div>
-                }
+                      }
 
 								{/* Media URL field for image and pdf */}
 								{(block.type === 'image' || block.type === 'pdf') &&
-                <div data-ev-id="ev_media_url_field" className="mb-3">
+                      <div data-ev-id="ev_media_url_field" className="mb-3">
 										{/* File upload control */}
 										<div data-ev-id="ev_5f68215120" className="flex items-center gap-3 mb-2">
 											<label data-ev-id="ev_192f7afb84" className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors cursor-pointer text-sm font-medium">
 												{uploadingIndex === index ?
-                      <>
+                            <>
 														<Loader2 className="w-4 h-4 animate-spin" />
 														{dict.studioBlocks.uploading}
 													</> :
 
-                      <>
+                            <>
 														<Upload className="w-4 h-4" />
 														{dict.studioBlocks.uploadFile}
 													</>
-                      }
+                            }
 												<input data-ev-id="ev_4c7f64f729"
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
-                      className="hidden"
-                      disabled={uploadingIndex !== null}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleFileUpload(index, file);
-                        }
-                        e.target.value = '';
-                      }} />
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+                            className="hidden"
+                            disabled={uploadingIndex !== null}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(index, file);
+                              }
+                              e.target.value = '';
+                            }} />
 
 											</label>
 											<button data-ev-id="ev_c72a42e5ae"
-                    type="button"
-                    onClick={() => setLibraryOpen({ index, kind: block.type as 'image' | 'pdf' })}
-                    disabled={uploadingIndex !== null}
-                    className="px-3 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors text-sm font-medium disabled:opacity-50">
+                          type="button"
+                          onClick={() => setLibraryOpen({ index, kind: block.type as 'image' | 'pdf' })}
+                          disabled={uploadingIndex !== null}
+                          className="px-3 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors text-sm font-medium disabled:opacity-50">
 												{dict.media.chooseFromLibrary}
 											</button>
 											<span data-ev-id="ev_37615337b0" className="text-xs text-muted-foreground">{dict.studioBlocks.orUseUrl}</span>
 										</div>
 										{uploadError?.index === index &&
-                  <p data-ev-id="ev_5ea3d70d18" className="mb-2 text-sm text-destructive">
+                        <p data-ev-id="ev_5ea3d70d18" className="mb-2 text-sm text-destructive">
 												{dict.studioBlocks.uploadFailed}: {uploadError.message}
 											</p>
-                  }
+                        }
 										<label data-ev-id="ev_media_url_label" className="block text-xs font-medium text-muted-foreground mb-1">
 											{dict.studioBlocks.mediaUrl}
 										</label>
 										<input data-ev-id="ev_media_url_input"
-                  type="url"
-                  value={block.url || ''}
-                  onChange={(e) => handleUpdateBlock(index, { url: e.target.value })}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  dir="ltr"
-                  placeholder="https://..." />
+                        type="url"
+                        value={block.url || ''}
+                        onChange={(e) => handleUpdateBlock(index, { url: e.target.value })}
+                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        dir="ltr"
+                        placeholder="https://..." />
 										{block.url && isNonEmbeddableHost(block.url) &&
-                  <p data-ev-id="ev_media_unsupported_host" className="mt-1 text-sm text-destructive">
+                        <p data-ev-id="ev_media_unsupported_host" className="mt-1 text-sm text-destructive">
 												{dict.studioBlocks.unsupportedHost}
 											</p>
-                  }
+                        }
 									</div>
-                }
+                      }
 
 								{/* Content fields - side by side on wide, stacked on narrow */}
 								<div data-ev-id="ev_b598b2379e" className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -846,21 +868,21 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 											{dict.profile.english}
 										</label>
 										{block.type === 'heading' ?
-                    <input data-ev-id="ev_f7cc3fdb99"
-                    type="text"
-                    value={block.content.en}
-                    onChange={(e) => handleUpdateContent(index, 'en', e.target.value)}
-                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    dir="ltr" /> :
+                          <input data-ev-id="ev_f7cc3fdb99"
+                          type="text"
+                          value={block.content.en}
+                          onChange={(e) => handleUpdateContent(index, 'en', e.target.value)}
+                          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                          dir="ltr" /> :
 
 
-                    <textarea data-ev-id="ev_44eb50b182"
-                    value={block.content.en}
-                    onChange={(e) => handleUpdateContent(index, 'en', e.target.value)}
-                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
-                    dir="ltr" />
+                          <textarea data-ev-id="ev_44eb50b182"
+                          value={block.content.en}
+                          onChange={(e) => handleUpdateContent(index, 'en', e.target.value)}
+                          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
+                          dir="ltr" />
 
-                    }
+                          }
 									</div>
 
 									{/* Hebrew */}
@@ -869,38 +891,38 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
 											{dict.profile.hebrew}
 										</label>
 										{block.type === 'heading' ?
-                    <input data-ev-id="ev_addb3d038d"
-                    type="text"
-                    value={block.content.he}
-                    onChange={(e) => handleUpdateContent(index, 'he', e.target.value)}
-                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    dir="rtl" /> :
+                          <input data-ev-id="ev_addb3d038d"
+                          type="text"
+                          value={block.content.he}
+                          onChange={(e) => handleUpdateContent(index, 'he', e.target.value)}
+                          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                          dir="rtl" /> :
 
 
-                    <textarea data-ev-id="ev_c320f834d1"
-                    value={block.content.he}
-                    onChange={(e) => handleUpdateContent(index, 'he', e.target.value)}
-                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
-                    dir="rtl" />
+                          <textarea data-ev-id="ev_c320f834d1"
+                          value={block.content.he}
+                          onChange={(e) => handleUpdateContent(index, 'he', e.target.value)}
+                          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
+                          dir="rtl" />
 
-                    }
+                          }
 									</div>
 								</div>
 
 								{/* Formatting hint for text blocks */}
 								{block.type === 'text' &&
-                <p data-ev-id="ev_10be20b955" className="mt-2 text-xs text-muted-foreground">
+                      <p data-ev-id="ev_10be20b955" className="mt-2 text-xs text-muted-foreground">
 										{dict.studioBlocks.formattingHint}
 									</p>
-                }
+                      }
               </>
-              }
+                    }
 							</div>
-              )}
-            </SortableBlock>
-          );
+                  }
+            </SortableBlock>);
 
-        })}
+
+            })}
 				</div>
         </SortableContext>
       </DndContext>

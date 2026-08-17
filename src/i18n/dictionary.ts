@@ -184,6 +184,11 @@ export interface Dictionary {
 		dragHandle: string;
 		autosaving: string;
 		autosaved: string;
+		needsHebrew: string;
+		needsEnglish: string;
+		warnEmpty: string;
+		warnNoUrl: string;
+		warnBadUrl: string;
 	};
 	
 	// Media Library
@@ -860,6 +865,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			dragHandle: 'Drag to reorder',
 			autosaving: 'Saving…',
 			autosaved: 'Saved',
+			needsHebrew: 'Hebrew text missing',
+			needsEnglish: 'English text missing',
+			warnEmpty: 'Empty — learners will not see this block',
+			warnNoUrl: 'No file or link — learners will not see this block',
+			warnBadUrl: 'Link not allowed — learners will not see this block',
 		},
 		
 		media: {
@@ -1512,6 +1522,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			dragHandle: 'גררו לשינוי הסדר',
 			autosaving: 'שומר…',
 			autosaved: 'נשמר',
+			needsHebrew: 'חסר טקסט בעברית',
+			needsEnglish: 'חסר טקסט באנגלית',
+			warnEmpty: 'ריק — הלומדים לא יראו בלוק זה',
+			warnNoUrl: 'אין קובץ או קישור — הלומדים לא יראו בלוק זה',
+			warnBadUrl: 'הקישור אינו מותר — הלומדים לא יראו בלוק זה',
 		},
 		
 		media: {
