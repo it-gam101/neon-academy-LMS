@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, Settings, Package, Archive, AlertTriangle, Pencil, ChevronUp, ChevronDown, Edit } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, Settings, Package, Archive, AlertTriangle, Pencil, ChevronUp, ChevronDown, Edit, Loader2 } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +17,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { QuizQuestionEditor } from '@/components/studio/QuizQuestionEditor';
 import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
 import { LessonBlockEditor } from '@/components/studio/LessonBlockEditor';
+import { courseProblems, type CourseProblem, type ProblemCode } from '@/lib/completeness';
 
 type Course = Tables<'courses'>;
 type Module = Tables<'modules'>;
@@ -36,6 +37,10 @@ export default function StudioEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishBlockers, setPublishBlockers] = useState<CourseProblem[] | null>(null);
+  const [publishCheckFailed, setPublishCheckFailed] = useState(false);
+  const [checkingPublish, setCheckingPublish] = useState(false);
+  const [focusBlockId, setFocusBlockId] = useState<string | undefined>(undefined);
 
   // SCORM upload state
   const [showScormUploadModal, setShowScormUploadModal] = useState(false);
@@ -200,16 +205,121 @@ export default function StudioEditor() {
     setSaving(false);
   };
 
+  // Opens the publish modal and computes blockers
+  const handleOpenPublishModal = async () => {
+    if (!supabase) return;
+    setShowPublishModal(true);
+    setCheckingPublish(true);
+    setPublishBlockers(null);
+    setPublishCheckFailed(false);
+
+    try {
+      // Fetch quiz data only for quiz modules
+      const quizModuleIds = modules.filter((m) => m.module_type === 'quiz').map((m) => m.id);
+      let quizzes: Array<{module_id: string;quiz_questions: unknown[];}> = [];
+
+      if (quizModuleIds.length > 0) {
+        const { data, error } = await supabase.
+        from('quizzes').
+        select('id, module_id, quiz_questions(*)').
+        in('module_id', quizModuleIds);
+
+        if (error) {
+          console.error('Failed to fetch quiz data:', error);
+          setPublishCheckFailed(true);
+          setCheckingPublish(false);
+          return;
+        }
+        quizzes = (data ?? []).map((q) => ({
+          module_id: q.module_id,
+          quiz_questions: q.quiz_questions ?? []
+        }));
+      }
+
+      // Compute blockers
+      const blockers = courseProblems({
+        modules: modules.map((m) => ({
+          id: m.id,
+          title_en: m.title_en,
+          title_he: m.title_he,
+          module_type: m.module_type,
+          content_json: m.content_json
+        })),
+        quizzes,
+        locale
+      });
+
+      setPublishBlockers(blockers);
+    } catch (err) {
+      console.error('Publish check failed:', err);
+      setPublishCheckFailed(true);
+    }
+    setCheckingPublish(false);
+  };
+
+  // Returns the user-facing label for a problem code
+  const getBlockerLabel = (code: ProblemCode): string => {
+    switch (code) {
+      case 'no_modules':return dict.studio.blockerNoModules;
+      case 'module_title_translation':return dict.studio.blockerModuleTitle;
+      case 'no_blocks':return dict.studio.blockerNoBlocks;
+      case 'no_questions':return dict.studio.blockerNoQuestions;
+      case 'question_translation':return dict.studio.blockerQuestionText;
+      case 'too_few_options':return dict.studio.blockerFewOptions;
+      case 'option_translation':return dict.studio.blockerOptionText;
+      case 'no_correct':return dict.studio.blockerNoCorrect;
+      // Block-level codes — reuse studioBlocks keys
+      case 'missing_translation_he':return dict.studioBlocks.needsHebrew;
+      case 'missing_translation_en':return dict.studioBlocks.needsEnglish;
+      case 'empty_block':return dict.studioBlocks.warnEmpty;
+      case 'missing_url':return dict.studioBlocks.warnNoUrl;
+      case 'bad_url':return dict.studioBlocks.warnBadUrl;
+    }
+  };
+
+  // Navigate to a blocker's source
+  const handleFixBlocker = (blocker: CourseProblem) => {
+    setShowPublishModal(false);
+
+    if (blocker.blockId) {
+      // Block-level: open lesson editor with focus
+      setFocusBlockId(blocker.blockId);
+      setEditingLessonModuleId(blocker.moduleId);
+      setShowLessonEditorModal(true);
+    } else if (blocker.questionIndex !== undefined) {
+      // Quiz-level: open quiz editor
+      handleOpenQuizSettings(blocker.moduleId);
+    } else if (blocker.moduleId) {
+      // Module-level: open module title editor
+      const mod = modules.find((m) => m.id === blocker.moduleId);
+      if (mod) {
+        if (blocker.code === 'no_blocks') {
+          handleOpenLessonEditor(blocker.moduleId);
+        } else if (blocker.code === 'no_questions') {
+          handleOpenQuizSettings(blocker.moduleId);
+        } else {
+          handleOpenModuleTitleEdit(mod);
+        }
+      }
+    }
+  };
+
   const handlePublish = async () => {
     if (!supabase || !courseId) return;
 
-    const { error } = await supabase.
+    // Fix: add .select() and check for empty result (RLS-blocked update)
+    const { data, error } = await supabase.
     from('courses').
     update({ status: 'published', updated_at: new Date().toISOString() }).
-    eq('id', courseId);
+    eq('id', courseId).
+    select();
 
     if (error) {
-      showToast('error', error.message);
+      console.error('Publish error:', error);
+      showToast('error', (error as {message?: string;})?.message || dict.common.error);
+    } else if (!data || data.length === 0) {
+      // RLS-blocked update returns success with zero rows
+      showToast('error', dict.studio.deleteFailed);
     } else {
       showToast('success', dict.studio.publishSuccess);
       setCourse((prev) => prev ? { ...prev, status: 'published' } : null);
@@ -859,9 +969,32 @@ export default function StudioEditor() {
 							{saving ? dict.common.loading : dict.studio.saveDraft}
 						</button>
 
+						{/* Readiness indicator badge — computed from modules only (no query). 
+                 The full check including quizzes runs when the modal opens; if they differ, the modal is authoritative. */}
+						{course.status !== 'published' && (() => {
+              const headerBlockers = courseProblems({
+                modules: modules.map((m) => ({
+                  id: m.id,
+                  title_en: m.title_en,
+                  title_he: m.title_he,
+                  module_type: m.module_type,
+                  content_json: m.content_json
+                })),
+                quizzes: [], // Header badge is approximate; quiz checks run on modal open
+                locale
+              });
+              const hasBlockers = headerBlockers.length > 0;
+              return (
+                <span data-ev-id="ev_publish_badge" className={`text-xs px-2 py-1 rounded-full ${
+                hasBlockers ? 'bg-amber-500/10 text-amber-500' : 'bg-green-500/10 text-green-500'}`
+                }>
+                {hasBlockers ? `${dict.studio.blockersCount} ${headerBlockers.length}` : dict.studio.readyToPublish}
+              </span>);
+
+            })()}
 						{course.status !== 'published' &&
             <button data-ev-id="ev_6e5e3cdd52"
-            onClick={() => setShowPublishModal(true)}
+            onClick={handleOpenPublishModal}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
 
 								<Send className="w-4 h-4" />
@@ -965,14 +1098,64 @@ export default function StudioEditor() {
 						</button>
 						<button data-ev-id="ev_1a3c9684f5"
           onClick={handlePublish}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+          disabled={checkingPublish || publishCheckFailed || publishBlockers !== null && publishBlockers.length > 0}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 							{dict.common.publish}
 						</button>
 					</>
         }>
 
-				<p data-ev-id="ev_6cb6a55427" className="text-muted-foreground">{dict.studio.confirmPublishMessage}</p>
+				{/* Loading state */}
+				{checkingPublish &&
+        <div data-ev-id="ev_publish_checking" className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            {dict.common.loading}
+          </div>
+        }
+
+				{/* Check failed state */}
+				{!checkingPublish && publishCheckFailed &&
+        <div data-ev-id="ev_publish_failed" className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <p data-ev-id="ev_20fe575dae" className="text-destructive flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              {dict.studio.blockerCheckFailed}
+            </p>
+          </div>
+        }
+
+				{/* Blockers list */}
+				{!checkingPublish && !publishCheckFailed && publishBlockers !== null && publishBlockers.length > 0 &&
+        <div data-ev-id="ev_publish_blockers" className="flex flex-col gap-2">
+            <p data-ev-id="ev_8c1fef1da4" className="text-amber-500 font-medium flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              {dict.studio.blockersCount} {publishBlockers.length}
+            </p>
+            <div data-ev-id="ev_e28d32766a" className="max-h-64 overflow-y-auto flex flex-col gap-2">
+              {publishBlockers.map((blocker, i) =>
+            <div key={i} data-ev-id="ev_blocker_row" className="flex items-center justify-between p-3 bg-muted/50 border border-border rounded-lg">
+                  <div data-ev-id="ev_27b4b88ed5" className="flex flex-col gap-0.5 min-w-0">
+                    <span data-ev-id="ev_4f62acb8b4" className="text-sm font-medium text-foreground truncate">{blocker.moduleTitle || dict.studio.blockerNoModules}</span>
+                    <span data-ev-id="ev_742e9db37c" className="text-xs text-muted-foreground">{getBlockerLabel(blocker.code)}</span>
+                  </div>
+                  {blocker.moduleId &&
+              <button
+                data-ev-id="ev_blocker_fix"
+                onClick={() => handleFixBlocker(blocker)}
+                className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex-shrink-0 ms-2">
+                      {dict.studio.blockerFix}
+                    </button>
+              }
+                </div>
+            )}
+            </div>
+          </div>
+        }
+
+				{/* Ready to publish */}
+				{!checkingPublish && !publishCheckFailed && publishBlockers !== null && publishBlockers.length === 0 &&
+        <p data-ev-id="ev_6cb6a55427" className="text-muted-foreground">{dict.studio.confirmPublishMessage}</p>
+        }
 			</Modal>
 
 			{/* Quiz settings modal */}
@@ -1124,15 +1307,16 @@ export default function StudioEditor() {
 			{/* Lesson content editor modal */}
 			<Modal
         isOpen={showLessonEditorModal}
-        onClose={() => {if (lessonEditorDirty) {setShowDiscardConfirm(true);} else {setShowLessonEditorModal(false);}}}
+        onClose={() => {if (lessonEditorDirty) {setShowDiscardConfirm(true);} else {setShowLessonEditorModal(false);setFocusBlockId(undefined);}}}
         title={dict.studioBlocks.editContent}
         size="lg">
 				{editingLessonModuleId &&
         <LessonBlockEditor
           moduleId={editingLessonModuleId}
           onBlockCountChange={handleBlockCountChange}
-          onSaved={() => {setLessonEditorDirty(false);setShowLessonEditorModal(false);}}
-          onDirtyChange={setLessonEditorDirty} />
+          onSaved={() => {setLessonEditorDirty(false);setShowLessonEditorModal(false);setFocusBlockId(undefined);}}
+          onDirtyChange={setLessonEditorDirty}
+          focusBlockId={focusBlockId} />
         }
 			</Modal>
 
@@ -1143,7 +1327,7 @@ export default function StudioEditor() {
         message={dict.studioBlocks.discardChangesMessage}
         confirmLabel={dict.studioBlocks.discardConfirm}
         destructive
-        onConfirm={() => {setShowDiscardConfirm(false);setShowLessonEditorModal(false);setLessonEditorDirty(false);}}
+        onConfirm={() => {setShowDiscardConfirm(false);setShowLessonEditorModal(false);setLessonEditorDirty(false);setFocusBlockId(undefined);}}
         onCancel={() => setShowDiscardConfirm(false)} />
 
 

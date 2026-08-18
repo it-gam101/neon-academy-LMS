@@ -398,7 +398,7 @@ export default function ScormPlayer() {
         title={getTitle(module) || 'SCORM Content'}
         className="w-full h-full border-0"
         style={{ minHeight: 'calc(100vh - 100px)' }}
-        sandbox="allow-scripts allow-same-origin" />
+        sandbox="allow-scripts allow-same-origin allow-modals" />
 
 			</div>
 		</div>);

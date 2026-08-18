@@ -26,6 +26,7 @@ interface LessonBlockEditorProps {
   onBlockCountChange?: (count: number) => void;
   onSaved?: () => void;
   onDirtyChange?: (dirty: boolean) => void;
+  focusBlockId?: string; // If set, expand and scroll this block into view on mount
 }
 
 interface SortableBlockProps {
@@ -128,7 +129,7 @@ function convertToEmbedUrl(url: string): {converted: string;wasConverted: boolea
   return { converted: embedUrl, wasConverted: true };
 }
 
-export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDirtyChange }: LessonBlockEditorProps) {
+export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDirtyChange, focusBlockId }: LessonBlockEditorProps) {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
 
@@ -145,6 +146,10 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
   const [libraryAssets, setLibraryAssets] = useState<Array<{id: string;url: string;filename: string;kind: 'image' | 'pdf';}>>([]);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
+
+  // Refs for block elements (for scrollIntoView)
+  const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Dirty tracking for unsaved changes guard
   const savedSnapshotRef = useRef<string>('[]');
@@ -347,6 +352,34 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
       }
     };
   }, [persistBlocks]);
+
+  // Focus block effect: expand, scroll into view, and highlight
+  useEffect(() => {
+    if (!focusBlockId || loading || blocks.length === 0) return;
+
+    // Ensure block is expanded (not collapsed)
+    setCollapsed((prev) => {
+      if (prev.has(focusBlockId)) {
+        const next = new Set(prev);
+        next.delete(focusBlockId);
+        return next;
+      }
+      return prev;
+    });
+
+    // Small delay to let DOM update after expand
+    const timer = setTimeout(() => {
+      const el = blockRefs.current.get(focusBlockId);
+      if (el) {
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        setHighlightedBlockId(focusBlockId);
+        // Remove highlight after 2 seconds
+        setTimeout(() => setHighlightedBlockId(null), 2000);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [focusBlockId, loading, blocks.length]);
 
   const handleAddBlock = (type: 'heading' | 'text' | 'video' | 'image' | 'pdf') => {
     setDeleteConfirm(null);
@@ -668,9 +701,14 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
                 <SortableBlock key={block.id} block={block}>
               {({ listeners, attributes, isDragging }) =>
                   <div data-ev-id="ev_4de0529002"
-                  className={`p-4 bg-background border rounded-lg ${
+                  ref={(el) => {
+                    if (el) blockRefs.current.set(block.id, el);
+                    else blockRefs.current.delete(block.id);
+                  }}
+                  className={`p-4 bg-background border rounded-lg transition-shadow ${
                   hasProblems ? 'border-amber-500/50' : 'border-border'}${
                   deleteConfirm === block.id ? ' ring-2 ring-destructive' : ''}${
+                  highlightedBlockId === block.id ? ' ring-2 ring-primary' : ''}${
                   isDragging ? ' opacity-50' : ''}`
                   }>
 

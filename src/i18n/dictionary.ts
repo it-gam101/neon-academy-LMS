@@ -543,6 +543,18 @@ export interface Dictionary {
 		scopeAll: string;
 		owner: string;
 		unknownOwner: string;
+		readyToPublish: string;
+		blockersCount: string;
+		blockerFix: string;
+		blockerCheckFailed: string;
+		blockerNoModules: string;
+		blockerModuleTitle: string;
+		blockerNoBlocks: string;
+		blockerNoQuestions: string;
+		blockerQuestionText: string;
+		blockerFewOptions: string;
+		blockerOptionText: string;
+		blockerNoCorrect: string;
 	};
 	
 	// HR Analytics
@@ -1214,6 +1226,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			scopeAll: 'All Courses',
 			owner: 'Owner',
 			unknownOwner: 'Unknown',
+			readyToPublish: 'Ready to publish',
+			blockersCount: 'Must be fixed before publishing:',
+			blockerFix: 'Fix',
+			blockerCheckFailed: 'Could not check this course — try again',
+			blockerNoModules: 'The course has no modules',
+			blockerModuleTitle: 'Module title missing a translation',
+			blockerNoBlocks: 'Lesson has no content blocks',
+			blockerNoQuestions: 'Quiz has no questions',
+			blockerQuestionText: 'Question missing a translation',
+			blockerFewOptions: 'Question needs at least two options',
+			blockerOptionText: 'An answer option is missing a translation',
+			blockerNoCorrect: 'Question has no valid correct answer',
 		},
 		
 		hrAnalytics: {
@@ -1871,6 +1895,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			scopeAll: 'כל הקורסים',
 			owner: 'בעלים',
 			unknownOwner: 'לא ידוע',
+			readyToPublish: 'מוכן לפרסום',
+			blockersCount: 'יש לתקן לפני הפרסום:',
+			blockerFix: 'תיקון',
+			blockerCheckFailed: 'לא ניתן היה לבדוק את הקורס — נסו שוב',
+			blockerNoModules: 'לקורס אין מודולים',
+			blockerModuleTitle: 'חסר תרגום לכותרת המודול',
+			blockerNoBlocks: 'לשיעור אין בלוקי תוכן',
+			blockerNoQuestions: 'למבחן אין שאלות',
+			blockerQuestionText: 'חסר תרגום לשאלה',
+			blockerFewOptions: 'לשאלה נדרשות לפחות שתי אפשרויות',
+			blockerOptionText: 'לאחת מאפשרויות התשובה חסר תרגום',
+			blockerNoCorrect: 'לשאלה אין תשובה נכונה תקפה',
 		},
 		
 		hrAnalytics: {
