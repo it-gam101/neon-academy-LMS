@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { ProfileMenu } from '@/components/layout/ProfileMenu';
 import { Navigation } from '@/components/layout/Navigation';
+import { MobileNav } from '@/components/layout/MobileNav';
 import logoSrc from '@/assets/logo.svg';
 
 interface HeaderProps {
@@ -13,6 +15,7 @@ interface HeaderProps {
 export function Header({ hideLoginButton = false }: HeaderProps) {
   const { isAuthenticated } = useAuth();
   const { t } = useLocale();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <header data-ev-id="ev_14941de2e5" className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -49,6 +52,9 @@ export function Header({ hideLoginButton = false }: HeaderProps) {
 								{t.auth.login}
 							</Link> :
             null}
+						{isAuthenticated && (
+              <MobileNav isOpen={mobileNavOpen} onOpenChange={setMobileNavOpen} />
+            )}
 					</div>
 				</div>
 			</div>

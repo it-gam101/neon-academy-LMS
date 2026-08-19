@@ -26,6 +26,8 @@ export interface Dictionary {
 		studio: string;
 		hrAnalytics: string;
 		admin: string;
+		openMenu: string;
+		menuTitle: string;
 	};
 	
 	// Auth
@@ -725,6 +727,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			studio: 'Studio',
 			hrAnalytics: 'HR Analytics',
 			admin: 'Admin',
+			openMenu: 'Open menu',
+			menuTitle: 'Menu',
 		},
 		
 		auth: {
@@ -1394,6 +1398,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			studio: 'סטודיו',
 			hrAnalytics: 'אנליטיקת HR',
 			admin: 'ניהול',
+			openMenu: 'פתיחת התפריט',
+			menuTitle: 'תפריט',
 		},
 		
 		auth: {
