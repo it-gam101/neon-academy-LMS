@@ -1,7 +1,8 @@
-import { useParams, useNavigate, Link } from 'react-router';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router';
 import { Clock, BookOpen, Calendar, AlertCircle } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
+import { useAuth } from '@/hooks/useAuth';
 import { useCourseModules } from '@/hooks/useCourseModules';
 import { useCourses } from '@/hooks/useCourses';
 import { ModuleList } from '@/components/courses/ModuleList';
@@ -13,6 +14,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { BackButton } from '@/components/ui/BackButton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
+import { PreviewBanner } from '@/components/studio/PreviewBanner';
 import { formatRelativeDate } from '@/utils/formatDate';
 import { useState } from 'react';
 
@@ -21,6 +23,13 @@ export default function CoursePage() {
   const navigate = useNavigate();
   const { locale } = useLocale();
   const dict = getDictionary(locale);
+  const { profile } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Preview mode: only authors (instructor/hr_manager/super_admin) get preview behavior
+  const previewParam = searchParams.get('preview') === '1';
+  const canAuthor = profile?.role === 'instructor' || profile?.role === 'hr_manager' || profile?.role === 'super_admin';
+  const isPreview = previewParam && canAuthor;
 
   const {
     course,
@@ -79,7 +88,7 @@ export default function CoursePage() {
     setEnrolling(false);
   };
 
-  return (
+  const content = (
     <div data-ev-id="ev_825ddcb642">
 			<div data-ev-id="ev_0004629ff6" className="max-w-4xl mx-auto">
 				{/* Breadcrumbs */}
@@ -179,8 +188,9 @@ export default function CoursePage() {
 					<ModuleList
             courseId={courseId || ''}
             modules={modules}
-            enrolled={isEnrolled}
-            enrollmentId={enrollment?.id} />
+            enrolled={isEnrolled || isPreview}
+            enrollmentId={enrollment?.id}
+            isPreview={isPreview} />
 
 				</div>
 
@@ -192,5 +202,12 @@ export default function CoursePage() {
 					</div>
         }
 			</div>
-		</div>);
+		</div>
+  );
+
+  if (isPreview) {
+    return <PreviewBanner courseId={courseId || ''}>{content}</PreviewBanner>;
+  }
+
+  return content;
 }

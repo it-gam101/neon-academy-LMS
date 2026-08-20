@@ -948,12 +948,8 @@ export default function StudioEditor() {
 				{/* Actions */}
 				<div data-ev-id="ev_a8097d2908" className="flex items-center justify-between">
 					<Link
-            to={course.status === 'published' ? `/course/${courseId}` : '#'}
-            className={`flex items-center gap-2 px-4 py-2 text-foreground border border-border rounded-lg transition-colors ${
-            course.status === 'published' ?
-            'hover:bg-muted' :
-            'opacity-50 cursor-not-allowed'}`
-            }>
+            to={`/course/${courseId}?preview=1`}
+            className="flex items-center gap-2 px-4 py-2 text-foreground border border-border rounded-lg transition-colors hover:bg-muted">
 
 						<Eye className="w-4 h-4" />
 						{dict.studio.previewAsLearner}

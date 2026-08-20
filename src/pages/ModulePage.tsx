@@ -1,7 +1,8 @@
-import { useParams, useNavigate, Link } from 'react-router';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router';
 import { CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
+import { useAuth } from '@/hooks/useAuth';
 import { isAllowedVideoUrl, isAllowedMediaUrl } from '@/lib/contentSafety';
 import { useCourseModules } from '@/hooks/useCourseModules';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -9,6 +10,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { BackButton } from '@/components/ui/BackButton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
+import { PreviewBanner } from '@/components/studio/PreviewBanner';
 import { useState, useMemo, useEffect } from 'react';
 
 interface ContentBlock {
@@ -43,8 +45,16 @@ export default function ModulePage() {
   const navigate = useNavigate();
   const { locale } = useLocale();
   const dict = getDictionary(locale);
+  const { profile } = useAuth();
+  const [searchParams] = useSearchParams();
   const PrevChevron = locale === 'he' ? ChevronRight : ChevronLeft;
   const NextChevron = locale === 'he' ? ChevronLeft : ChevronRight;
+
+  // Preview mode: only authors (instructor/hr_manager/super_admin) get preview behavior
+  const previewParam = searchParams.get('preview') === '1';
+  const canAuthor = profile?.role === 'instructor' || profile?.role === 'hr_manager' || profile?.role === 'super_admin';
+  const isPreview = previewParam && canAuthor;
+  const previewSuffix = isPreview ? '?preview=1' : '';
 
   const { course, modules, enrollment, loading, error, refetch, getLocalizedTitle, getLocalizedCourseTitle, markModuleProgress } = useCourseModules(courseId || '');
   const [marking, setMarking] = useState(false);
@@ -57,12 +67,13 @@ export default function ModulePage() {
   const isCompleted = currentModule?.progress?.status === 'completed';
   const isQuiz = currentModule?.module_type === 'quiz';
 
-  // Mark as in_progress when entering lesson
+  // Mark as in_progress when entering lesson (skip in preview mode)
   useEffect(() => {
+    if (isPreview) return; // Never write progress in preview
     if (currentModule && !isQuiz && currentModule.progress?.status !== 'completed' && currentModule.progress?.status !== 'in_progress') {
       markModuleProgress(currentModule.id, 'in_progress');
     }
-  }, [currentModule, isQuiz, markModuleProgress]);
+  }, [currentModule, isQuiz, markModuleProgress, isPreview]);
 
   const contentBlocks = useMemo<ContentBlock[]>(() => {
     if (!currentModule?.content_json) return [];
@@ -95,11 +106,12 @@ export default function ModulePage() {
 
   // Redirect to quiz page if it's a quiz
   if (isQuiz) {
-    navigate(`/course/${courseId}/quiz/${moduleId}`, { replace: true });
+    navigate(`/course/${courseId}/quiz/${moduleId}${previewSuffix}`, { replace: true });
     return null;
   }
 
   const handleMarkComplete = async () => {
+    if (isPreview) return; // Never write progress in preview
     setMarking(true);
     const { error } = await markModuleProgress(currentModule.id, 'completed');
     if (error) {
@@ -169,21 +181,21 @@ export default function ModulePage() {
     }
   };
 
-  return (
-    <div data-ev-id="ev_9dc9cd554c" className="min-h-screen bg-background">
+  const content =
+  <div data-ev-id="ev_9dc9cd554c" className="min-h-screen bg-background">
 			<div data-ev-id="ev_90af7b3ade" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				{/* Breadcrumbs */}
 				<Breadcrumbs
-          items={[
-          { label: dict.nav.catalogue, href: '/catalogue' },
-          { label: courseTitle, href: `/course/${courseId}` },
-          { label: moduleTitle }]
-          } />
+        items={[
+        { label: dict.nav.catalogue, href: '/catalogue' },
+        { label: courseTitle, href: `/course/${courseId}${previewSuffix}` },
+        { label: moduleTitle }]
+        } />
 
 				
 				{/* Header */}
 				<div data-ev-id="ev_c5459550e6" className="mb-8">
-					<BackButton to={`/course/${courseId}`} label={dict.course.backToCourse} />
+					<BackButton to={`/course/${courseId}${previewSuffix}`} label={dict.course.backToCourse} />
 
 					<p data-ev-id="ev_8cdba98cd1" className="text-sm text-muted-foreground mb-2">
 						{dict.course.lesson} {currentIndex + 1} {dict.common.of} {modules.length}
@@ -194,64 +206,74 @@ export default function ModulePage() {
 				{/* Content */}
 				<div data-ev-id="ev_1eea7feda1" className="bg-card border border-border rounded-lg p-6 mb-8">
 					{contentBlocks.length > 0 ?
-          contentBlocks.map((block, index) => renderBlock(block, index)) :
+        contentBlocks.map((block, index) => renderBlock(block, index)) :
 
-          <p data-ev-id="ev_b8cc61754d" className="text-muted-foreground">{dict.common.noResults}</p>
-          }
+        <p data-ev-id="ev_b8cc61754d" className="text-muted-foreground">{dict.common.noResults}</p>
+        }
 				</div>
 
 				{/* Actions */}
 				<div data-ev-id="ev_ffc1aaac98" className="flex items-center justify-between gap-4">
 					{/* Previous */}
 					{prevModule ?
-          <Link
-            to={`/course/${courseId}/module/${prevModule.id}`}
-            className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
+        <Link
+          to={`/course/${courseId}/module/${prevModule.id}${previewSuffix}`}
+          className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
 
 							<PrevChevron className="w-5 h-5" />
 							{dict.course.previousModule}
 						</Link> :
 
-          <div data-ev-id="ev_47e74bb53a" />
-          }
+        <div data-ev-id="ev_47e74bb53a" />
+        }
 
 					{/* Mark complete */}
-					{!isCompleted ?
-          <button data-ev-id="ev_bdabb08cd9"
-          onClick={handleMarkComplete}
-          disabled={marking}
-          className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+					{isPreview ?
+        <span data-ev-id="ev_9af3db0d4e" className="flex items-center gap-2 px-6 py-2 bg-muted text-muted-foreground rounded-lg cursor-not-allowed">
+              <CheckCircle className="w-5 h-5" />
+              {dict.studio.previewNoProgress}
+            </span> :
+        !isCompleted ?
+        <button data-ev-id="ev_bdabb08cd9"
+        onClick={handleMarkComplete}
+        disabled={marking}
+        className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+              <CheckCircle className="w-5 h-5" />
+              {marking ? dict.common.loading : dict.course.markComplete}
+            </button> :
 
-							<CheckCircle className="w-5 h-5" />
-							{marking ? dict.common.loading : dict.course.markComplete}
-						</button> :
-
-          <span data-ev-id="ev_0b84f95aeb" className="flex items-center gap-2 text-primary">
-							<CheckCircle className="w-5 h-5" />
-							{dict.course.completedLesson}
-						</span>
-          }
+        <span data-ev-id="ev_0b84f95aeb" className="flex items-center gap-2 text-primary">
+              <CheckCircle className="w-5 h-5" />
+              {dict.course.completedLesson}
+            </span>
+        }
 
 					{/* Next */}
 					{nextModule ?
-          <Link
-            to={`/course/${courseId}/module/${nextModule.id}`}
-            className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
+        <Link
+          to={`/course/${courseId}/module/${nextModule.id}${previewSuffix}`}
+          className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
 
 							{dict.course.nextModule}
 							<NextChevron className="w-5 h-5" />
 						</Link> :
 
-          <Link
-            to={`/course/${courseId}`}
-            className="flex items-center gap-2 px-4 py-2 text-primary hover:text-primary/90 transition-colors">
+        <Link
+          to={`/course/${courseId}${previewSuffix}`}
+          className="flex items-center gap-2 px-4 py-2 text-primary hover:text-primary/90 transition-colors">
 
 							{dict.course.backToCourse}
 							<NextChevron className="w-5 h-5" />
 						</Link>
-          }
+        }
 				</div>
 			</div>
-		</div>);
+		</div>;
 
+
+  if (isPreview) {
+    return <PreviewBanner courseId={courseId || ''}>{content}</PreviewBanner>;
+  }
+
+  return content;
 }

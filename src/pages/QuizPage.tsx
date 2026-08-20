@@ -1,8 +1,9 @@
-import { useParams, useNavigate, Link } from 'react-router';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router';
 import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, ArrowRight, Clock, AlertCircle, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
+import { useAuth } from '@/hooks/useAuth';
 import { useQuiz } from '@/hooks/useQuiz';
 import { useCourseModules } from '@/hooks/useCourseModules';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -13,6 +14,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { BackButton } from '@/components/ui/BackButton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
+import { PreviewBanner } from '@/components/studio/PreviewBanner';
 
 type QuizState = 'info' | 'playing' | 'results' | 'review';
 
@@ -21,9 +23,17 @@ export default function QuizPage() {
   const navigate = useNavigate();
   const { locale } = useLocale();
   const dict = getDictionary(locale);
+  const { profile } = useAuth();
+  const [searchParams] = useSearchParams();
   const BackArrow = locale === 'he' ? ArrowRight : ArrowLeft;
   const PrevChevron = locale === 'he' ? ChevronRight : ChevronLeft;
   const NextChevron = locale === 'he' ? ChevronLeft : ChevronRight;
+
+  // Preview mode: only authors (instructor/hr_manager/super_admin) get preview behavior
+  const previewParam = searchParams.get('preview') === '1';
+  const canAuthor = profile?.role === 'instructor' || profile?.role === 'hr_manager' || profile?.role === 'super_admin';
+  const isPreview = previewParam && canAuthor;
+  const previewSuffix = isPreview ? '?preview=1' : '';
 
   const { quiz, questions, loading, error, attemptsUsed, attemptsAllowed, attemptsRemaining, canAttempt, hasPassed, submitQuiz, getLocalizedQuestion, getLocalizedOptions } = useQuiz(moduleId || '');
   const { course, modules, markModuleProgress, getLocalizedTitle, getLocalizedCourseTitle } = useCourseModules(courseId || '');
@@ -74,6 +84,34 @@ export default function QuizPage() {
     setSubmitting(true);
     setShowConfirmModal(false);
 
+    // In preview mode, calculate score locally without writing to DB
+    if (isPreview) {
+      let earnedPoints = 0;
+      let totalPoints = 0;
+      questions.forEach(q => {
+        totalPoints += q.points || 1;
+        const userAnswer = answers[q.id];
+        const correctAnswer = q.correct;
+        if (q.question_type === 'multi') {
+          const correct = correctAnswer as number[];
+          const user = (userAnswer || []) as number[];
+          if (correct.length === user.length && correct.every(c => user.includes(c))) {
+            earnedPoints += q.points || 1;
+          }
+        } else {
+          if (String(userAnswer) === String(correctAnswer)) {
+            earnedPoints += q.points || 1;
+          }
+        }
+      });
+      const localScore = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
+      const localPassed = localScore >= (quiz?.pass_score || 70);
+      setResult({ score: localScore, passed: localPassed });
+      setState('results');
+      setSubmitting(false);
+      return;
+    }
+
     const { data, score, passed, error } = await submitQuiz(answers);
 
     if (error === 'max_attempts_reached') {
@@ -93,12 +131,20 @@ export default function QuizPage() {
 
     setSubmitting(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answers, submitQuiz, moduleId, markModuleProgress, submitting]);
+  }, [answers, submitQuiz, moduleId, markModuleProgress, submitting, isPreview, questions, quiz?.pass_score]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Wrapper for preview mode
+  const wrapInPreview = (content: React.ReactNode) => {
+    if (isPreview) {
+      return <PreviewBanner courseId={courseId || ''}>{content}</PreviewBanner>;
+    }
+    return content;
   };
 
   if (loading) {
@@ -114,7 +160,7 @@ export default function QuizPage() {
   if (error || !quiz) {
     return (
       <div data-ev-id="ev_66bf24593c" className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton to={`/course/${courseId}`} label={dict.quiz.backToCourse} />
+        <BackButton to={`/course/${courseId}${previewSuffix}`} label={dict.quiz.backToCourse} />
         <ErrorState error={error || dict.common.notFound} />
       </div>);
   }
@@ -123,7 +169,7 @@ export default function QuizPage() {
   if (questions.length === 0) {
     return (
       <div data-ev-id="ev_quiz_no_questions" className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton to={`/course/${courseId}`} label={dict.quiz.backToCourse} />
+        <BackButton to={`/course/${courseId}${previewSuffix}`} label={dict.quiz.backToCourse} />
         <div data-ev-id="ev_no_questions_card" className="bg-card border border-border rounded-lg p-8 text-center">
           <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h2 data-ev-id="ev_no_questions_title" className="text-xl font-semibold text-foreground mb-2">
@@ -139,19 +185,19 @@ export default function QuizPage() {
 
   // Info screen
   if (state === 'info') {
-    return (
+    return wrapInPreview(
       <div data-ev-id="ev_e303f380d7" className="min-h-screen bg-background">
         <div data-ev-id="ev_da9078865f" className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Breadcrumbs */}
           <Breadcrumbs
             items={[
             { label: dict.nav.catalogue, href: '/catalogue' },
-            { label: courseTitle, href: `/course/${courseId}` },
+            { label: courseTitle, href: `/course/${courseId}${previewSuffix}` },
             { label: currentModule ? getLocalizedTitle(currentModule) : dict.course.quiz }]
             } />
 
           
-          <BackButton to={`/course/${courseId}`} label={dict.quiz.backToCourse} />
+          <BackButton to={`/course/${courseId}${previewSuffix}`} label={dict.quiz.backToCourse} />
 
 					<div data-ev-id="ev_9ba8660d35" className="bg-card border border-border rounded-lg p-8 text-center">
 						<h1 data-ev-id="ev_2b529c51a7" className="text-2xl font-bold text-foreground mb-4">
@@ -186,7 +232,7 @@ export default function QuizPage() {
 								<CheckCircle className="w-8 h-8 text-primary mx-auto mb-2" />
 								<p data-ev-id="ev_2655ba0c5b" className="text-primary font-medium">{dict.quiz.youPassed}</p>
 							</div> :
-            !canAttempt ?
+            !canAttempt && !isPreview ?
             <div data-ev-id="ev_d6dbf8f5af" className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg mb-6">
 								<XCircle className="w-8 h-8 text-destructive mx-auto mb-2" />
 								<p data-ev-id="ev_014e8f67f8" className="text-destructive font-medium">{dict.quiz.noAttemptsRemaining}</p>
@@ -195,20 +241,20 @@ export default function QuizPage() {
 
 						<button data-ev-id="ev_d7596ef15d"
             onClick={startQuiz}
-            disabled={!canAttempt}
+            disabled={!canAttempt && !isPreview}
             className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 
 							{hasPassed ? dict.quiz.retryQuiz : dict.course.startQuiz}
 						</button>
 					</div>
 				</div>
-			</div>);
-
+			</div>
+    );
   }
 
   // Results screen
   if (state === 'results' && result) {
-    return (
+    return wrapInPreview(
       <div data-ev-id="ev_ce964a37c6" className="min-h-screen bg-background">
 				<div data-ev-id="ev_e078460f0f" className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 					<div data-ev-id="ev_ea13b18d8c" className="bg-card border border-border rounded-lg p-8 text-center">
@@ -252,7 +298,7 @@ export default function QuizPage() {
 								</button>
               }
 							<Link
-                to={`/course/${courseId}`}
+                to={`/course/${courseId}${previewSuffix}`}
                 className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
 
 								{dict.quiz.backToCourse}
@@ -260,19 +306,19 @@ export default function QuizPage() {
 						</div>
 					</div>
 				</div>
-			</div>);
-
+			</div>
+    );
   }
 
   // Review screen
   if (state === 'review') {
-    return (
+    return wrapInPreview(
       <div data-ev-id="ev_99c82607c8" className="min-h-screen bg-background">
 				<div data-ev-id="ev_1757b239f3" className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 					<div data-ev-id="ev_32f3b02f20" className="flex items-center justify-between mb-6">
 						<h1 data-ev-id="ev_86452122bd" className="text-xl font-bold text-foreground">{dict.quiz.reviewAnswers}</h1>
 						<Link
-              to={`/course/${courseId}`}
+              to={`/course/${courseId}${previewSuffix}`}
               className="text-primary hover:underline">
 
 							{dict.quiz.backToCourse}
@@ -344,8 +390,8 @@ export default function QuizPage() {
             })}
 					</div>
 				</div>
-			</div>);
-
+			</div>
+    );
   }
 
   // Quiz playing
@@ -353,7 +399,7 @@ export default function QuizPage() {
   const options = getLocalizedOptions(question);
   const questionType = question.question_type;
 
-  return (
+  return wrapInPreview(
     <div data-ev-id="ev_7a6c8533f4" className="min-h-screen bg-background">
 			<div data-ev-id="ev_60adf4ad5e" className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				{/* Progress header */}
@@ -476,6 +522,6 @@ export default function QuizPage() {
 
 				<p data-ev-id="ev_897b988f13" className="text-muted-foreground">{dict.quiz.confirmSubmitMessage}</p>
 			</Modal>
-		</div>);
-
+		</div>
+  );
 }

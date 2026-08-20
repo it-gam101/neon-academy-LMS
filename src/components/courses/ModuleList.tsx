@@ -20,9 +20,10 @@ interface ModuleListProps {
   modules: ModuleWithProgress[];
   enrolled: boolean;
   enrollmentId?: string;
+  isPreview?: boolean;
 }
 
-export function ModuleList({ courseId, modules, enrolled, enrollmentId }: ModuleListProps) {
+export function ModuleList({ courseId, modules, enrolled, enrollmentId, isPreview }: ModuleListProps) {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
   const Chevron = locale === 'he' ? ChevronLeft : ChevronRight;
@@ -84,13 +85,15 @@ export function ModuleList({ courseId, modules, enrolled, enrollmentId }: Module
     }
   };
 
+  const previewSuffix = isPreview ? '?preview=1' : '';
+
   const getModuleUrl = (mod: ModuleWithProgress) => {
-    // SCORM modules use the player route with enrollment ID
-    if (mod.module_type === 'scorm_package' && enrollmentId) {
+    // SCORM modules use the player route with enrollment ID (not supported in preview)
+    if (mod.module_type === 'scorm_package' && enrollmentId && !isPreview) {
       return `/learn/${enrollmentId}/scorm/${mod.id}`;
     }
-    // Default module route
-    return `/course/${courseId}/module/${mod.id}`;
+    // Default module route (works for lessons and quizzes via redirect)
+    return `/course/${courseId}/module/${mod.id}${previewSuffix}`;
   };
 
   const getModuleTypeLabel = (mod: ModuleWithProgress, index: number) => {

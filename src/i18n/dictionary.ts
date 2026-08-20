@@ -557,6 +557,11 @@ export interface Dictionary {
 		blockerFewOptions: string;
 		blockerOptionText: string;
 		blockerNoCorrect: string;
+		previewBanner: string;
+		previewBackToEdit: string;
+		previewNoProgress: string;
+		previewDesktop: string;
+		previewMobile: string;
 	};
 	
 	// HR Analytics
@@ -1242,6 +1247,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			blockerFewOptions: 'Question needs at least two options',
 			blockerOptionText: 'An answer option is missing a translation',
 			blockerNoCorrect: 'Question has no valid correct answer',
+			previewBanner: 'Preview — you are seeing this course as a learner. Nothing is recorded.',
+			previewBackToEdit: 'Back to editing',
+			previewNoProgress: 'Disabled in preview',
+			previewDesktop: 'Desktop',
+			previewMobile: 'Mobile',
 		},
 		
 		hrAnalytics: {
@@ -1913,6 +1923,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			blockerFewOptions: 'לשאלה נדרשות לפחות שתי אפשרויות',
 			blockerOptionText: 'לאחת מאפשרויות התשובה חסר תרגום',
 			blockerNoCorrect: 'לשאלה אין תשובה נכונה תקפה',
+			previewBanner: 'תצוגה מקדימה — כך הקורס נראה ללומד. שום דבר אינו נשמר.',
+			previewBackToEdit: 'חזרה לעריכה',
+			previewNoProgress: 'מושבת בתצוגה מקדימה',
+			previewDesktop: 'מחשב',
+			previewMobile: 'נייד',
 		},
 		
 		hrAnalytics: {
