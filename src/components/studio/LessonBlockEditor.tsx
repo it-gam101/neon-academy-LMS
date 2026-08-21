@@ -70,61 +70,71 @@ function normaliseContent(content: {en: string;he: string;} | string | undefined
 
 // Check if URL looks like a non-embed YouTube URL that can't be parsed
 function isUnparseableYouTubeUrl(url: string): boolean {
-  // If it's already an embed URL, it's fine
-  if (url.includes('/embed/')) return false;
   // If it looks like YouTube but we can't extract an ID, warn
-  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+  if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('youtube-nocookie.com')) {
     const id = extractYouTubeId(url);
     return !id;
   }
   return false;
 }
 
-// Extract YouTube video ID from various URL formats
+// Extract YouTube video ID from any recognised URL shape.
+// URL-parsed rather than regexed so `v` need not be the first query param.
 function extractYouTubeId(url: string): string | null {
-  // Already embed format
-  const embedMatch = url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
-  if (embedMatch) return embedMatch[1];
+  let u: URL;
+  try {
+    u = new URL(url.trim());
+  } catch {
+    return null;
+  }
+  const host = u.hostname.toLowerCase().replace(/^(www|m)\./, '');
+  if (host !== 'youtube.com' && host !== 'youtube-nocookie.com' && host !== 'youtu.be') {
+    return null;
+  }
+  const valid = (id: string | null | undefined): string | null =>
+    id && /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
 
-  // watch?v= format
-  const watchMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/);
-  if (watchMatch) return watchMatch[1];
+  if (host === 'youtu.be') return valid(u.pathname.split('/')[1]);
 
-  // youtu.be format
-  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
-  if (shortMatch) return shortMatch[1];
+  const v = u.searchParams.get('v');
+  if (v) return valid(v);
 
+  const parts = u.pathname.split('/').filter(Boolean);
+  if (parts.length >= 2 && ['embed', 'shorts', 'live', 'v'].includes(parts[0])) {
+    return valid(parts[1]);
+  }
   return null;
 }
 
-// Extract start time from URL params (t= or start=)
+// Extract start time in seconds from t= or start= (accepts 90, 90s, 1m30s, 1h2m3s)
 function extractStartTime(url: string): number | null {
-  // Match t=90s, t=90, start=90
-  const match = url.match(/[?&](t|start)=(\d+)s?/);
-  if (match) return parseInt(match[2], 10);
-  return null;
+  let u: URL;
+  try {
+    u = new URL(url.trim());
+  } catch {
+    return null;
+  }
+  const raw = u.searchParams.get('t') ?? u.searchParams.get('start');
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) return parseInt(raw, 10);
+  const m = raw.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+  if (!m || (!m[1] && !m[2] && !m[3])) return null;
+  return parseInt(m[1] || '0', 10) * 3600 + parseInt(m[2] || '0', 10) * 60 + parseInt(m[3] || '0', 10);
 }
 
-// Convert YouTube URL to embed format
 function convertToEmbedUrl(url: string): {converted: string;wasConverted: boolean;} {
   const trimmed = url.trim();
   if (!trimmed) return { converted: '', wasConverted: false };
 
-  // Already an embed URL
-  if (trimmed.includes('/embed/')) {
-    return { converted: trimmed, wasConverted: false };
-  }
+  // Already exactly what we emit — leave it alone, params and all
+  if (isAllowedVideoUrl(trimmed)) return { converted: trimmed, wasConverted: false };
 
   const videoId = extractYouTubeId(trimmed);
-  if (!videoId) {
-    return { converted: trimmed, wasConverted: false };
-  }
+  if (!videoId) return { converted: trimmed, wasConverted: false };
 
   const startTime = extractStartTime(trimmed);
   let embedUrl = `https://www.youtube.com/embed/${videoId}`;
-  if (startTime) {
-    embedUrl += `?start=${startTime}`;
-  }
+  if (startTime) embedUrl += `?start=${startTime}`;
 
   return { converted: embedUrl, wasConverted: true };
 }

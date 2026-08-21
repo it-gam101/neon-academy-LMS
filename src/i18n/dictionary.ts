@@ -562,6 +562,8 @@ export interface Dictionary {
 		previewNoProgress: string;
 		previewDesktop: string;
 		previewMobile: string;
+		scormCannotPlayHere: string;
+		scormCannotPlayHereBody: string;
 	};
 	
 	// HR Analytics
@@ -1252,6 +1254,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			previewNoProgress: 'Disabled in preview',
 			previewDesktop: 'Desktop',
 			previewMobile: 'Mobile',
+			scormCannotPlayHere: 'SCORM package cannot be played here',
+			scormCannotPlayHereBody: 'SCORM packages run only from My Learning, where an enrolment exists to record progress and score. Preview will not open the player, so nothing is recorded by mistake.',
 		},
 		
 		hrAnalytics: {
@@ -1928,6 +1932,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			previewNoProgress: 'מושבת בתצוגה מקדימה',
 			previewDesktop: 'מחשב',
 			previewMobile: 'נייד',
+			scormCannotPlayHere: 'לא ניתן להפעיל כאן חבילת SCORM',
+			scormCannotPlayHereBody: 'חבילות SCORM פועלות רק מתוך "הלמידה שלי", שם קיימת הרשמה שמתעדת התקדמות וציון. התצוגה המקדימה לא תפתח את הנגן, כך שלא יירשם מידע בטעות.',
 		},
 		
 		hrAnalytics: {

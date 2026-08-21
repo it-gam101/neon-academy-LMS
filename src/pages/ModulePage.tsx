@@ -198,16 +198,29 @@ export default function ModulePage() {
 					<BackButton to={`/course/${courseId}${previewSuffix}`} label={dict.course.backToCourse} />
 
 					<p data-ev-id="ev_8cdba98cd1" className="text-sm text-muted-foreground mb-2">
-						{dict.course.lesson} {currentIndex + 1} {dict.common.of} {modules.length}
+						{currentModule.module_type === 'scorm_package' ? dict.scorm.scormPackage : dict.course.lesson} {currentIndex + 1} {dict.common.of} {modules.length}
 					</p>
 					<h1 data-ev-id="ev_6eb27630c5" className="text-2xl font-bold text-foreground">{getLocalizedTitle(currentModule)}</h1>
 				</div>
 
 				{/* Content */}
 				<div data-ev-id="ev_1eea7feda1" className="bg-card border border-border rounded-lg p-6 mb-8">
-					{contentBlocks.length > 0 ?
+					{currentModule.module_type === 'scorm_package' ?
+        <div data-ev-id="ev_456a7cd033" className="text-center py-6">
+            <h2 data-ev-id="ev_5cb78922d1" className="text-lg font-semibold text-foreground mb-2">
+              {dict.studio.scormCannotPlayHere}
+            </h2>
+            <p data-ev-id="ev_6b60038736" className="text-muted-foreground max-w-xl mx-auto mb-4">
+              {dict.studio.scormCannotPlayHereBody}
+            </p>
+            <Link
+            to="/sandbox"
+            className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+              {dict.landing.trySandbox}
+            </Link>
+          </div> :
+        contentBlocks.length > 0 ?
         contentBlocks.map((block, index) => renderBlock(block, index)) :
-
         <p data-ev-id="ev_b8cc61754d" className="text-muted-foreground">{dict.common.noResults}</p>
         }
 				</div>

@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
+import { syncCourseType } from '@/lib/courseType';
 
 type Module = Tables<'modules'>;
 
@@ -324,6 +325,9 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
       }
 
       setState('success');
+
+      // Sync course type since we added a SCORM module
+      await syncCourseType(courseId);
 
       // Return the module to parent
       onUploaded(moduleData);

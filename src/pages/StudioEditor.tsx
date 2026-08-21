@@ -18,6 +18,7 @@ import { QuizQuestionEditor } from '@/components/studio/QuizQuestionEditor';
 import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
 import { LessonBlockEditor } from '@/components/studio/LessonBlockEditor';
 import { courseProblems, type CourseProblem, type ProblemCode } from '@/lib/completeness';
+import { syncCourseType } from '@/lib/courseType';
 
 type Course = Tables<'courses'>;
 type Module = Tables<'modules'>;
@@ -348,6 +349,7 @@ export default function StudioEditor() {
       showToast('error', error.message);
     } else if (data) {
       setModules((prev) => [...prev, data]);
+      await syncCourseType(courseId);
 
       // Create quiz record if it's a quiz module
       if (type === 'quiz') {
@@ -418,6 +420,7 @@ export default function StudioEditor() {
       showToast('error', error.message);
     } else {
       setModules((prev) => prev.filter((m) => m.id !== moduleId));
+      await syncCourseType(courseId);
     }
     setDeletingModuleId(null);
     setModuleDeleteWarningCount(null);
@@ -469,6 +472,7 @@ export default function StudioEditor() {
       showToast('error', dict.common.error);
     } else {
       setModules((prev) => [...prev, data]);
+      await syncCourseType(courseId);
       setShowScormChooser(false);
       showToast('success', dict.studioUpload.success);
     }

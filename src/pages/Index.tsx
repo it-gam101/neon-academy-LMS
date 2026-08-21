@@ -83,6 +83,7 @@ export default function Index() {
   const { courses, loading: coursesLoading, getLocalizedTitle: getCourseTitle } = useCourses({ onlyPublished: true });
 
   const [newUserCount, setNewUserCount] = useState<number | null>(null);
+  const [newUsers, setNewUsers] = useState<{id: string;full_name: string | null;email: string;department: string | null;}[]>([]);
 
   const userRole = profile?.role ?? 'employee';
   const visibleActions = quickActions.filter((action) =>
@@ -94,16 +95,19 @@ export default function Index() {
     if (!supabase || !isAuthenticated || profile?.role !== 'super_admin') return;
 
     const fetchNewUsers = async () => {
-      const { count, error } = await supabase.
+      const { data, count, error } = await supabase.
       from('profiles').
-      select('id', { count: 'exact', head: true }).
-      gte('created_at', newUserWindowStartISO());
+      select('id, full_name, email, department, created_at', { count: 'exact' }).
+      gte('created_at', newUserWindowStartISO()).
+      order('created_at', { ascending: false }).
+      limit(5);
 
       if (error) {
         console.error('Failed to fetch new user count:', error);
         return;
       }
       setNewUserCount(count ?? 0);
+      setNewUsers(data ?? []);
     };
 
     fetchNewUsers();
@@ -502,22 +506,36 @@ export default function Index() {
         <div data-ev-id="ev_5d03215638" className="mb-8">
             <Link
             to="/admin"
-            className="group flex items-center justify-between p-4 bg-card border border-border rounded-xl hover:border-primary/50 transition-all hover:shadow-md">
-              <div data-ev-id="ev_930220bae5" className="flex items-center gap-3">
-                <div data-ev-id="ev_60e3586aa5" className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-primary" />
+            className="group block p-4 bg-card border border-border rounded-xl hover:border-primary/50 transition-all hover:shadow-md">
+              <div data-ev-id="ev_9ae1aa4ef4" className="flex items-center justify-between">
+                <div data-ev-id="ev_930220bae5" className="flex items-center gap-3">
+                  <div data-ev-id="ev_60e3586aa5" className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-primary" />
+                  </div>
+                  <div data-ev-id="ev_11135fdfa4">
+                    <p data-ev-id="ev_3d6102ff8f" className="font-medium text-foreground flex items-center gap-2">
+                      {t.admin.newRegistrations}
+                      <span data-ev-id="ev_62715f19a9" className="px-2 py-0.5 bg-primary text-primary-foreground text-sm rounded-full font-semibold">
+                        {newUserCount}
+                      </span>
+                    </p>
+                    <p data-ev-id="ev_7801df722c" className="text-sm text-muted-foreground">{t.admin.newRegistrationsCta}</p>
+                  </div>
                 </div>
-                <div data-ev-id="ev_11135fdfa4">
-                  <p data-ev-id="ev_3d6102ff8f" className="font-medium text-foreground flex items-center gap-2">
-                    {t.admin.newRegistrations}
-                    <span data-ev-id="ev_62715f19a9" className="px-2 py-0.5 bg-primary text-primary-foreground text-sm rounded-full font-semibold">
-                      {newUserCount}
-                    </span>
-                  </p>
-                  <p data-ev-id="ev_7801df722c" className="text-sm text-muted-foreground">{t.admin.newRegistrationsCta}</p>
-                </div>
+                <ChevronForward className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
-              <ChevronForward className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              {newUsers.length > 0 &&
+            <ul data-ev-id="ev_0223133cff" className="mt-3 pt-3 border-t border-border space-y-1">
+                  {newUsers.map((u) =>
+              <li data-ev-id="ev_477eb1c428" key={u.id} className="flex items-center justify-between gap-3 text-sm">
+                      <span data-ev-id="ev_6a09171bc0" className="text-foreground truncate">{u.full_name?.trim() || u.email}</span>
+                      {u.department &&
+                <span data-ev-id="ev_cc5fb537f9" className="text-muted-foreground shrink-0">{u.department}</span>
+                }
+                    </li>
+              )}
+                </ul>
+            }
             </Link>
           </div>
         }

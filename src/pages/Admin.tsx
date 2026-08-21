@@ -19,6 +19,15 @@ type Category = Tables<'course_categories'>;
 type AuditLog = Tables<'audit_log'>;
 type OrgSettings = Tables<'org_settings'>;
 
+function formatAuditMeta(meta: unknown): string | null {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
+  const entries = Object.entries(meta as Record<string, unknown>);
+  if (entries.length === 0) return null;
+  return entries.
+  map(([k, v]) => `${k}: ${v !== null && typeof v === 'object' ? JSON.stringify(v) : String(v)}`).
+  join(' · ');
+}
+
 export default function Admin() {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
@@ -365,6 +374,7 @@ export default function Admin() {
 												<th data-ev-id="ev_f6badcb18a" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.admin.actor}</th>
 												<th data-ev-id="ev_595ce92293" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.admin.action}</th>
 												<th data-ev-id="ev_bab09ead88" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.admin.entity}</th>
+												<th data-ev-id="ev_67c4e61ee8" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.admin.details}</th>
 											</tr>
 										</thead>
 										<tbody data-ev-id="ev_f53a5e41d3" className="divide-y divide-border">
@@ -380,6 +390,11 @@ export default function Admin() {
 														<Badge variant="info">{log.action}</Badge>
 													</td>
 													<td data-ev-id="ev_e787e135f1" className="px-4 py-3 text-muted-foreground">{log.entity}</td>
+													<td data-ev-id="ev_f6476c4c17" className="px-4 py-3 text-sm text-muted-foreground">
+														{formatAuditMeta(log.meta) ?
+                          <code data-ev-id="ev_7361b7eabe" dir="ltr" className="text-xs break-all">{formatAuditMeta(log.meta)}</code> :
+                          '-'}
+													</td>
 												</tr>
                       )}
 										</tbody>
@@ -606,13 +621,13 @@ export default function Admin() {
 
 			{/* Delete Category Confirm Dialog */}
 			<ConfirmDialog
-				isOpen={deletingCategoryId !== null}
-				title={dict.admin.deleteCategory}
-				message={dict.admin.confirmDeleteCategory}
-				confirmLabel={dict.common.delete}
-				destructive
-				onConfirm={() => deletingCategoryId && handleDeleteCategory(deletingCategoryId)}
-				onCancel={() => setDeletingCategoryId(null)}
-			/>
+        isOpen={deletingCategoryId !== null}
+        title={dict.admin.deleteCategory}
+        message={dict.admin.confirmDeleteCategory}
+        confirmLabel={dict.common.delete}
+        destructive
+        onConfirm={() => deletingCategoryId && handleDeleteCategory(deletingCategoryId)}
+        onCancel={() => setDeletingCategoryId(null)} />
+
 		</div>);
 }
