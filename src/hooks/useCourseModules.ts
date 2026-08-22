@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { useLocale } from '@/hooks/useLocale';
+import { getDictionary } from '@/i18n/dictionary';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 
 export type Module = Tables<'modules'>;
@@ -22,6 +23,7 @@ export function useCourseModules(courseId: string) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const { locale } = useLocale();
+	const dict = getDictionary(locale);
 
 	const fetchModules = useCallback(async () => {
 		if (!supabase || !courseId) {
@@ -196,23 +198,40 @@ export function useCourseModules(courseId: string) {
 				? scores.reduce((a, b) => a + b, 0) / scores.length 
 				: null;
 
-			await supabase
+			const { data: rollupData, error: rollupError } = await supabase
 				.from('enrollments')
 				.update({
 					status: 'completed',
 					completed_at: new Date().toISOString(),
 					score: avgScore,
 				})
-				.eq('id', enrollment.id);
+				.eq('id', enrollment.id)
+				.select();
+
+			if (rollupError) {
+				console.error('useCourseModules: enrollment rollup failed', rollupError);
+				return { error: rollupError.message };
+			}
+			if (!rollupData || rollupData.length === 0) {
+				console.error('useCourseModules: enrollment rollup REFUSED (0 rows) for', enrollment.id);
+				return { error: dict.common.changeRefused };
+			}
 
 			setEnrollment(prev => prev ? { ...prev, status: 'completed', score: avgScore } : null);
 		} else if (enrollment.status === 'not_started') {
-			await supabase
+			const { data: startData, error: startError } = await supabase
 				.from('enrollments')
 				.update({ status: 'in_progress' })
-				.eq('id', enrollment.id);
+				.eq('id', enrollment.id)
+				.select();
 
-			setEnrollment(prev => prev ? { ...prev, status: 'in_progress' } : null);
+			if (startError) {
+				console.error('useCourseModules: enrollment start failed', startError);
+			} else if (!startData || startData.length === 0) {
+				console.error('useCourseModules: enrollment start REFUSED (0 rows) for', enrollment.id);
+			} else {
+				setEnrollment(prev => prev ? { ...prev, status: 'in_progress' } : null);
+			}
 		}
 
 		return { data };

@@ -67,6 +67,7 @@ export default function StudioEditor() {
   const [editingQuizModuleId, setEditingQuizModuleId] = useState<string | null>(null);
   const [quizSettings, setQuizSettings] = useState<Quiz | null>(null);
   const [savingQuizSettings, setSavingQuizSettings] = useState(false);
+  const [quizSettingsError, setQuizSettingsError] = useState<string | null>(null);
   const [quizQuestionCounts, setQuizQuestionCounts] = useState<Record<string, number>>({});
 
   // Lesson editor dirty tracking
@@ -182,7 +183,7 @@ export default function StudioEditor() {
     if (!supabase || !courseId) return;
     setSaving(true);
 
-    const { error } = await supabase.
+    const { data, error } = await supabase.
     from('courses').
     update({
       title_en: titleEn,
@@ -196,10 +197,13 @@ export default function StudioEditor() {
       due_days: dueDays ? parseInt(dueDays) : null,
       updated_at: new Date().toISOString()
     }).
-    eq('id', courseId);
+    eq('id', courseId).
+    select();
 
     if (error) {
       showToast('error', error.message);
+    } else if (!data || data.length === 0) {
+      showToast('error', dict.common.changeRefused);
     } else {
       showToast('success', dict.studio.courseSaved);
     }
@@ -411,13 +415,16 @@ export default function StudioEditor() {
   const handleDeleteModule = async (moduleId: string) => {
     if (!supabase) return;
 
-    const { error } = await supabase.
+    const { data, error } = await supabase.
     from('modules').
     delete().
-    eq('id', moduleId);
+    eq('id', moduleId).
+    select();
 
     if (error) {
       showToast('error', error.message);
+    } else if (!data || data.length === 0) {
+      showToast('error', dict.common.changeRefused);
     } else {
       setModules((prev) => prev.filter((m) => m.id !== moduleId));
       await syncCourseType(courseId);
@@ -496,14 +503,16 @@ export default function StudioEditor() {
 
     setQuizSettings(data);
     setEditingQuizModuleId(moduleId);
+    setQuizSettingsError(null);
     setShowQuizSettingsModal(true);
   };
 
   const handleSaveQuizSettings = async () => {
     if (!supabase || !quizSettings) return;
     setSavingQuizSettings(true);
+    setQuizSettingsError(null);
 
-    const { error } = await supabase.
+    const { data, error } = await supabase.
     from('quizzes').
     update({
       pass_score: quizSettings.pass_score,
@@ -511,10 +520,13 @@ export default function StudioEditor() {
       time_limit_minutes: quizSettings.time_limit_minutes,
       shuffle_questions: quizSettings.shuffle_questions
     }).
-    eq('id', quizSettings.id);
+    eq('id', quizSettings.id).
+    select();
 
     if (error) {
-      showToast('error', error.message);
+      setQuizSettingsError(error.message);
+    } else if (!data || data.length === 0) {
+      setQuizSettingsError(dict.common.changeRefused);
     } else {
       showToast('success', dict.studio.courseSaved);
       setShowQuizSettingsModal(false);
@@ -1164,6 +1176,7 @@ export default function StudioEditor() {
         onClose={() => setShowQuizSettingsModal(false)}
         title={dict.studio.quizSettings}
         size="lg"
+        error={quizSettingsError}
         footer={
         <>
 						<button data-ev-id="ev_quiz_settings_cancel"

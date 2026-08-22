@@ -210,14 +210,19 @@ export function useTeam(options?: UseTeamOptions) {
 		if (!supabase) return { error: 'Database not available' };
 
 		try {
-			const { error: updateError } = await supabase
+			const { data, error: updateError } = await supabase
 				.from('enrollments')
 				.update({ due_at: dueAt })
-				.eq('id', enrollmentId);
+				.eq('id', enrollmentId)
+				.select();
 
 			if (updateError) {
 				console.error('useTeam updateDueDate error:', updateError);
 				return { error: extractErrorMessage(updateError, 'Failed to update due date') };
+			}
+			if (!data || data.length === 0) {
+				console.error('useTeam updateDueDate: refused, 0 rows for', enrollmentId);
+				return { error: dict.common.changeRefused };
 			}
 
 			await fetchTeam();
@@ -232,14 +237,19 @@ export function useTeam(options?: UseTeamOptions) {
 		if (!supabase) return { error: 'Database not available' };
 
 		try {
-			const { error: deleteError } = await supabase
+			const { data, error: deleteError } = await supabase
 				.from('enrollments')
 				.delete()
-				.eq('id', enrollmentId);
+				.eq('id', enrollmentId)
+				.select();
 
 			if (deleteError) {
 				console.error('useTeam revokeEnrollment error:', deleteError);
 				return { error: extractErrorMessage(deleteError, 'Failed to revoke enrollment') };
+			}
+			if (!data || data.length === 0) {
+				console.error('useTeam revokeEnrollment: refused, 0 rows for', enrollmentId);
+				return { error: dict.common.changeRefused };
 			}
 
 			await fetchTeam();

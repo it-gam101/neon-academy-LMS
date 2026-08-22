@@ -481,6 +481,8 @@ export type Database = {
         Row: {
           correct: Json
           created_at: string
+          explanation_en: string | null
+          explanation_he: string | null
           id: string
           options: Json
           points: number
@@ -493,6 +495,8 @@ export type Database = {
         Insert: {
           correct: Json
           created_at?: string
+          explanation_en?: string | null
+          explanation_he?: string | null
           id?: string
           options: Json
           points?: number
@@ -505,6 +509,8 @@ export type Database = {
         Update: {
           correct?: Json
           created_at?: string
+          explanation_en?: string | null
+          explanation_he?: string | null
           id?: string
           options?: Json
           points?: number

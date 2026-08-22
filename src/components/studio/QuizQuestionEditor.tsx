@@ -39,6 +39,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [questionError, setQuestionError] = useState<string | null>(null);
 
   // Store callback in ref to avoid re-triggering fetch on parent re-renders
   const onCountChangeRef = useRef(onQuestionCountChange);
@@ -215,15 +216,21 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 
   const handleDeleteQuestion = async (index: number) => {
     const q = questions[index];
+    setQuestionError(null);
 
     if (q.id && supabase) {
-      const { error } = await supabase.
+      const { data, error } = await supabase.
       from('quiz_questions').
       delete().
-      eq('id', q.id);
+      eq('id', q.id).
+      select();
 
       if (error) {
-        showToast('error', error.message);
+        setQuestionError(error.message);
+        return;
+      }
+      if (!data || data.length === 0) {
+        setQuestionError(dict.common.changeRefused);
         return;
       }
     }
@@ -241,6 +248,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
   const handleSaveQuestion = async (index: number) => {
     const q = questions[index];
     if (!supabase) return;
+    setQuestionError(null);
 
     // Validate
     if (!q.question_en.trim() || !q.question_he.trim()) {
@@ -269,13 +277,16 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 
     if (q.id) {
       // Update existing
-      const { error } = await supabase.
+      const { data, error } = await supabase.
       from('quiz_questions').
       update(questionData).
-      eq('id', q.id);
+      eq('id', q.id).
+      select();
 
       if (error) {
-        showToast('error', error.message);
+        setQuestionError(error.message);
+      } else if (!data || data.length === 0) {
+        setQuestionError(dict.common.changeRefused);
       } else {
         showToast('success', locale === 'he' ? 'השאלה נשמרה' : 'Question saved');
       }
@@ -332,6 +343,14 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 					{dict.studio.addQuestion}
 				</button>
 			</div>
+
+			{questionError &&
+				<div data-ev-id="ev_qqe_error"
+					role="alert"
+					className="px-3 py-2 rounded-lg border border-destructive/40 bg-destructive/10 text-sm text-destructive">
+					{questionError}
+				</div>
+			}
 
 			{/* Questions List */}
 			{questions.length === 0 ?

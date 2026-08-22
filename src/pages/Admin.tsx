@@ -44,6 +44,8 @@ export default function Admin() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isNewCategory, setIsNewCategory] = useState(false);
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
+  const [editUserError, setEditUserError] = useState<string | null>(null);
+  const [editCategoryError, setEditCategoryError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -93,8 +95,9 @@ export default function Admin() {
 
   const handleSaveUser = async () => {
     if (!supabase || !editingUser) return;
+    setEditUserError(null);
 
-    const { error } = await supabase.
+    const { data, error } = await supabase.
     from('profiles').
     update({
       role: editingUser.role,
@@ -102,10 +105,13 @@ export default function Admin() {
       department: editingUser.department,
       is_active: editingUser.is_active
     }).
-    eq('id', editingUser.id);
+    eq('id', editingUser.id).
+    select();
 
     if (error) {
-      showToast('error', error.message);
+      setEditUserError(error.message);
+    } else if (!data || data.length === 0) {
+      setEditUserError(dict.common.changeRefused);
     } else {
       showToast('success', dict.admin.userUpdated);
       setUsers((prev) => prev.map((u) => u.id === editingUser.id ? editingUser : u));
@@ -115,6 +121,7 @@ export default function Admin() {
 
   const handleSaveCategory = async () => {
     if (!supabase || !editingCategory) return;
+    setEditCategoryError(null);
 
     if (isNewCategory) {
       const { data, error } = await supabase.
@@ -128,24 +135,27 @@ export default function Admin() {
       single();
 
       if (error) {
-        showToast('error', error.message);
+        setEditCategoryError(error.message);
       } else {
         showToast('success', dict.admin.categorySaved);
         setCategories((prev) => [...prev, data]);
         setEditingCategory(null);
       }
     } else {
-      const { error } = await supabase.
+      const { data, error } = await supabase.
       from('course_categories').
       update({
         name_en: editingCategory.name_en,
         name_he: editingCategory.name_he,
         sort_order: editingCategory.sort_order
       }).
-      eq('id', editingCategory.id);
+      eq('id', editingCategory.id).
+      select();
 
       if (error) {
-        showToast('error', error.message);
+        setEditCategoryError(error.message);
+      } else if (!data || data.length === 0) {
+        setEditCategoryError(dict.common.changeRefused);
       } else {
         showToast('success', dict.admin.categorySaved);
         setCategories((prev) => prev.map((c) => c.id === editingCategory.id ? editingCategory : c));
@@ -157,13 +167,16 @@ export default function Admin() {
   const handleDeleteCategory = async (id: string) => {
     if (!supabase) return;
 
-    const { error } = await supabase.
+    const { data, error } = await supabase.
     from('course_categories').
     delete().
-    eq('id', id);
+    eq('id', id).
+    select();
 
     if (error) {
       showToast('error', error.message);
+    } else if (!data || data.length === 0) {
+      showToast('error', dict.common.changeRefused);
     } else {
       showToast('success', dict.admin.categoryDeleted);
       setCategories((prev) => prev.filter((c) => c.id !== id));
@@ -177,7 +190,7 @@ export default function Admin() {
     if (!supabase || !orgSettings) return;
     setSavingSettings(true);
 
-    const { error } = await supabase.
+    const { data, error } = await supabase.
     from('org_settings').
     update({
       org_name: orgSettings.org_name,
@@ -185,10 +198,13 @@ export default function Admin() {
       default_locale: orgSettings.default_locale,
       updated_at: new Date().toISOString()
     }).
-    eq('id', orgSettings.id);
+    eq('id', orgSettings.id).
+    select();
 
     if (error) {
       showToast('error', error.message);
+    } else if (!data || data.length === 0) {
+      showToast('error', dict.common.changeRefused);
     } else {
       showToast('success', dict.admin.settingsSaved);
     }
@@ -291,7 +307,7 @@ export default function Admin() {
 														</td>
 														<td data-ev-id="ev_475761869c" className="px-4 py-3 text-end">
 															<button data-ev-id="ev_841070f0b7"
-                            onClick={() => setEditingUser(user)}
+                            onClick={() => { setEditUserError(null); setEditingUser(user); }}
                             className="p-2 hover:bg-muted rounded-lg transition-colors"
                             title={dict.common.edit}>
 
@@ -313,6 +329,7 @@ export default function Admin() {
 									<div data-ev-id="ev_5a05043dfe" className="flex justify-end mb-4">
 										<button data-ev-id="ev_96c27ffd72"
                     onClick={() => {
+                      setEditCategoryError(null);
                       setIsNewCategory(true);
                       setEditingCategory({
                         id: '',
@@ -343,6 +360,7 @@ export default function Admin() {
 												<div data-ev-id="ev_c8cad43745" className="flex items-center gap-2">
 													<button data-ev-id="ev_2e758041d3"
                         onClick={() => {
+                          setEditCategoryError(null);
                           setIsNewCategory(false);
                           setEditingCategory(cat);
                         }}
@@ -470,6 +488,7 @@ export default function Admin() {
         isOpen={!!editingUser}
         onClose={() => setEditingUser(null)}
         title={dict.admin.editUser}
+        error={editUserError}
         footer={
         <>
 						<button data-ev-id="ev_39e169f49d"
@@ -559,6 +578,7 @@ export default function Admin() {
         isOpen={!!editingCategory}
         onClose={() => setEditingCategory(null)}
         title={isNewCategory ? dict.admin.addCategory : dict.admin.editCategory}
+        error={editCategoryError}
         footer={
         <>
 						<button data-ev-id="ev_3b64f219f7"

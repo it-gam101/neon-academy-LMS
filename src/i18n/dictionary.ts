@@ -227,6 +227,7 @@ export interface Dictionary {
 	common: {
 		loading: string;
 		error: string;
+		changeRefused: string;
 		save: string;
 		cancel: string;
 		delete: string;
