@@ -9,10 +9,11 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
+  error?: string | null;
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, footer, error, size = 'md' }: ModalProps) {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -79,6 +80,15 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
 
 				{/* Content */}
 				<div data-ev-id="ev_961fad03c7" className="p-4">{children}</div>
+
+				{/* Inline error — toasts are invisible above a modal <dialog>, so failures render here */}
+				{error &&
+					<div data-ev-id="ev_modal_error"
+						role="alert"
+						className="mx-4 mb-4 px-3 py-2 rounded-lg border border-destructive/40 bg-destructive/10 text-sm text-destructive">
+						{error}
+					</div>
+				}
 
 				{/* Footer */}
 				{footer &&

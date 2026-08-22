@@ -926,6 +926,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		common: {
 			loading: 'Loading...',
 			error: 'An error occurred',
+			changeRefused: 'The change was refused — you may not have permission.',
 			save: 'Save',
 			cancel: 'Cancel',
 			delete: 'Delete',
@@ -1604,6 +1605,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		common: {
 			loading: 'טוען...',
 			error: 'אירעה שגיאה',
+			changeRefused: 'השינוי נדחה — ייתכן שאין לך הרשאה.',
 			save: 'שמור',
 			cancel: 'ביטול',
 			delete: 'מחק',
