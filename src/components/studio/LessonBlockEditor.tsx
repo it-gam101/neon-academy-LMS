@@ -598,26 +598,27 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
     }
 
     setSaving(true);
+    try {
+      // Cancel pending autosave since we're doing an explicit save
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+      pendingRef.current = false;
 
-    // Cancel pending autosave since we're doing an explicit save
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
+      const result = await persistBlocks(blocks, { silent: false });
+
+      if (!result.success) {
+        showToast('error', result.error || dict.common.error);
+      } else {
+        showToast('success', dict.studioBlocks.blocksSaved);
+        setSaveStatus('idle');
+        setSaveError(null);
+        onSaved?.();
+      }
+    } finally {
+      setSaving(false);
     }
-    pendingRef.current = false;
-
-    const result = await persistBlocks(blocks, { silent: false });
-
-    if (!result.success) {
-      showToast('error', result.error || dict.common.error);
-    } else {
-      showToast('success', dict.studioBlocks.blocksSaved);
-      setSaveStatus('idle');
-      setSaveError(null);
-      onSaved?.();
-    }
-
-    setSaving(false);
   };
 
   // Compute all problems from the pure completeness model (derived state, never mutates blocks)

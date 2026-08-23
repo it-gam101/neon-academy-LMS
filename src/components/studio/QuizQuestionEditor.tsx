@@ -263,57 +263,58 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
     }
 
     setSaving(true);
+    try {
+      const questionData: TablesInsert<'quiz_questions'> = {
+        quiz_id: quizId,
+        question_en: q.question_en.trim(),
+        question_he: q.question_he.trim(),
+        question_type: q.question_type,
+        options: q.options as unknown as TablesInsert<'quiz_questions'>['options'],
+        correct: q.correct as unknown as TablesInsert<'quiz_questions'>['correct'],
+        points: q.points,
+        sort_order: q.sort_order
+      };
 
-    const questionData: TablesInsert<'quiz_questions'> = {
-      quiz_id: quizId,
-      question_en: q.question_en.trim(),
-      question_he: q.question_he.trim(),
-      question_type: q.question_type,
-      options: q.options as unknown as TablesInsert<'quiz_questions'>['options'],
-      correct: q.correct as unknown as TablesInsert<'quiz_questions'>['correct'],
-      points: q.points,
-      sort_order: q.sort_order
-    };
+      if (q.id) {
+        // Update existing
+        const { data, error } = await supabase.
+        from('quiz_questions').
+        update(questionData).
+        eq('id', q.id).
+        select();
 
-    if (q.id) {
-      // Update existing
-      const { data, error } = await supabase.
-      from('quiz_questions').
-      update(questionData).
-      eq('id', q.id).
-      select();
-
-      if (error) {
-        setQuestionError(error.message);
-      } else if (!data || data.length === 0) {
-        setQuestionError(dict.common.changeRefused);
+        if (error) {
+          setQuestionError(error.message);
+        } else if (!data || data.length === 0) {
+          setQuestionError(dict.common.changeRefused);
+        } else {
+          showToast('success', locale === 'he' ? 'השאלה נשמרה' : 'Question saved');
+        }
       } else {
-        showToast('success', locale === 'he' ? 'השאלה נשמרה' : 'Question saved');
-      }
-    } else {
-      // Insert new
-      const { data, error } = await supabase.
-      from('quiz_questions').
-      insert(questionData).
-      select().
-      single();
+        // Insert new
+        const { data, error } = await supabase.
+        from('quiz_questions').
+        insert(questionData).
+        select().
+        single();
 
-      if (error) {
-        showToast('error', error.message);
-      } else if (data) {
-        const updated = [...questions];
-        updated[index] = {
-          ...updated[index],
-          id: data.id,
-          isNew: false
-        };
-        setQuestions(updated);
-        onCountChangeRef.current?.(updated.length);
-        showToast('success', locale === 'he' ? 'השאלה נוספה' : 'Question added');
+        if (error) {
+          showToast('error', error.message);
+        } else if (data) {
+          const updated = [...questions];
+          updated[index] = {
+            ...updated[index],
+            id: data.id,
+            isNew: false
+          };
+          setQuestions(updated);
+          onCountChangeRef.current?.(updated.length);
+          showToast('success', locale === 'he' ? 'השאלה נוספה' : 'Question added');
+        }
       }
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   };
 
   if (loading) {

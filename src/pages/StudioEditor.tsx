@@ -182,32 +182,34 @@ export default function StudioEditor() {
   const handleSave = async () => {
     if (!supabase || !courseId) return;
     setSaving(true);
+    try {
+      const { data, error } = await supabase.
+      from('courses').
+      update({
+        title_en: titleEn,
+        title_he: titleHe,
+        description_en: descriptionEn || null,
+        description_he: descriptionHe || null,
+        category_id: categoryId || null,
+        thumbnail_url: thumbnailUrl || null,
+        estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
+        is_mandatory: isMandatory,
+        due_days: dueDays ? parseInt(dueDays) : null,
+        updated_at: new Date().toISOString()
+      }).
+      eq('id', courseId).
+      select();
 
-    const { data, error } = await supabase.
-    from('courses').
-    update({
-      title_en: titleEn,
-      title_he: titleHe,
-      description_en: descriptionEn || null,
-      description_he: descriptionHe || null,
-      category_id: categoryId || null,
-      thumbnail_url: thumbnailUrl || null,
-      estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
-      is_mandatory: isMandatory,
-      due_days: dueDays ? parseInt(dueDays) : null,
-      updated_at: new Date().toISOString()
-    }).
-    eq('id', courseId).
-    select();
-
-    if (error) {
-      showToast('error', error.message);
-    } else if (!data || data.length === 0) {
-      showToast('error', dict.common.changeRefused);
-    } else {
-      showToast('success', dict.studio.courseSaved);
+      if (error) {
+        showToast('error', error.message);
+      } else if (!data || data.length === 0) {
+        showToast('error', dict.common.changeRefused);
+      } else {
+        showToast('success', dict.studio.courseSaved);
+      }
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   // Opens the publish modal and computes blockers
@@ -510,28 +512,31 @@ export default function StudioEditor() {
   const handleSaveQuizSettings = async () => {
     if (!supabase || !quizSettings) return;
     setSavingQuizSettings(true);
-    setQuizSettingsError(null);
+    try {
+      setQuizSettingsError(null);
 
-    const { data, error } = await supabase.
-    from('quizzes').
-    update({
-      pass_score: quizSettings.pass_score,
-      attempts_allowed: quizSettings.attempts_allowed,
-      time_limit_minutes: quizSettings.time_limit_minutes,
-      shuffle_questions: quizSettings.shuffle_questions
-    }).
-    eq('id', quizSettings.id).
-    select();
+      const { data, error } = await supabase.
+      from('quizzes').
+      update({
+        pass_score: quizSettings.pass_score,
+        attempts_allowed: quizSettings.attempts_allowed,
+        time_limit_minutes: quizSettings.time_limit_minutes,
+        shuffle_questions: quizSettings.shuffle_questions
+      }).
+      eq('id', quizSettings.id).
+      select();
 
-    if (error) {
-      setQuizSettingsError(error.message);
-    } else if (!data || data.length === 0) {
-      setQuizSettingsError(dict.common.changeRefused);
-    } else {
-      showToast('success', dict.studio.courseSaved);
-      setShowQuizSettingsModal(false);
+      if (error) {
+        setQuizSettingsError(error.message);
+      } else if (!data || data.length === 0) {
+        setQuizSettingsError(dict.common.changeRefused);
+      } else {
+        showToast('success', dict.studio.courseSaved);
+        setShowQuizSettingsModal(false);
+      }
+    } finally {
+      setSavingQuizSettings(false);
     }
-    setSavingQuizSettings(false);
   };
 
   const handleOpenLessonEditor = (moduleId: string) => {
@@ -632,24 +637,26 @@ export default function StudioEditor() {
   const handleArchive = async () => {
     if (!supabase || !courseId) return;
     setArchiving(true);
+    try {
+      const { data, error } = await supabase.
+      from('courses').
+      update({ status: 'archived', updated_at: new Date().toISOString() }).
+      eq('id', courseId).
+      select();
 
-    const { data, error } = await supabase.
-    from('courses').
-    update({ status: 'archived', updated_at: new Date().toISOString() }).
-    eq('id', courseId).
-    select();
-
-    if (error) {
-      const msg = (error as {message?: string;})?.message || JSON.stringify(error);
-      console.error('Archive error:', error);
-      showToast('error', msg);
-    } else if (!data || data.length === 0) {
-      showToast('error', dict.studio.deleteFailed);
-    } else {
-      setCourse((prev) => prev ? { ...prev, status: 'archived' } : null);
-      showToast('success', dict.studio.courseArchived);
+      if (error) {
+        const msg = (error as {message?: string;})?.message || JSON.stringify(error);
+        console.error('Archive error:', error);
+        showToast('error', msg);
+      } else if (!data || data.length === 0) {
+        showToast('error', dict.studio.deleteFailed);
+      } else {
+        setCourse((prev) => prev ? { ...prev, status: 'archived' } : null);
+        showToast('success', dict.studio.courseArchived);
+      }
+    } finally {
+      setArchiving(false);
     }
-    setArchiving(false);
   };
 
   const handleDelete = async () => {

@@ -185,30 +185,36 @@ export default function Admin() {
   };
 
   const [savingSettings, setSavingSettings] = useState(false);
+  const [orgSettingsSaved, setOrgSettingsSaved] = useState(false);
 
   const handleSaveOrgSettings = async () => {
     if (!supabase || !orgSettings) return;
     setSavingSettings(true);
+    try {
+      setOrgSettingsSaved(false);
 
-    const { data, error } = await supabase.
-    from('org_settings').
-    update({
-      org_name: orgSettings.org_name,
-      logo_url: orgSettings.logo_url,
-      default_locale: orgSettings.default_locale,
-      updated_at: new Date().toISOString()
-    }).
-    eq('id', orgSettings.id).
-    select();
+      const { data, error } = await supabase.
+      from('org_settings').
+      update({
+        org_name: orgSettings.org_name,
+        logo_url: orgSettings.logo_url,
+        default_locale: orgSettings.default_locale,
+        updated_at: new Date().toISOString()
+      }).
+      eq('id', orgSettings.id).
+      select();
 
-    if (error) {
-      showToast('error', error.message);
-    } else if (!data || data.length === 0) {
-      showToast('error', dict.common.changeRefused);
-    } else {
-      showToast('success', dict.admin.settingsSaved);
+      if (error) {
+        showToast('error', error.message);
+      } else if (!data || data.length === 0) {
+        showToast('error', dict.common.changeRefused);
+      } else {
+        showToast('success', dict.admin.settingsSaved);
+        setOrgSettingsSaved(true);
+      }
+    } finally {
+      setSavingSettings(false);
     }
-    setSavingSettings(false);
   };
 
   const filteredUsers = users.filter((u) => {
@@ -307,7 +313,7 @@ export default function Admin() {
 														</td>
 														<td data-ev-id="ev_475761869c" className="px-4 py-3 text-end">
 															<button data-ev-id="ev_841070f0b7"
-                            onClick={() => { setEditUserError(null); setEditingUser(user); }}
+                            onClick={() => {setEditUserError(null);setEditingUser(user);}}
                             className="p-2 hover:bg-muted rounded-lg transition-colors"
                             title={dict.common.edit}>
 
@@ -435,7 +441,7 @@ export default function Admin() {
 											<input data-ev-id="ev_940af316c9"
                     type="text"
                     value={orgSettings.org_name}
-                    onChange={(e) => setOrgSettings({ ...orgSettings, org_name: e.target.value })}
+                    onChange={(e) => {setOrgSettingsSaved(false);setOrgSettings({ ...orgSettings, org_name: e.target.value });}}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
 
 										</div>
@@ -447,7 +453,7 @@ export default function Admin() {
 											<input data-ev-id="ev_6157171da8"
                     type="url"
                     value={orgSettings.logo_url || ''}
-                    onChange={(e) => setOrgSettings({ ...orgSettings, logo_url: e.target.value || null })}
+                    onChange={(e) => {setOrgSettingsSaved(false);setOrgSettings({ ...orgSettings, logo_url: e.target.value || null });}}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     dir="ltr" />
 
@@ -459,7 +465,7 @@ export default function Admin() {
 											</label>
 											<select data-ev-id="ev_76c0dc4ad3"
                     value={orgSettings.default_locale}
-                    onChange={(e) => setOrgSettings({ ...orgSettings, default_locale: e.target.value })}
+                    onChange={(e) => {setOrgSettingsSaved(false);setOrgSettings({ ...orgSettings, default_locale: e.target.value });}}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
 
 												<option data-ev-id="ev_38e237e5f0" value="en">{dict.profile.english}</option>
@@ -467,14 +473,20 @@ export default function Admin() {
 											</select>
 										</div>
 
-										<button data-ev-id="ev_e62a14f3ac"
-                  onClick={handleSaveOrgSettings}
-                  disabled={savingSettings}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-
-											<Save className="w-4 h-4" />
-											{savingSettings ? dict.common.loading : dict.common.save}
-										</button>
+										<div data-ev-id="ev_0928916928" className="flex items-center gap-3">
+											<button data-ev-id="ev_e62a14f3ac"
+                    onClick={handleSaveOrgSettings}
+                    disabled={savingSettings}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+												<Save className="w-4 h-4" />
+												{savingSettings ? dict.common.loading : dict.common.save}
+											</button>
+											{orgSettingsSaved && !savingSettings &&
+                    <span data-ev-id="ev_org_saved_inline" className="text-sm text-primary self-center">
+													{dict.admin.settingsSaved}
+												</span>
+                    }
+										</div>
 									</div>
                 }
 							</div>);

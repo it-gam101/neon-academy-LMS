@@ -152,57 +152,58 @@ export default function Profile() {
     const previousAvatarUrl = profile.avatar_url;
 
     setSaving(true);
+    try {
+      // Only update full_name and avatar_url — role, manager_id, department are READ-ONLY
+      const { data, error } = await supabase.
+      from('profiles').
+      update({
+        full_name: fullName.trim(),
+        avatar_url: avatarUrl.trim() || null // Empty string becomes null
+      }).
+      eq('id', profile.id).
+      select();
 
-    // Only update full_name and avatar_url — role, manager_id, department are READ-ONLY
-    const { data, error } = await supabase.
-    from('profiles').
-    update({
-      full_name: fullName.trim(),
-      avatar_url: avatarUrl.trim() || null // Empty string becomes null
-    }).
-    eq('id', profile.id).
-    select();
+      if (error) {
+        console.error('Profile update error:', error);
+        showToast('error', (error as {message?: string;})?.message || t.common.error);
+      } else if (!data || data.length === 0) {
+        // RLS-blocked UPDATE returns success with ZERO rows
+        showToast('error', t.common.error);
+      } else {
+        showToast('success', t.profile.profileUpdated);
+        await refreshProfile();
 
-    if (error) {
-      console.error('Profile update error:', error);
-      showToast('error', (error as {message?: string;})?.message || t.common.error);
-    } else if (!data || data.length === 0) {
-      // RLS-blocked UPDATE returns success with ZERO rows
-      showToast('error', t.common.error);
-    } else {
-      showToast('success', t.profile.profileUpdated);
-      await refreshProfile();
-
-      // Clean up the old avatar object if it was an avatar we uploaded
-      // ⚠️ Cleanup failure must NEVER fail the save — fire and forget
-      const newAvatarUrl = avatarUrl.trim() || null;
-      if (
-        previousAvatarUrl &&
-        previousAvatarUrl !== newAvatarUrl
-      ) {
-        try {
-          const oldUrl = new URL(previousAvatarUrl);
-          const oldKey = oldUrl.pathname.slice(1); // Remove leading slash
-          
-          // Only delete if it's one of our avatar objects (not an external link)
-          if (oldKey.startsWith('avatars/')) {
-            supabase.functions.invoke('media-delete', {
-              body: { purpose: 'avatar', key: oldKey }
-            }).then(({ error: deleteError }) => {
-              if (deleteError) {
-                console.error('Failed to delete old avatar (non-blocking):', deleteError);
-              }
-            }).catch((err) => {
-              console.error('Failed to delete old avatar (non-blocking):', err);
-            });
+        // Clean up the old avatar object if it was an avatar we uploaded
+        // ⚠️ Cleanup failure must NEVER fail the save — fire and forget
+        const newAvatarUrl = avatarUrl.trim() || null;
+        if (
+          previousAvatarUrl &&
+          previousAvatarUrl !== newAvatarUrl
+        ) {
+          try {
+            const oldUrl = new URL(previousAvatarUrl);
+            const oldKey = oldUrl.pathname.slice(1); // Remove leading slash
+            
+            // Only delete if it's one of our avatar objects (not an external link)
+            if (oldKey.startsWith('avatars/')) {
+              supabase.functions.invoke('media-delete', {
+                body: { purpose: 'avatar', key: oldKey }
+              }).then(({ error: deleteError }) => {
+                if (deleteError) {
+                  console.error('Failed to delete old avatar (non-blocking):', deleteError);
+                }
+              }).catch((err) => {
+                console.error('Failed to delete old avatar (non-blocking):', err);
+              });
+            }
+          } catch {
+            // URL parse failed — skip cleanup (external link or invalid)
           }
-        } catch {
-          // URL parse failed — skip cleanup (external link or invalid)
         }
       }
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   };
 
   // Handle avatar file upload

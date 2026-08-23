@@ -113,13 +113,16 @@ export default function ModulePage() {
   const handleMarkComplete = async () => {
     if (isPreview) return; // Never write progress in preview
     setMarking(true);
-    const { error } = await markModuleProgress(currentModule.id, 'completed');
-    if (error) {
-      showToast('error', error);
-    } else {
-      showToast('success', dict.common.completed);
+    try {
+      const { error } = await markModuleProgress(currentModule.id, 'completed');
+      if (error) {
+        showToast('error', error);
+      } else {
+        showToast('success', dict.common.completed);
+      }
+    } finally {
+      setMarking(false);
     }
-    setMarking(false);
   };
 
   const renderBlock = (block: ContentBlock, index: number) => {
