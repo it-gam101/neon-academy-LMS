@@ -32,6 +32,7 @@ export function useEnrollments(userId?: string) {
 
 			const targetUserId = userId || (await supabase.auth.getUser()).data.user?.id;
 			if (!targetUserId) {
+				setError('TIMEOUT');
 				setLoading(false);
 				return;
 			}

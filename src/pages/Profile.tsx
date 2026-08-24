@@ -9,6 +9,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { formatDate } from '@/utils/formatDate';
 import { functionErrorMessage } from '@/lib/functionError';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 
 /**
  * Resize an image to a maximum dimension while preserving aspect ratio.
@@ -154,14 +155,17 @@ export default function Profile() {
     setSaving(true);
     try {
       // Only update full_name and avatar_url — role, manager_id, department are READ-ONLY
-      const { data, error } = await supabase.
-      from('profiles').
-      update({
-        full_name: fullName.trim(),
-        avatar_url: avatarUrl.trim() || null // Empty string becomes null
-      }).
-      eq('id', profile.id).
-      select();
+      const { data, error } = await withTimeout(
+        supabase.
+        from('profiles').
+        update({
+          full_name: fullName.trim(),
+          avatar_url: avatarUrl.trim() || null // Empty string becomes null
+        }).
+        eq('id', profile.id).
+        select(),
+        10000
+      );
 
       if (error) {
         console.error('Profile update error:', error);
@@ -201,6 +205,12 @@ export default function Profile() {
           }
         }
       }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? t.errors.connectionTimeout
+        : err instanceof Error ? err.message : t.common.error;
+      console.error('handleSave failed:', err);
+      showToast('error', msg);
     } finally {
       setSaving(false);
     }

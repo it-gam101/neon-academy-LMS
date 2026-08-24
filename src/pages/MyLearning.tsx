@@ -6,6 +6,7 @@ import { useEnrollments } from '@/hooks/useEnrollments';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -38,8 +39,8 @@ export default function MyLearning() {
 
   if (error) {
     return (
-      <div data-ev-id="ev_bb019f7e60" className="max-w-4xl mx-auto text-center">
-				<p data-ev-id="ev_67c667bf0e" className="text-destructive">{error}</p>
+      <div data-ev-id="ev_bb019f7e60" className="max-w-4xl mx-auto">
+				<ErrorState error={error} />
 			</div>);
   }
 

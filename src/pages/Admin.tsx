@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, FolderTree, FileText, Building, Plus, Search, Edit, Trash2, Save } from 'lucide-react';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -193,16 +194,19 @@ export default function Admin() {
     try {
       setOrgSettingsSaved(false);
 
-      const { data, error } = await supabase.
-      from('org_settings').
-      update({
-        org_name: orgSettings.org_name,
-        logo_url: orgSettings.logo_url,
-        default_locale: orgSettings.default_locale,
-        updated_at: new Date().toISOString()
-      }).
-      eq('id', orgSettings.id).
-      select();
+      const { data, error } = await withTimeout(
+        supabase.
+        from('org_settings').
+        update({
+          org_name: orgSettings.org_name,
+          logo_url: orgSettings.logo_url,
+          default_locale: orgSettings.default_locale,
+          updated_at: new Date().toISOString()
+        }).
+        eq('id', orgSettings.id).
+        select(),
+        10000
+      );
 
       if (error) {
         showToast('error', error.message);
@@ -212,6 +216,12 @@ export default function Admin() {
         showToast('success', dict.admin.settingsSaved);
         setOrgSettingsSaved(true);
       }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message : dict.common.error;
+      console.error('handleSaveOrgSettings failed:', err);
+      showToast('error', msg);
     } finally {
       setSavingSettings(false);
     }

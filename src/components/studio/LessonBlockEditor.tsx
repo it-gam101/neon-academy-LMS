@@ -8,6 +8,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 import { Modal } from '@/components/ui/Modal';
 import { functionErrorMessage } from '@/lib/functionError';
 import type { Json } from '@/integrations/supabase/types';
@@ -606,7 +607,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
       }
       pendingRef.current = false;
 
-      const result = await persistBlocks(blocks, { silent: false });
+      const result = await withTimeout(persistBlocks(blocks, { silent: false }), 10000);
 
       if (!result.success) {
         showToast('error', result.error || dict.common.error);
@@ -616,6 +617,12 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
         setSaveError(null);
         onSaved?.();
       }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message : dict.common.error;
+      console.error('explicit save failed:', err);
+      showToast('error', msg);
     } finally {
       setSaving(false);
     }

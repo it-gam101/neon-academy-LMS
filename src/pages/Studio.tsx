@@ -9,6 +9,7 @@ import { useProfile } from '@/hooks/useProfile';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { showToast } from '@/components/ui/Toast';
 
@@ -148,13 +149,9 @@ export default function Studio() {
 					</div>
 				</div>
 
-				{error &&
-        <div data-ev-id="ev_161d2a1a0a" className="text-center py-8">
-						<p data-ev-id="ev_cd572e2210" className="text-destructive">{error}</p>
-					</div>
-        }
-
-				{courses.length === 0 ?
+				{error ?
+        <ErrorState error={error} onRetry={refetch} /> :
+        courses.length === 0 ?
         <EmptyState
           icon={BookOpen}
           title={dict.studio.noCourses}

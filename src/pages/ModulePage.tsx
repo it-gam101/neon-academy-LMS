@@ -10,6 +10,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { BackButton } from '@/components/ui/BackButton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 import { PreviewBanner } from '@/components/studio/PreviewBanner';
 import { useState, useMemo, useEffect } from 'react';
 
@@ -114,12 +115,18 @@ export default function ModulePage() {
     if (isPreview) return; // Never write progress in preview
     setMarking(true);
     try {
-      const { error } = await markModuleProgress(currentModule.id, 'completed');
+      const { error } = await withTimeout(markModuleProgress(currentModule.id, 'completed'), 10000);
       if (error) {
         showToast('error', error);
       } else {
         showToast('success', dict.common.completed);
       }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message : dict.common.error;
+      console.error('handleMarkComplete failed:', err);
+      showToast('error', msg);
     } finally {
       setMarking(false);
     }

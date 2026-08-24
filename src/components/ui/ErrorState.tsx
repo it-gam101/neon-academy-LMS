@@ -12,10 +12,10 @@ export function ErrorState({ error, onRetry, title }: ErrorStateProps) {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
 
-  // Map TIMEOUT error to localized message
-  const displayError = error === 'TIMEOUT' || error?.includes('timed out') ?
-  dict.errors.connectionTimeout :
-  error || dict.errors.failedToLoad;
+  // Map TIMEOUT error to localized headline; show raw detail for diagnosis
+  const isTimeout = error === 'TIMEOUT' || error?.includes('timed out');
+  const headline = isTimeout ? dict.errors.connectionTimeout : dict.errors.failedToLoad;
+  const detail = !isTimeout && error && error !== headline ? error : null;
 
   return (
     <div data-ev-id="ev_8dd32ada56" className="flex flex-col items-center justify-center py-12 text-center">
@@ -26,8 +26,13 @@ export function ErrorState({ error, onRetry, title }: ErrorStateProps) {
 				{title || dict.common.errorOccurred}
 			</h3>
 			<p data-ev-id="ev_bd878b3619" className="text-muted-foreground mb-4 max-w-md">
-				{displayError}
+				{headline}
 			</p>
+			{detail &&
+			<p data-ev-id="ev_errorstate_detail" dir="ltr" className="text-xs text-muted-foreground/70 mb-4 max-w-md break-words">
+				{detail}
+			</p>
+			}
 			{onRetry &&
       <button data-ev-id="ev_e5a7f166dd"
       onClick={onRetry}

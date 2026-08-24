@@ -4,6 +4,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 import type { Tables, TablesInsert } from '@/integrations/supabase/helpers';
 
 type QuizQuestion = Tables<'quiz_questions'>;
@@ -277,11 +278,14 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 
       if (q.id) {
         // Update existing
-        const { data, error } = await supabase.
-        from('quiz_questions').
-        update(questionData).
-        eq('id', q.id).
-        select();
+        const { data, error } = await withTimeout(
+          supabase.
+          from('quiz_questions').
+          update(questionData).
+          eq('id', q.id).
+          select(),
+          10000
+        );
 
         if (error) {
           setQuestionError(error.message);
@@ -292,11 +296,14 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
         }
       } else {
         // Insert new
-        const { data, error } = await supabase.
-        from('quiz_questions').
-        insert(questionData).
-        select().
-        single();
+        const { data, error } = await withTimeout(
+          supabase.
+          from('quiz_questions').
+          insert(questionData).
+          select().
+          single(),
+          10000
+        );
 
         if (error) {
           showToast('error', error.message);
@@ -312,6 +319,12 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
           showToast('success', locale === 'he' ? 'השאלה נוספה' : 'Question added');
         }
       }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message : dict.common.error;
+      console.error('handleSaveQuestion failed:', err);
+      setQuestionError(msg);
     } finally {
       setSaving(false);
     }

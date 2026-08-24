@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, Settings, Package, Archive, AlertTriangle, Pencil, ChevronUp, ChevronDown, Edit, Loader2 } from 'lucide-react';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -183,22 +184,25 @@ export default function StudioEditor() {
     if (!supabase || !courseId) return;
     setSaving(true);
     try {
-      const { data, error } = await supabase.
-      from('courses').
-      update({
-        title_en: titleEn,
-        title_he: titleHe,
-        description_en: descriptionEn || null,
-        description_he: descriptionHe || null,
-        category_id: categoryId || null,
-        thumbnail_url: thumbnailUrl || null,
-        estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
-        is_mandatory: isMandatory,
-        due_days: dueDays ? parseInt(dueDays) : null,
-        updated_at: new Date().toISOString()
-      }).
-      eq('id', courseId).
-      select();
+      const { data, error } = await withTimeout(
+        supabase.
+        from('courses').
+        update({
+          title_en: titleEn,
+          title_he: titleHe,
+          description_en: descriptionEn || null,
+          description_he: descriptionHe || null,
+          category_id: categoryId || null,
+          thumbnail_url: thumbnailUrl || null,
+          estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
+          is_mandatory: isMandatory,
+          due_days: dueDays ? parseInt(dueDays) : null,
+          updated_at: new Date().toISOString()
+        }).
+        eq('id', courseId).
+        select(),
+        10000
+      );
 
       if (error) {
         showToast('error', error.message);
@@ -207,6 +211,12 @@ export default function StudioEditor() {
       } else {
         showToast('success', dict.studio.courseSaved);
       }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message : dict.common.error;
+      console.error('handleSave failed:', err);
+      showToast('error', msg);
     } finally {
       setSaving(false);
     }
@@ -515,16 +525,19 @@ export default function StudioEditor() {
     try {
       setQuizSettingsError(null);
 
-      const { data, error } = await supabase.
-      from('quizzes').
-      update({
-        pass_score: quizSettings.pass_score,
-        attempts_allowed: quizSettings.attempts_allowed,
-        time_limit_minutes: quizSettings.time_limit_minutes,
-        shuffle_questions: quizSettings.shuffle_questions
-      }).
-      eq('id', quizSettings.id).
-      select();
+      const { data, error } = await withTimeout(
+        supabase.
+        from('quizzes').
+        update({
+          pass_score: quizSettings.pass_score,
+          attempts_allowed: quizSettings.attempts_allowed,
+          time_limit_minutes: quizSettings.time_limit_minutes,
+          shuffle_questions: quizSettings.shuffle_questions
+        }).
+        eq('id', quizSettings.id).
+        select(),
+        10000
+      );
 
       if (error) {
         setQuizSettingsError(error.message);
@@ -534,6 +547,12 @@ export default function StudioEditor() {
         showToast('success', dict.studio.courseSaved);
         setShowQuizSettingsModal(false);
       }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message : dict.common.error;
+      console.error('handleSaveQuizSettings failed:', err);
+      setQuizSettingsError(msg);
     } finally {
       setSavingQuizSettings(false);
     }
@@ -638,11 +657,14 @@ export default function StudioEditor() {
     if (!supabase || !courseId) return;
     setArchiving(true);
     try {
-      const { data, error } = await supabase.
-      from('courses').
-      update({ status: 'archived', updated_at: new Date().toISOString() }).
-      eq('id', courseId).
-      select();
+      const { data, error } = await withTimeout(
+        supabase.
+        from('courses').
+        update({ status: 'archived', updated_at: new Date().toISOString() }).
+        eq('id', courseId).
+        select(),
+        10000
+      );
 
       if (error) {
         const msg = (error as {message?: string;})?.message || JSON.stringify(error);
@@ -654,6 +676,12 @@ export default function StudioEditor() {
         setCourse((prev) => prev ? { ...prev, status: 'archived' } : null);
         showToast('success', dict.studio.courseArchived);
       }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message : dict.common.error;
+      console.error('handleArchive failed:', err);
+      showToast('error', msg);
     } finally {
       setArchiving(false);
     }
