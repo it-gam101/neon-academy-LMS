@@ -199,6 +199,11 @@ export default function CoursePage() {
         <div data-ev-id="ev_dc180930aa" className="mt-8 p-6 bg-primary/10 border border-primary/30 rounded-lg text-center">
 						<h3 data-ev-id="ev_739caeedf9" className="text-xl font-semibold text-primary mb-2">{dict.course.courseCompleted}</h3>
 						<p data-ev-id="ev_0a4eae3796" className="text-muted-foreground">{dict.course.courseCompletedMessage}</p>
+						<Link
+							to="/my-learning"
+							className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+							{dict.nav.myLearning}
+						</Link>
 					</div>
         }
 			</div>

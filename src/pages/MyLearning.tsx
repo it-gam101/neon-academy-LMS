@@ -15,7 +15,7 @@ import { formatRelativeDate } from '@/utils/formatDate';
 export default function MyLearning() {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
-  const { enrollments, inProgress, completed, overdue, loading, error, getLocalizedTitle, calculateProgress, isOverdue } = useEnrollments();
+  const { enrollments, inProgress, completed, overdue, loading, error, refetch, getLocalizedTitle, calculateProgress, isOverdue } = useEnrollments();
   const Chevron = locale === 'he' ? ChevronLeft : ChevronRight;
 
   const tabs = [
@@ -40,7 +40,7 @@ export default function MyLearning() {
   if (error) {
     return (
       <div data-ev-id="ev_bb019f7e60" className="max-w-4xl mx-auto">
-				<ErrorState error={error} />
+				<ErrorState error={error} onRetry={refetch} />
 			</div>);
   }
 

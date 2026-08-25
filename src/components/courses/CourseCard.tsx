@@ -95,7 +95,7 @@ export function CourseCard({ course, onEnroll, enrolling, progressPercent }: Cou
             to={`/course/${course.id}`}
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 
-							{dict.catalogue.continueCourse}
+							{progressPercent === 100 ? dict.catalogue.viewCourse : dict.catalogue.continueCourse}
 							<Chevron className="w-4 h-4" />
 						</Link> :
 

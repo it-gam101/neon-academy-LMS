@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Users, FolderTree, FileText, Building, Plus, Search, Edit, Trash2, Save } from 'lucide-react';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useLocale } from '@/hooks/useLocale';
@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { isRecentlyRegistered } from '@/lib/newUsers';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
@@ -38,6 +39,7 @@ export default function Admin() {
   const [auditLogs, setAuditLogs] = useState<(AuditLog & {actor?: Profile;})[]>([]);
   const [orgSettings, setOrgSettings] = useState<OrgSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals
@@ -48,51 +50,72 @@ export default function Admin() {
   const [editUserError, setEditUserError] = useState<string | null>(null);
   const [editCategoryError, setEditCategoryError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!supabase) return;
+    setLoading(true);
+    setLoadError(null);
 
-    const fetchData = async () => {
-      setLoading(true);
-
+    try {
       // Fetch users
-      const { data: usersData } = await supabase.
-      from('profiles').
-      select('*').
-      order('created_at', { ascending: false });
-
+      const { data: usersData, error: usersError } = await withTimeout(
+        supabase.
+        from('profiles').
+        select('*').
+        order('created_at', { ascending: false }),
+        10000
+      );
+      if (usersError) throw usersError;
       if (usersData) setUsers(usersData);
 
       // Fetch categories
-      const { data: categoriesData } = await supabase.
-      from('course_categories').
-      select('*').
-      order('sort_order');
-
+      const { data: categoriesData, error: categoriesError } = await withTimeout(
+        supabase.
+        from('course_categories').
+        select('*').
+        order('sort_order'),
+        10000
+      );
+      if (categoriesError) throw categoriesError;
       if (categoriesData) setCategories(categoriesData);
 
       // Fetch audit logs
-      const { data: logsData } = await supabase.
-      from('audit_log').
-      select('*, actor:profiles(full_name, email)').
-      order('at', { ascending: false }).
-      limit(100);
-
+      const { data: logsData, error: logsError } = await withTimeout(
+        supabase.
+        from('audit_log').
+        select('*, actor:profiles(full_name, email)').
+        order('at', { ascending: false }).
+        limit(100),
+        10000
+      );
+      if (logsError) throw logsError;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (logsData) setAuditLogs(logsData as any);
 
       // Fetch org settings
-      const { data: settingsData } = await supabase.
-      from('org_settings').
-      select('*').
-      single();
-
+      const { data: settingsData, error: settingsError } = await withTimeout(
+        supabase.
+        from('org_settings').
+        select('*').
+        single(),
+        10000
+      );
+      if (settingsError) throw settingsError;
       if (settingsData) setOrgSettings(settingsData);
-
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message
+        : (err as { message?: string })?.message || dict.common.error;
+      console.error('Admin fetchData failed:', err);
+      setLoadError(msg);
+    } finally {
       setLoading(false);
-    };
+    }
+  }, [dict]);
 
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleSaveUser = async () => {
     if (!supabase || !editingUser) return;
@@ -245,6 +268,13 @@ export default function Admin() {
       <div data-ev-id="ev_b06c6e374f" className="max-w-6xl mx-auto">
 				<LoadingSkeleton variant="table" count={5} />
 			</div>);
+  }
+
+  if (loadError) {
+    return (
+      <div data-ev-id="ev_admin_error" className="max-w-6xl mx-auto">
+        <ErrorState error={loadError} onRetry={() => void fetchData()} />
+      </div>);
   }
 
   return (
