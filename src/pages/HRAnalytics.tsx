@@ -8,6 +8,7 @@ import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { showToast } from '@/components/ui/Toast';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 
 interface KPIs {
   completionRate: number;
@@ -48,65 +49,82 @@ export default function HRAnalytics() {
     const fetchKPIs = async () => {
       setLoading(true);
 
-      // Fetch all enrollments for KPIs
-      const { data: enrollments } = await supabase.
-      from('enrollments').
-      select(`
-					*,
-					course:courses(id, title_en, title_he)
-				`);
-
-      if (enrollments) {
-        const total = enrollments.length;
-        const completed = enrollments.filter((e) => e.status === 'completed').length;
-        const overdue = enrollments.filter((e) =>
-        e.status !== 'completed' && e.due_at && new Date(e.due_at) < new Date()
-        ).length;
-
-        // Active learners (any progress in last 30 days)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const { data: moduleProgress } = await supabase.
-        from('module_progress').
-        select('enrollment:enrollments(user_id)').
-        gte('updated_at', thirtyDaysAgo.toISOString());
-
-        const activeUserIds = new Set(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (moduleProgress || []).map((mp: any) => mp.enrollment?.user_id).filter(Boolean)
+      try {
+        // Fetch all enrollments for KPIs
+        const { data: enrollments, error: enrollError } = await withTimeout(
+          supabase.
+          from('enrollments').
+          select(`
+						*,
+						course:courses(id, title_en, title_he)
+					`),
+          10000
         );
 
-        // Top courses by enrollment
-        const courseEnrollments: Record<string, {title: string;count: number;}> = {};
-        enrollments.forEach((e) => {
-          if (e.course) {
-            const title = locale === 'he' ? e.course.title_he : e.course.title_en;
-            if (!courseEnrollments[e.course.id]) {
-              courseEnrollments[e.course.id] = { title, count: 0 };
+        if (enrollError) throw enrollError;
+
+        if (enrollments) {
+          const total = enrollments.length;
+          const completed = enrollments.filter((e) => e.status === 'completed').length;
+          const overdue = enrollments.filter((e) =>
+          e.status !== 'completed' && e.due_at && new Date(e.due_at) < new Date()
+          ).length;
+
+          // Active learners (any progress in last 30 days)
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+          const { data: moduleProgress } = await withTimeout(
+            supabase.
+            from('module_progress').
+            select('enrollment:enrollments(user_id)').
+            gte('updated_at', thirtyDaysAgo.toISOString()),
+            10000
+          );
+
+          const activeUserIds = new Set(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (moduleProgress || []).map((mp: any) => mp.enrollment?.user_id).filter(Boolean)
+          );
+
+          // Top courses by enrollment
+          const courseEnrollments: Record<string, {title: string;count: number;}> = {};
+          enrollments.forEach((e) => {
+            if (e.course) {
+              const title = locale === 'he' ? e.course.title_he : e.course.title_en;
+              if (!courseEnrollments[e.course.id]) {
+                courseEnrollments[e.course.id] = { title, count: 0 };
+              }
+              courseEnrollments[e.course.id].count++;
             }
-            courseEnrollments[e.course.id].count++;
-          }
-        });
+          });
 
-        const topCourses = Object.entries(courseEnrollments).
-        map(([id, { title, count }]) => ({ id, title, enrollments: count })).
-        sort((a, b) => b.enrollments - a.enrollments).
-        slice(0, 5);
+          const topCourses = Object.entries(courseEnrollments).
+          map(([id, { title, count }]) => ({ id, title, enrollments: count })).
+          sort((a, b) => b.enrollments - a.enrollments).
+          slice(0, 5);
 
-        setKpis({
-          completionRate: total > 0 ? Math.round(completed / total * 100) : 0,
-          overdueCount: overdue,
-          activeLearners: activeUserIds.size,
-          topCourses
-        });
+          setKpis({
+            completionRate: total > 0 ? Math.round(completed / total * 100) : 0,
+            overdueCount: overdue,
+            activeLearners: activeUserIds.size,
+            topCourses
+          });
+        }
+      } catch (err) {
+        const msg = err instanceof Error && err.message === 'TIMEOUT'
+          ? dict.errors.connectionTimeout
+          : err instanceof Error ? err.message
+          : (err as { message?: string })?.message || dict.common.error;
+        console.error('fetchKPIs failed:', err);
+        showToast('error', msg);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchKPIs();
-  }, [locale]);
+  }, [locale, dict]);
 
   const generateReport = async (type: 'completion' | 'compliance' | 'engagement') => {
     if (!supabase) return;

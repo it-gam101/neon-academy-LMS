@@ -85,10 +85,12 @@ export default function Index() {
   const [newUserCount, setNewUserCount] = useState<number | null>(null);
   const [newUsers, setNewUsers] = useState<{id: string;full_name: string | null;email: string;department: string | null;}[]>([]);
 
-  const userRole = profile?.role ?? 'employee';
-  const visibleActions = quickActions.filter((action) =>
+  // null means "unknown", not "employee"
+  const userRole = profile?.role ?? null;
+  // no role-gated cards until the role is known
+  const visibleActions = userRole ? quickActions.filter((action) =>
   action.allowedRoles.includes(userRole)
-  );
+  ) : [];
 
   // Fetch new registrations count for super_admin
   useEffect(() => {
@@ -378,7 +380,7 @@ export default function Index() {
             t.dashboard.welcome}
           </h1>
           <p data-ev-id="ev_2e97c27e8f" className="text-foreground-muted">
-            {t.roles[userRole]}
+            {userRole ? t.roles[userRole] : ''}
           </p>
         </div>
 

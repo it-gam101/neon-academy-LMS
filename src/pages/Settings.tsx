@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
+import { withTimeout } from '@/utils/fetchWithTimeout';
+import { getDictionary } from '@/i18n/dictionary';
 
 export default function SettingsPage() {
   const { t, locale, setLocale } = useLocale();
@@ -27,19 +29,33 @@ export default function SettingsPage() {
 
     if (!supabase) return;
 
+    const dict = getDictionary(locale);
     setSaving(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setSaving(false);
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.updateUser({ password: newPassword }),
+        10000
+      );
 
-    if (error) {
-      console.error('Password update error:', error);
-      setPasswordError(error.message || t.common.error);
-      return;
+      if (error) {
+        console.error('Password update error:', error);
+        setPasswordError(error.message || t.common.error);
+        return;
+      }
+
+      showToast('success', t.auth.passwordUpdated);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message
+        : (err as { message?: string })?.message || t.common.error;
+      console.error('handleChangePassword failed:', err);
+      setPasswordError(msg);
+    } finally {
+      setSaving(false);
     }
-
-    showToast('success', t.auth.passwordUpdated);
-    setNewPassword('');
-    setConfirmPassword('');
   };
 
   return (

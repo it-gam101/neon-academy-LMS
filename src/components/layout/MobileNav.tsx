@@ -19,10 +19,11 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const previousOverflowRef = useRef<string | null>(null);
 
-  const userRole = profile?.role ?? 'employee';
-  const visibleItems = navItems.filter((item) =>
-  item.allowedRoles.includes(userRole)
-  );
+  // A null profile means "role unknown", NOT "employee". Guessing the lowest role
+  // silently downgrades a super_admin and makes their navigation disappear.
+  const visibleItems = profile?.role
+    ? navItems.filter((item) => item.allowedRoles.includes(profile.role))
+    : [];
 
   const drawerId = 'mobile-nav-drawer';
 

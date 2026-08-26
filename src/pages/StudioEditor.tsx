@@ -119,44 +119,62 @@ export default function StudioEditor() {
     const fetchData = async () => {
       setLoading(true);
 
-      // Fetch course
-      const { data: courseData } = await supabase.
-      from('courses').
-      select('*').
-      eq('id', courseId).
-      single();
+      try {
+        // Fetch course
+        const { data: courseData, error: courseError } = await withTimeout(
+          supabase.
+          from('courses').
+          select('*').
+          eq('id', courseId).
+          single(),
+          10000
+        );
 
-      if (courseData) {
-        setCourse(courseData);
-        setTitleEn(courseData.title_en);
-        setTitleHe(courseData.title_he);
-        setDescriptionEn(courseData.description_en || '');
-        setDescriptionHe(courseData.description_he || '');
-        setCategoryId(courseData.category_id || '');
-        setThumbnailUrl(courseData.thumbnail_url || '');
-        setEstimatedMinutes(courseData.estimated_minutes?.toString() || '');
-        setIsMandatory(courseData.is_mandatory);
-        setDueDays(courseData.due_days?.toString() || '');
+        if (courseError) throw courseError;
+
+        if (courseData) {
+          setCourse(courseData);
+          setTitleEn(courseData.title_en);
+          setTitleHe(courseData.title_he);
+          setDescriptionEn(courseData.description_en || '');
+          setDescriptionHe(courseData.description_he || '');
+          setCategoryId(courseData.category_id || '');
+          setThumbnailUrl(courseData.thumbnail_url || '');
+          setEstimatedMinutes(courseData.estimated_minutes?.toString() || '');
+          setIsMandatory(courseData.is_mandatory);
+          setDueDays(courseData.due_days?.toString() || '');
+        }
+
+        // Fetch modules
+        const { data: modulesData, error: modulesError } = await withTimeout(
+          supabase.
+          from('modules').
+          select('*').
+          eq('course_id', courseId).
+          order('sort_order'),
+          10000
+        );
+
+        if (modulesError) throw modulesError;
+        if (modulesData) setModules(modulesData);
+
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await withTimeout(
+          supabase.
+          from('course_categories').
+          select('*').
+          order('sort_order'),
+          10000
+        );
+
+        if (categoriesError) throw categoriesError;
+        if (categoriesData) setCategories(categoriesData);
+      } catch (err) {
+        console.error('StudioEditor fetchData failed:', err);
+        // Keep existing failure handling - data remains empty/unchanged
+      } finally {
+        setLoading(false);
       }
-
-      // Fetch modules
-      const { data: modulesData } = await supabase.
-      from('modules').
-      select('*').
-      eq('course_id', courseId).
-      order('sort_order');
-
-      if (modulesData) setModules(modulesData);
-
-      // Fetch categories
-      const { data: categoriesData } = await supabase.
-      from('course_categories').
-      select('*').
-      order('sort_order');
-
-      if (categoriesData) setCategories(categoriesData);
-
-      setLoading(false);
     };
 
     fetchData();
@@ -236,15 +254,17 @@ export default function StudioEditor() {
       let quizzes: Array<{module_id: string;quiz_questions: unknown[];}> = [];
 
       if (quizModuleIds.length > 0) {
-        const { data, error } = await supabase.
-        from('quizzes').
-        select('id, module_id, quiz_questions(*)').
-        in('module_id', quizModuleIds);
+        const { data, error } = await withTimeout(
+          supabase.
+          from('quizzes').
+          select('id, module_id, quiz_questions(*)').
+          in('module_id', quizModuleIds),
+          10000
+        );
 
         if (error) {
           console.error('Failed to fetch quiz data:', error);
           setPublishCheckFailed(true);
-          setCheckingPublish(false);
           return;
         }
         quizzes = (data ?? []).map((q) => ({
@@ -270,8 +290,9 @@ export default function StudioEditor() {
     } catch (err) {
       console.error('Publish check failed:', err);
       setPublishCheckFailed(true);
+    } finally {
+      setCheckingPublish(false);
     }
-    setCheckingPublish(false);
   };
 
   // Returns the user-facing label for a problem code
@@ -450,19 +471,33 @@ export default function StudioEditor() {
     setLoadingPackages(true);
     setShowScormChooser(true);
 
-    const { data, error } = await supabase.
-    from('scorm_packages').
-    select('id, title, scorm_version, created_at').
-    eq('is_public_sandbox', false).
-    order('created_at', { ascending: false });
+    try {
+      const { data, error } = await withTimeout(
+        supabase.
+        from('scorm_packages').
+        select('id, title, scorm_version, created_at').
+        eq('is_public_sandbox', false).
+        order('created_at', { ascending: false }),
+        10000
+      );
 
-    if (error) {
-      console.error('Failed to load packages:', error);
+      if (error) {
+        console.error('Failed to load packages:', error);
+        setAvailablePackages([]);
+      } else {
+        setAvailablePackages(data ?? []);
+      }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message
+        : (err as { message?: string })?.message || dict.common.error;
+      console.error('handleOpenScormChooser failed:', err);
+      showToast('error', msg);
       setAvailablePackages([]);
-    } else {
-      setAvailablePackages(data ?? []);
+    } finally {
+      setLoadingPackages(false);
     }
-    setLoadingPackages(false);
   };
 
   const handleSelectExistingPackage = async (pkg: {id: string;title: string;}) => {
@@ -577,31 +612,42 @@ export default function StudioEditor() {
     if (!trimmedEn || !trimmedHe) return;
 
     setSavingModuleTitle(true);
-
-    const { data, error } = await supabase.
-    from('modules').
-    update({ title_en: trimmedEn, title_he: trimmedHe }).
-    eq('id', editingModule.id).
-    select();
-
-    if (error) {
-      const msg = (error as {message?: string;})?.message || JSON.stringify(error);
-      console.error('Module title save error:', error);
-      showToast('error', msg);
-    } else if (!data || data.length === 0) {
-      showToast('error', dict.studio.deleteFailed);
-    } else {
-      // Update local module list
-      setModules((prev) =>
-      prev.map((m) =>
-      m.id === editingModule.id ? { ...m, title_en: trimmedEn, title_he: trimmedHe } : m
-      )
+    try {
+      const { data, error } = await withTimeout(
+        supabase.
+        from('modules').
+        update({ title_en: trimmedEn, title_he: trimmedHe }).
+        eq('id', editingModule.id).
+        select(),
+        10000
       );
-      showToast('success', dict.studio.moduleTitleSaved);
-      setShowModuleTitleModal(false);
-    }
 
-    setSavingModuleTitle(false);
+      if (error) {
+        const msg = (error as {message?: string;})?.message || JSON.stringify(error);
+        console.error('Module title save error:', error);
+        showToast('error', msg);
+      } else if (!data || data.length === 0) {
+        showToast('error', dict.studio.deleteFailed);
+      } else {
+        // Update local module list
+        setModules((prev) =>
+        prev.map((m) =>
+        m.id === editingModule.id ? { ...m, title_en: trimmedEn, title_he: trimmedHe } : m
+        )
+        );
+        showToast('success', dict.studio.moduleTitleSaved);
+        setShowModuleTitleModal(false);
+      }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message
+        : (err as { message?: string })?.message || dict.common.error;
+      console.error('handleSaveModuleTitle failed:', err);
+      showToast('error', msg);
+    } finally {
+      setSavingModuleTitle(false);
+    }
   };
 
   const handleMoveModule = async (index: number, direction: 'up' | 'down') => {
@@ -610,40 +656,51 @@ export default function StudioEditor() {
     if (newIndex < 0 || newIndex >= modules.length) return;
 
     setReordering(true);
+    try {
+      const currentModule = modules[index];
+      const targetModule = modules[newIndex];
+      const currentOrder = currentModule.sort_order;
+      const targetOrder = targetModule.sort_order;
 
-    const currentModule = modules[index];
-    const targetModule = modules[newIndex];
-    const currentOrder = currentModule.sort_order;
-    const targetOrder = targetModule.sort_order;
+      // Swap sort_orders
+      const [result1, result2] = await withTimeout(
+        Promise.all([
+          supabase.from('modules').update({ sort_order: targetOrder }).eq('id', currentModule.id).select(),
+          supabase.from('modules').update({ sort_order: currentOrder }).eq('id', targetModule.id).select()
+        ]),
+        10000
+      );
 
-    // Swap sort_orders
-    const [result1, result2] = await Promise.all([
-    supabase.from('modules').update({ sort_order: targetOrder }).eq('id', currentModule.id).select(),
-    supabase.from('modules').update({ sort_order: currentOrder }).eq('id', targetModule.id).select()]
-    );
+      const error1 = result1.error;
+      const error2 = result2.error;
+      const data1 = result1.data;
+      const data2 = result2.data;
 
-    const error1 = result1.error;
-    const error2 = result2.error;
-    const data1 = result1.data;
-    const data2 = result2.data;
-
-    if (error1 || error2) {
-      const msg = (error1 as {message?: string;})?.message || (error2 as {message?: string;})?.message || 'Reorder failed';
-      console.error('Reorder error:', error1 || error2);
+      if (error1 || error2) {
+        const msg = (error1 as {message?: string;})?.message || (error2 as {message?: string;})?.message || 'Reorder failed';
+        console.error('Reorder error:', error1 || error2);
+        showToast('error', msg);
+      } else if (!data1 || data1.length === 0 || !data2 || data2.length === 0) {
+        showToast('error', dict.studio.deleteFailed);
+      } else {
+        // Update local state
+        setModules((prev) => {
+          const newModules = [...prev];
+          newModules[index] = { ...currentModule, sort_order: targetOrder };
+          newModules[newIndex] = { ...targetModule, sort_order: currentOrder };
+          return newModules.sort((a, b) => a.sort_order - b.sort_order);
+        });
+      }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : err instanceof Error ? err.message
+        : (err as { message?: string })?.message || dict.common.error;
+      console.error('handleMoveModule failed:', err);
       showToast('error', msg);
-    } else if (!data1 || data1.length === 0 || !data2 || data2.length === 0) {
-      showToast('error', dict.studio.deleteFailed);
-    } else {
-      // Update local state
-      setModules((prev) => {
-        const newModules = [...prev];
-        newModules[index] = { ...currentModule, sort_order: targetOrder };
-        newModules[newIndex] = { ...targetModule, sort_order: currentOrder };
-        return newModules.sort((a, b) => a.sort_order - b.sort_order);
-      });
+    } finally {
+      setReordering(false);
     }
-
-    setReordering(false);
   };
 
   // Danger zone handlers

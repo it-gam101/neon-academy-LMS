@@ -233,27 +233,28 @@ export default function Profile() {
       const resizedBlob = await resizeImageToBlob(file, 256);
 
       // 2. Get presigned URL from media-presign with purpose: 'avatar'
-      const { data: presignData, error: presignError } = await supabase.functions.invoke('media-presign', {
-        body: {
-          purpose: 'avatar',
-          filename: file.name,
-          mimeType: resizedBlob.type,
-          size: resizedBlob.size
-        }
-      });
+      const { data: presignData, error: presignError } = await withTimeout(
+        supabase.functions.invoke('media-presign', {
+          body: {
+            purpose: 'avatar',
+            filename: file.name,
+            mimeType: resizedBlob.type,
+            size: resizedBlob.size
+          }
+        }),
+        10000
+      );
 
       if (presignError) {
         const msg = await functionErrorMessage(presignError, t.common.error);
         console.error('Presign error:', presignError);
         setUploadError(msg);
-        setUploading(false);
         return;
       }
 
       if (!presignData?.uploadUrl || !presignData?.publicUrl) {
         console.error('Invalid presign response:', presignData);
         setUploadError(presignData?.error || t.common.error);
-        setUploading(false);
         return;
       }
 
@@ -267,7 +268,6 @@ export default function Profile() {
       if (!uploadResponse.ok) {
         console.error('Upload failed:', uploadResponse.status, uploadResponse.statusText);
         setUploadError(t.common.error);
-        setUploading(false);
         return;
       }
 
@@ -277,8 +277,10 @@ export default function Profile() {
       setPreviewFailed(false);
 
     } catch (err) {
-      console.error('Avatar upload error:', err);
-      const msg = await functionErrorMessage(err, t.common.error);
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? t.errors.connectionTimeout
+        : await functionErrorMessage(err, t.common.error);
+      console.error('handleAvatarUpload failed:', err);
       setUploadError(msg);
     } finally {
       setUploading(false);

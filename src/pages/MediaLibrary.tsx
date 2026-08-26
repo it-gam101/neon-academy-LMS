@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { showToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { functionErrorMessage } from '@/lib/functionError';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 
 interface MediaAsset {
   id: string;
@@ -208,15 +209,17 @@ export default function MediaLibrary() {
     setDeleteError(null);
 
     try {
-      const { error } = await supabase.functions.invoke('media-delete', {
-        body: { id: deleteTarget.id }
-      });
+      const { error } = await withTimeout(
+        supabase.functions.invoke('media-delete', {
+          body: { id: deleteTarget.id }
+        }),
+        10000
+      );
 
       if (error) {
         const msg = await functionErrorMessage(error, dict.common.error);
         console.error('Delete error:', error);
         setDeleteError(msg);
-        setDeleting(false);
         return;
       }
       
@@ -224,12 +227,14 @@ export default function MediaLibrary() {
       showToast('success', dict.media.deleted);
       setDeleteTarget(null);
     } catch (err) {
-      const msg = await functionErrorMessage(err, dict.common.error);
-      console.error('Delete exception:', err);
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : await functionErrorMessage(err, dict.common.error);
+      console.error('handleDelete failed:', err);
       setDeleteError(msg);
+    } finally {
+      setDeleting(false);
     }
-
-    setDeleting(false);
   };
 
   const handleDeletePackage = async () => {
@@ -239,15 +244,17 @@ export default function MediaLibrary() {
     setDeletePackageError(null);
 
     try {
-      const { error } = await supabase.functions.invoke('scorm-package-delete', {
-        body: { id: deletePackageTarget.id }
-      });
+      const { error } = await withTimeout(
+        supabase.functions.invoke('scorm-package-delete', {
+          body: { id: deletePackageTarget.id }
+        }),
+        10000
+      );
 
       if (error) {
         const msg = await functionErrorMessage(error, dict.common.error);
         console.error('Delete package error:', error);
         setDeletePackageError(msg);
-        setDeletingPackage(false);
         return;
       }
 
@@ -255,12 +262,14 @@ export default function MediaLibrary() {
       showToast('success', dict.media.packageDeleted);
       setDeletePackageTarget(null);
     } catch (err) {
-      const msg = await functionErrorMessage(err, dict.common.error);
-      console.error('Delete package exception:', err);
+      const msg = err instanceof Error && err.message === 'TIMEOUT'
+        ? dict.errors.connectionTimeout
+        : await functionErrorMessage(err, dict.common.error);
+      console.error('handleDeletePackage failed:', err);
       setDeletePackageError(msg);
+    } finally {
+      setDeletingPackage(false);
     }
-
-    setDeletingPackage(false);
   };
 
   const openDeleteDialog = (asset: MediaAsset) => {

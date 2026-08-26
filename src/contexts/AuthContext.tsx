@@ -36,7 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			if (error) {
 				console.error('Error fetching profile:', error);
 				setProfileError(error.message);
-				setProfile(null);
+				// Do NOT clear a profile we already have. A failed REFRESH must not destroy good
+				// state — the AppShell banner reports the error, and the user keeps their role.
 				return;
 			}
 			
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			const message = err instanceof Error ? err.message : 'Failed to load profile';
 			console.error('Profile load error:', message);
 			setProfileError(message);
-			setProfile(null);
+			// Same reason — see the error branch above.
 		}
 	}, [applyLocale]);
 	

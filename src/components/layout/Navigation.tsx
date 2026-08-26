@@ -9,12 +9,11 @@ export function Navigation() {
   const { profile } = useAuth();
   const { t, isRTL } = useLocale();
 
-  const userRole = profile?.role ?? 'employee';
-
-  // Filter nav items based on user role
-  const visibleItems = navItems.filter((item) =>
-  item.allowedRoles.includes(userRole)
-  );
+  // A null profile means "role unknown", NOT "employee". Guessing the lowest role
+  // silently downgrades a super_admin and makes their navigation disappear.
+  const visibleItems = profile?.role
+    ? navItems.filter((item) => item.allowedRoles.includes(profile.role))
+    : [];
 
   // Directional chevron for RTL support
   const ChevronForward = isRTL ? ChevronLeft : ChevronRight;

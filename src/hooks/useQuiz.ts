@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { useLocale } from '@/hooks/useLocale';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 
 export type Quiz = Tables<'quizzes'>;
 export type QuizQuestion = Tables<'quiz_questions'>;
@@ -30,21 +31,27 @@ export function useQuiz(moduleId: string) {
 			setLoading(true);
 
 			// Fetch quiz
-			const { data: quizData, error: quizError } = await supabase
-				.from('quizzes')
-				.select('*')
-				.eq('module_id', moduleId)
-				.single();
+			const { data: quizData, error: quizError } = await withTimeout(
+				supabase
+					.from('quizzes')
+					.select('*')
+					.eq('module_id', moduleId)
+					.single(),
+				10000
+			);
 
 			if (quizError) throw quizError;
 			setQuiz(quizData);
 
 			// Fetch questions
-			const { data: questionsData, error: questionsError } = await supabase
-				.from('quiz_questions')
-				.select('*')
-				.eq('quiz_id', quizData.id)
-				.order('sort_order');
+			const { data: questionsData, error: questionsError } = await withTimeout(
+				supabase
+					.from('quiz_questions')
+					.select('*')
+					.eq('quiz_id', quizData.id)
+					.order('sort_order'),
+				10000
+			);
 
 			if (questionsError) throw questionsError;
 			setQuestions(questionsData || []);
@@ -52,17 +59,23 @@ export function useQuiz(moduleId: string) {
 			// Fetch user's attempts
 			const { data: { user } } = await supabase.auth.getUser();
 			if (user) {
-				const { data: attemptsData } = await supabase
-					.from('quiz_attempts')
-					.select('*')
-					.eq('user_id', user.id)
-					.eq('quiz_id', quizData.id)
-					.order('attempt_no', { ascending: false });
+				const { data: attemptsData } = await withTimeout(
+					supabase
+						.from('quiz_attempts')
+						.select('*')
+						.eq('user_id', user.id)
+						.eq('quiz_id', quizData.id)
+						.order('attempt_no', { ascending: false }),
+					10000
+				);
 
 				setAttempts(attemptsData || []);
 			}
 		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Failed to load quiz');
+			const msg = err instanceof Error && err.message === 'TIMEOUT'
+				? 'TIMEOUT'
+				: err instanceof Error ? err.message : 'Failed to load quiz';
+			setError(msg);
 		} finally {
 			setLoading(false);
 		}

@@ -84,8 +84,8 @@ export default function MyLearning() {
           title={dict.myLearning.noCourses}
           description={dict.myLearning.noCoursesDescription}
           action={{
-            label: dict.catalogue.viewCourse,
-            onClick: () => window.location.href = '/catalogue'
+            label: dict.nav.catalogue,
+            to: '/catalogue'
           }} /> :
 
 
