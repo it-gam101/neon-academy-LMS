@@ -53,3 +53,16 @@ export const navItems: NavItem[] = [
     allowedRoles: ['super_admin']
   }
 ];
+
+const ALL_ROLES: UserRole[] = [
+  'super_admin', 'hr_manager', 'team_manager', 'instructor', 'employee'
+];
+
+/**
+ * Items safe to show BEFORE the role is known — those every role can see.
+ * Rendering nothing strands the user with no navigation (regression, 2026-08-26);
+ * rendering the employee set would silently downgrade a super_admin.
+ */
+export const universalNavItems: NavItem[] = navItems.filter((item) =>
+  ALL_ROLES.every((role) => item.allowedRoles.includes(role))
+);

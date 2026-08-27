@@ -87,10 +87,13 @@ export default function Index() {
 
   // null means "unknown", not "employee"
   const userRole = profile?.role ?? null;
-  // no role-gated cards until the role is known
-  const visibleActions = userRole ? quickActions.filter((action) =>
-  action.allowedRoles.includes(userRole)
-  ) : [];
+  // Show universal actions (those every role can see) when role is unknown
+  const visibleActions = userRole ?
+  quickActions.filter((action) => action.allowedRoles.includes(userRole)) :
+  quickActions.filter((action) =>
+  (['super_admin', 'hr_manager', 'team_manager', 'instructor', 'employee'] as UserRole[]).
+  every((role) => action.allowedRoles.includes(role))
+  );
 
   // Fetch new registrations count for super_admin
   useEffect(() => {
@@ -169,9 +172,9 @@ export default function Index() {
 
             {/* Buttons */}
             <div data-ev-id="ev_18c0bcfb36" className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-              <Link
-                to="/auth/login"
-                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary-hover transition-colors focus-ring">
+              <Link data-ev-id="ev_389b1c9306"
+              to="/auth/login"
+              className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary-hover transition-colors focus-ring">
 
                 {t.auth.login}
               </Link>
@@ -182,9 +185,9 @@ export default function Index() {
                 <Mail className="w-4 h-4" />
                 {t.landing.talkToUs}
               </a>
-              <Link
-                to="/sandbox"
-                className="px-6 py-3 border border-border text-foreground rounded-lg font-medium hover:bg-muted transition-colors focus-ring">
+              <Link data-ev-id="ev_6ae73e9478"
+              to="/sandbox"
+              className="px-6 py-3 border border-border text-foreground rounded-lg font-medium hover:bg-muted transition-colors focus-ring">
                 {t.landing.trySandbox}
               </Link>
             </div>
@@ -342,9 +345,9 @@ export default function Index() {
                 <Mail className="w-4 h-4" />
                 {t.landing.talkToUs}
               </a>
-              <Link
-                to="/auth/login"
-                className="px-6 py-3 border border-border text-foreground rounded-lg font-medium hover:bg-muted transition-colors focus-ring">
+              <Link data-ev-id="ev_8499e6dab2"
+              to="/auth/login"
+              className="px-6 py-3 border border-border text-foreground rounded-lg font-medium hover:bg-muted transition-colors focus-ring">
 
                 {t.auth.login}
               </Link>
@@ -402,17 +405,17 @@ export default function Index() {
                 <PlayCircle className="w-5 h-5 text-primary" />
                 {t.dashboard.continueLearning}
               </h2>
-              <Link
-              to="/my-learning"
-              className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1">
+              <Link data-ev-id="ev_508eb047ca"
+            to="/my-learning"
+            className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1">
 
                 {t.dashboard.viewAllCourses}
                 <ChevronForward className="w-4 h-4" />
               </Link>
             </div>
-            <Link
-            to={`/course/${continueEnrollment.course_id}`}
-            className="group block bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 relative">
+            <Link data-ev-id="ev_ebd4f01aec"
+          to={`/course/${continueEnrollment.course_id}`}
+          className="group block bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 relative">
 
               <div data-ev-id="ev_208155eddf" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-xl" />
               <div data-ev-id="ev_9cb8e5823c" className="flex items-center gap-4">
@@ -456,9 +459,9 @@ export default function Index() {
                 <Sparkles className="w-5 h-5 text-primary" />
                 {t.dashboard.newInCatalogue}
               </h2>
-              <Link
-              to="/catalogue"
-              className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1">
+              <Link data-ev-id="ev_df04af5835"
+            to="/catalogue"
+            className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1">
 
                 {t.dashboard.viewAllCourses}
                 <ChevronForward className="w-4 h-4" />
@@ -466,10 +469,10 @@ export default function Index() {
             </div>
             <div data-ev-id="ev_f39d70afec" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {newCourses.map((course) =>
-            <Link
-              key={course.id}
-              to={`/course/${course.id}`}
-              className="group block bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all hover:shadow-md">
+            <Link data-ev-id="ev_1e13ffbb51"
+            key={course.id}
+            to={`/course/${course.id}`}
+            className="group block bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all hover:shadow-md">
 
                   {/* Thumbnail */}
                   <div data-ev-id="ev_70b5435e56" className="aspect-video bg-muted relative overflow-hidden">
@@ -506,9 +509,9 @@ export default function Index() {
         {/* New registrations card - super_admin only */}
         {profile?.role === 'super_admin' && newUserCount !== null && newUserCount > 0 &&
         <div data-ev-id="ev_5d03215638" className="mb-8">
-            <Link
-            to="/admin"
-            className="group block p-4 bg-card border border-border rounded-xl hover:border-primary/50 transition-all hover:shadow-md">
+            <Link data-ev-id="ev_e31b507846"
+          to="/admin"
+          className="group block p-4 bg-card border border-border rounded-xl hover:border-primary/50 transition-all hover:shadow-md">
               <div data-ev-id="ev_9ae1aa4ef4" className="flex items-center justify-between">
                 <div data-ev-id="ev_930220bae5" className="flex items-center gap-3">
                   <div data-ev-id="ev_60e3586aa5" className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">

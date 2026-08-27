@@ -4,7 +4,7 @@ import { NavLink } from 'react-router';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
-import { navItems } from '@/components/layout/nav-config';
+import { navItems, universalNavItems } from '@/components/layout/nav-config';
 import logoSrc from '@/assets/logo.svg';
 
 interface MobileNavProps {
@@ -21,9 +21,9 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
 
   // A null profile means "role unknown", NOT "employee". Guessing the lowest role
   // silently downgrades a super_admin and makes their navigation disappear.
-  const visibleItems = profile?.role
-    ? navItems.filter((item) => item.allowedRoles.includes(profile.role))
-    : [];
+  const visibleItems = profile?.role ?
+  navItems.filter((item) => item.allowedRoles.includes(profile.role)) :
+  universalNavItems;
 
   const drawerId = 'mobile-nav-drawer';
 
@@ -95,14 +95,14 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
       {createPortal(
         <>
           {/* Backdrop */}
-          {isOpen && (
-            <div
-              data-ev-id="ev_736f654ad7"
-              className="fixed inset-0 z-50 bg-black/50 md:hidden"
-              onClick={closeDrawer}
-              aria-hidden="true"
-            />
-          )}
+          {isOpen &&
+          <div
+            data-ev-id="ev_736f654ad7"
+            className="fixed inset-0 z-50 bg-black/50 md:hidden"
+            onClick={closeDrawer}
+            aria-hidden="true" />
+
+          }
 
           {/* Drawer */}
           <div
@@ -111,14 +111,14 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
             ref={drawerRef}
             tabIndex={-1}
             className={
-              `fixed top-0 bottom-0 end-0 z-50 w-[280px] bg-background border-s border-border ` +
-              `transform transition-transform duration-300 ease-out md:hidden ` +
-              `${isOpen ? translateOpen : translateClosed}`
+            `fixed top-0 bottom-0 end-0 z-50 w-[280px] bg-background border-s border-border ` +
+            `transform transition-transform duration-300 ease-out md:hidden ` +
+            `${isOpen ? translateOpen : translateClosed}`
             }
             role="dialog"
             aria-modal="true"
-            aria-label={t.nav.menuTitle}
-          >
+            aria-label={t.nav.menuTitle}>
+
             {/* Header */}
             <div data-ev-id="ev_de02b54979" className="flex items-center justify-between px-4 h-16 border-b border-border">
               <div data-ev-id="ev_dbaa91c85d" className="flex items-center gap-3">
@@ -132,8 +132,8 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
                 type="button"
                 onClick={closeDrawer}
                 className="p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-muted transition-colors focus-ring"
-                aria-label={t.common.close}
-              >
+                aria-label={t.common.close}>
+
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -143,22 +143,22 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
               {visibleItems.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={closeDrawer}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ` +
-                      `transition-colors focus-ring ` +
-                      (isActive
-                        ? 'bg-primary-muted text-primary'
-                        : 'text-foreground-muted hover:text-foreground hover:bg-muted')
-                    }
-                  >
+                  <NavLink data-ev-id="ev_d1611fcc61"
+                  key={item.path}
+                  to={item.path}
+                  onClick={closeDrawer}
+                  className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ` +
+                  `transition-colors focus-ring ` + (
+                  isActive ?
+                  'bg-primary-muted text-primary' :
+                  'text-foreground-muted hover:text-foreground hover:bg-muted')
+                  }>
+
                     <Icon className="w-5 h-5" />
                     <span data-ev-id="ev_3727b1df27">{t.nav[item.labelKey]}</span>
-                  </NavLink>
-                );
+                  </NavLink>);
+
               })}
             </nav>
           </div>

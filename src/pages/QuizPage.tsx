@@ -14,6 +14,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { BackButton } from '@/components/ui/BackButton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
+import { withTimeout } from '@/utils/fetchWithTimeout';
 import { PreviewBanner } from '@/components/studio/PreviewBanner';
 
 type QuizState = 'info' | 'playing' | 'results' | 'review';
@@ -88,14 +89,14 @@ export default function QuizPage() {
     if (isPreview) {
       let earnedPoints = 0;
       let totalPoints = 0;
-      questions.forEach(q => {
+      questions.forEach((q) => {
         totalPoints += q.points || 1;
         const userAnswer = answers[q.id];
         const correctAnswer = q.correct;
         if (q.question_type === 'multi') {
           const correct = correctAnswer as number[];
           const user = (userAnswer || []) as number[];
-          if (correct.length === user.length && correct.every(c => user.includes(c))) {
+          if (correct.length === user.length && correct.every((c) => user.includes(c))) {
             earnedPoints += q.points || 1;
           }
         } else {
@@ -104,7 +105,7 @@ export default function QuizPage() {
           }
         }
       });
-      const localScore = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
+      const localScore = totalPoints > 0 ? Math.round(earnedPoints / totalPoints * 100) : 0;
       const localPassed = localScore >= (quiz?.pass_score || 70);
       setResult({ score: localScore, passed: localPassed });
       setState('results');
@@ -112,26 +113,34 @@ export default function QuizPage() {
       return;
     }
 
-    const { data, score, passed, error } = await submitQuiz(answers);
+    try {
+      const { data, score, passed, error } = await withTimeout(submitQuiz(answers), 10000);
 
-    if (error === 'max_attempts_reached') {
-      showToast('error', dict.quiz.maxAttemptsMessage);
-      setState('info');
-    } else if (error) {
-      showToast('error', error);
-    } else {
-      setResult({ score: score!, passed: passed! });
-      setState('results');
+      if (error === 'max_attempts_reached') {
+        showToast('error', dict.quiz.maxAttemptsMessage);
+        setState('info');
+      } else if (error) {
+        showToast('error', error);
+      } else {
+        setResult({ score: score!, passed: passed! });
+        setState('results');
 
-      // Mark module complete if passed
-      if (passed && moduleId) {
-        await markModuleProgress(moduleId, 'completed', score);
+        // Mark module complete if passed
+        if (passed && moduleId) {
+          await withTimeout(markModuleProgress(moduleId, 'completed', score), 10000);
+        }
       }
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      err instanceof Error ? err.message :
+      (err as {message?: string;})?.message || dict.common.error;
+      console.error('quiz submit failed:', err);
+      showToast('error', msg);
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answers, submitQuiz, moduleId, markModuleProgress, submitting, isPreview, questions, quiz?.pass_score]);
+  }, [answers, submitQuiz, moduleId, markModuleProgress, submitting, isPreview, questions, quiz?.pass_score, dict]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -179,8 +188,8 @@ export default function QuizPage() {
             {dict.quiz.noQuestionsDescription}
           </p>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   // Info screen
@@ -297,9 +306,9 @@ export default function QuizPage() {
 									{dict.quiz.retryQuiz}
 								</button>
               }
-							<Link
-                to={`/course/${courseId}${previewSuffix}`}
-                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+							<Link data-ev-id="ev_b2641cf59f"
+              to={`/course/${courseId}${previewSuffix}`}
+              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
 
 								{dict.quiz.backToCourse}
 							</Link>
@@ -317,9 +326,9 @@ export default function QuizPage() {
 				<div data-ev-id="ev_1757b239f3" className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 					<div data-ev-id="ev_32f3b02f20" className="flex items-center justify-between mb-6">
 						<h1 data-ev-id="ev_86452122bd" className="text-xl font-bold text-foreground">{dict.quiz.reviewAnswers}</h1>
-						<Link
-              to={`/course/${courseId}${previewSuffix}`}
-              className="text-primary hover:underline">
+						<Link data-ev-id="ev_389fea5c7a"
+            to={`/course/${courseId}${previewSuffix}`}
+            className="text-primary hover:underline">
 
 							{dict.quiz.backToCourse}
 						</Link>
