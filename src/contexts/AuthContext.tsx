@@ -6,6 +6,7 @@ import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useLocale } from '@/hooks/useLocale';
 
 const PROFILE_TIMEOUT_MS = 10000;
+const PROFILE_RETRIES = 3;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<import('@supabase/supabase-js').User | null>(null);
@@ -16,54 +17,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isDeactivated, setIsDeactivated] = useState(false);
 	const { applyLocale } = useLocale();
 	
-	// Load profile with timeout - never blocks rendering
+	// Load profile with timeout and retries - never blocks rendering
 	// Checks is_active and signs out deactivated users
 	const loadProfile = useCallback(async (userId: string) => {
 		if (!supabase) return;
-		
 		setProfileError(null);
-		
-		try {
-			const { data, error } = await withTimeout(
-				supabase
-					.from('profiles')
-					.select('*')
-					.eq('id', userId)
-					.single(),
-				PROFILE_TIMEOUT_MS
-			);
-			
-			if (error) {
-				console.error('Error fetching profile:', error);
-				setProfileError(error.message);
-				// Do NOT clear a profile we already have. A failed REFRESH must not destroy good
-				// state — the AppShell banner reports the error, and the user keeps their role.
+
+		for (let attempt = 1; attempt <= PROFILE_RETRIES; attempt++) {
+			const isLast = attempt === PROFILE_RETRIES;
+			try {
+				const { data, error } = await withTimeout(
+					supabase
+						.from('profiles')
+						.select('*')
+						.eq('id', userId)
+						.single(),
+					PROFILE_TIMEOUT_MS
+				);
+
+				if (error) {
+					console.error('Error fetching profile:', error);
+					setProfileError(error.message);
+					// Do NOT clear a profile we already have. A failed REFRESH must not destroy good
+					// state — the AppShell banner reports the error, and the user keeps their role.
+					if (!isLast) { await new Promise((r) => setTimeout(r, attempt * 1000)); continue; }
+					return;
+				}
+
+				// Check if user is deactivated — NEVER retry, return immediately
+				if (data && !data.is_active) {
+					console.warn('User account is deactivated, signing out');
+					setIsDeactivated(true);
+					setProfile(null);
+					// Sign out the user
+					await supabase.auth.signOut();
+					return;
+				}
+
+				setProfile(data as Profile);
+				setProfileError(null);
+				setIsDeactivated(false);
+
+				// Sync locale from profile (apply to React state, not just localStorage)
+				if (data?.locale === 'en' || data?.locale === 'he') {
+					applyLocale(data.locale);
+				}
+				return;
+
+			} catch (err) {
+				const message = err instanceof Error ? err.message : 'Failed to load profile';
+				console.error('Profile load error:', message);
+				setProfileError(message);
+				// Same reason — see the error branch above.
+				if (!isLast) { await new Promise((r) => setTimeout(r, attempt * 1000)); continue; }
 				return;
 			}
-			
-			// Check if user is deactivated
-			if (data && !data.is_active) {
-				console.warn('User account is deactivated, signing out');
-				setIsDeactivated(true);
-				setProfile(null);
-				// Sign out the user
-				await supabase.auth.signOut();
-				return;
-			}
-			
-			setProfile(data as Profile);
-			setProfileError(null);
-			setIsDeactivated(false);
-			
-			// Sync locale from profile (apply to React state, not just localStorage)
-			if (data?.locale === 'en' || data?.locale === 'he') {
-				applyLocale(data.locale);
-			}
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Failed to load profile';
-			console.error('Profile load error:', message);
-			setProfileError(message);
-			// Same reason — see the error branch above.
 		}
 	}, [applyLocale]);
 	

@@ -41,6 +41,9 @@ export default function ScormPlayer() {
   const [bridgeReady, setBridgeReady] = useState(false);
   const [completionStatus, setCompletionStatus] = useState<string | null>(null);
   const [scoreRaw, setScoreRaw] = useState<number | null>(null);
+  // The last CMI payload that failed to reach the server, kept so Retry can re-send it.
+  const [failedCommit, setFailedCommit] = useState<{cmi: Record<string, unknown>;event: 'commit' | 'terminate';} | null>(null);
+  const [retryingCommit, setRetryingCommit] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bucketOriginRef = useRef<string | null>(null);
@@ -181,9 +184,15 @@ export default function ScormPlayer() {
             setCompletionStatus(data.registration.completion_status);
             setScoreRaw(data.registration.score_raw);
           }
+          setFailedCommit(null); // recovered
+        } else {
+          // A non-2xx is a LOST completion, not a no-op. 401/500/RLS all land here.
+          console.error('scorm-commit returned', response.status);
+          setFailedCommit({ cmi, event });
         }
       } catch (err) {
         console.error('Failed to commit SCORM data:', err);
+        setFailedCommit({ cmi, event });
       }
     },
     [scormPackage, enrollmentId, moduleId, session?.access_token]
@@ -316,9 +325,9 @@ export default function ScormPlayer() {
 							{dict.common.retry}
 						</button>
 						{course &&
-            <Link
-              to={`/course/${course.id}`}
-              className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors">
+            <Link data-ev-id="ev_1f7ec6ceb1"
+            to={`/course/${course.id}`}
+            className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors">
 
 								{dict.course.backToCourse}
 							</Link>
@@ -350,9 +359,9 @@ export default function ScormPlayer() {
 					{/* Title Row */}
 					<div data-ev-id="ev_beab572386" className="flex items-center justify-between mt-2">
 						<div data-ev-id="ev_4cb0cad370" className="flex items-center gap-3">
-							<Link
-                to={`/course/${course?.id}`}
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+							<Link data-ev-id="ev_89cbf2de93"
+              to={`/course/${course?.id}`}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
 
 								{locale === 'he' ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
 								{dict.course.backToCourse}
@@ -381,6 +390,30 @@ export default function ScormPlayer() {
 					</div>
 				</div>
 			</div>
+
+			{failedCommit &&
+      <div data-ev-id="ev_scorm_commit_failed"
+      role="alert"
+      className="flex items-center justify-between gap-3 px-4 py-3 border-b border-destructive/40 bg-destructive/10">
+					<p data-ev-id="ev_scorm_commit_failed_msg" className="text-sm text-destructive">
+						{dict.scorm.progressNotSaved}
+					</p>
+					<button data-ev-id="ev_scorm_commit_retry"
+        type="button"
+        disabled={retryingCommit}
+        onClick={async () => {
+          setRetryingCommit(true);
+          try {
+            await commitCmi(failedCommit.cmi, failedCommit.event);
+          } finally {
+            setRetryingCommit(false);
+          }
+        }}
+        className="shrink-0 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
+						{retryingCommit ? dict.common.loading : dict.errors.retry}
+					</button>
+				</div>
+      }
 
 			{/* SCORM Player iframe */}
 			<div data-ev-id="ev_3bb8664cad" className="flex-1 relative">

@@ -95,6 +95,7 @@ export interface Dictionary {
 		packageNotFound: string;
 		invalidPackageUrl: string;
 		runtimeError: string;
+		progressNotSaved: string;
 		scormPackage: string;
 	};
 	
@@ -801,6 +802,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			packageNotFound: 'SCORM package not found',
 			invalidPackageUrl: 'Invalid package URL',
 			runtimeError: 'SCORM runtime error',
+			progressNotSaved: 'Your progress was not saved. Check your connection and try again.',
 			scormPackage: 'SCORM Package',
 		},
 		
@@ -1480,6 +1482,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			packageNotFound: 'חבילת SCORM לא נמצאה',
 			invalidPackageUrl: 'כתובת חבילה לא תקינה',
 			runtimeError: 'שגיאת זמן ריצה של SCORM',
+			progressNotSaved: 'ההתקדמות שלך לא נשמרה. בדקו את החיבור ונסו שוב.',
 			scormPackage: 'חבילת SCORM',
 		},
 		
