@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { AlertCircle, CheckCircle, Loader2, ChevronLeft, ChevronRight, RefreshCw, Package } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, ChevronLeft, ChevronRight, RefreshCw, Package, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
@@ -41,6 +41,7 @@ export default function ScormPlayer() {
   const [bridgeReady, setBridgeReady] = useState(false);
   const [completionStatus, setCompletionStatus] = useState<string | null>(null);
   const [scoreRaw, setScoreRaw] = useState<number | null>(null);
+  const [successStatus, setSuccessStatus] = useState<string | null>(null);
   // The last CMI payload that failed to reach the server, kept so Retry can re-send it.
   const [failedCommit, setFailedCommit] = useState<{cmi: Record<string, unknown>;event: 'commit' | 'terminate';} | null>(null);
   const [retryingCommit, setRetryingCommit] = useState(false);
@@ -127,6 +128,7 @@ export default function ScormPlayer() {
           setRegistration(regData);
           setCompletionStatus(regData.completion_status);
           setScoreRaw(regData.score_raw ? Number(regData.score_raw) : null);
+          setSuccessStatus(regData.success_status);
         }
 
         // Mark module as in_progress if not already
@@ -183,6 +185,7 @@ export default function ScormPlayer() {
           if (data.registration) {
             setCompletionStatus(data.registration.completion_status);
             setScoreRaw(data.registration.score_raw);
+            setSuccessStatus(data.registration.success_status);
           }
           setFailedCommit(null); // recovered
         } else {
@@ -379,13 +382,19 @@ export default function ScormPlayer() {
 							</Badge>
 
 							{/* Completion Badge */}
-							{completionStatus === 'completed' &&
+							{successStatus === 'failed' ?
+              <Badge variant="danger">
+									<XCircle className="w-3 h-3 me-1" />
+									{dict.course.quizFailed}
+									{scoreRaw != null && ` (${scoreRaw}%)`}
+								</Badge> :
+              completionStatus === 'completed' ?
               <Badge variant="success">
 									<CheckCircle className="w-3 h-3 me-1" />
 									{dict.common.completed}
 									{scoreRaw != null && ` (${scoreRaw}%)`}
-								</Badge>
-              }
+								</Badge> :
+              null}
 						</div>
 					</div>
 				</div>

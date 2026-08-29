@@ -80,6 +80,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			await loadProfile(user.id);
 		}
 	}, [user, loadProfile]);
+
+	// The retry loop in loadProfile is immediate and bounded, so a profile that failed while
+	// offline stays failed until something asks again. Reconnecting is exactly that moment.
+	useEffect(() => {
+		const onOnline = () => { void refreshProfile(); };
+		window.addEventListener('online', onOnline);
+		return () => window.removeEventListener('online', onOnline);
+	}, [refreshProfile]);
 	
 	useEffect(() => {
 		if (!supabase) {

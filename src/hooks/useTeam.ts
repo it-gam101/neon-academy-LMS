@@ -52,6 +52,7 @@ export function useTeam(options?: UseTeamOptions) {
 
 			const { data: { user } } = await supabase.auth.getUser();
 			if (!user) {
+				setError('TIMEOUT');
 				setLoading(false);
 				return;
 			}

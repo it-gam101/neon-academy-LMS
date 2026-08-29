@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { BookOpen, FileQuestion, CheckCircle, Circle, PlayCircle, ChevronRight, ChevronLeft, Lock, Package } from 'lucide-react';
+import { BookOpen, FileQuestion, CheckCircle, Circle, PlayCircle, ChevronRight, ChevronLeft, Lock, Package, XCircle } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { Badge } from '@/components/ui/Badge';
@@ -30,6 +30,15 @@ export function ModuleList({ courseId, modules, enrolled, enrollmentId, isPrevie
 
   const getStatusIcon = (mod: ModuleWithProgress) => {
     const status = mod.progress?.status || 'not_started';
+
+    // Keep this in step with getStatusBadge — an icon that disagrees with the badge is
+    // worse than no icon at all.
+    if (mod.scorm_registration?.success_status === 'failed') {
+      return <XCircle className="w-5 h-5 text-destructive" />;
+    }
+    if (mod.attempts && mod.attempts.length > 0 && mod.attempts[0].passed === false) {
+      return <XCircle className="w-5 h-5 text-destructive" />;
+    }
 
     if (status === 'completed') {
       return <CheckCircle className="w-5 h-5 text-primary" />;
@@ -66,8 +75,14 @@ export function ModuleList({ courseId, modules, enrolled, enrollmentId, isPrevie
     // SCORM module with registration
     if (mod.module_type === 'scorm_package' && mod.scorm_registration) {
       const reg = mod.scorm_registration;
+      const score = reg.score_raw != null ? ` (${Math.round(Number(reg.score_raw))}%)` : '';
+
+      // A failed attempt is still "complete" in SCORM terms — completion and success are
+      // separate axes. Reporting it as Completed tells a learner who failed that they passed.
+      if (reg.success_status === 'failed') {
+        return <Badge variant="danger">{dict.course.quizFailed}{score}</Badge>;
+      }
       if (reg.completion_status === 'completed') {
-        const score = reg.score_raw != null ? ` (${Math.round(Number(reg.score_raw))}%)` : '';
         return <Badge variant="success">{dict.common.completed}{score}</Badge>;
       }
       if (reg.completion_status === 'incomplete') {
@@ -98,13 +113,13 @@ export function ModuleList({ courseId, modules, enrolled, enrollmentId, isPrevie
 
   const getModuleTypeLabel = (mod: ModuleWithProgress, index: number) => {
     switch (mod.module_type) {
-      case 'quiz': {
-        const questionCount = mod.quiz?.questions?.length ?? 0;
-        const questionLabel = questionCount > 0 
-          ? ` (${questionCount} ${locale === 'he' ? 'שאלות' : 'Q'})` 
-          : '';
-        return `${dict.course.quiz} ${index + 1}${questionLabel}`;
-      }
+      case 'quiz':{
+          const questionCount = mod.quiz?.questions?.length ?? 0;
+          const questionLabel = questionCount > 0 ?
+          ` (${questionCount} ${locale === 'he' ? 'שאלות' : 'Q'})` :
+          '';
+          return `${dict.course.quiz} ${index + 1}${questionLabel}`;
+        }
       case 'scorm_package':
         return dict.scorm.scormPackage;
       default:
@@ -123,9 +138,9 @@ export function ModuleList({ courseId, modules, enrolled, enrollmentId, isPrevie
         return (
           <div data-ev-id="ev_649ed2b906" key={mod.id} className="group">
 						{canAccess ?
-            <Link
-              to={getModuleUrl(mod)}
-              className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all group-hover:shadow-md relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+            <Link data-ev-id="ev_c193518545"
+            to={getModuleUrl(mod)}
+            className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all group-hover:shadow-md relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 
 								{/* Leading accent */}
 								<div data-ev-id="ev_7cc9978516" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
@@ -145,9 +160,9 @@ export function ModuleList({ courseId, modules, enrolled, enrollmentId, isPrevie
 											{getModuleTypeLabel(mod, index)}
 										</span>
 										{/* SCORM version chip */}
-										{mod.module_type === 'scorm_package' && mod.scorm_package && (
-											<Badge>{mod.scorm_package.scorm_version}</Badge>
-										)}
+										{mod.module_type === 'scorm_package' && mod.scorm_package &&
+                  <Badge>{mod.scorm_package.scorm_version}</Badge>
+                  }
 									</div>
 									<h4 data-ev-id="ev_b76dd0d2c8" className="font-medium text-foreground truncate">{getTitle(mod)}</h4>
 								</div>
