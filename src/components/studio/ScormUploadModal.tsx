@@ -7,6 +7,7 @@ import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { syncCourseType } from '@/lib/courseType';
+import { parseVc4elSource, type Vc4elResult } from '@/lib/vc4elSource';
 
 type Module = Tables<'modules'>;
 
@@ -41,6 +42,8 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [unzippedFiles, setUnzippedFiles] = useState<Record<string, Uint8Array> | null>(null);
   const [packageRoot, setPackageRoot] = useState<string>('');
+  // Slice 9d-A: sidecar detection is REPORT-ONLY. null = no sidecar in this package.
+  const [sidecar, setSidecar] = useState<Vc4elResult | null>(null);
 
   // SCORM 1.2 uses adlcp:scormtype, SCORM 2004 uses adlcp:scormType.
   // XML getAttribute is case-sensitive, so match on the local name instead.
@@ -116,6 +119,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 
     setSelectedFile(file);
     setError(null);
+    setSidecar(null);
     setState('parsing');
 
     // Default title from filename without extension
@@ -166,6 +170,34 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
         setState('error');
         return;
       }
+
+      // vc4el course source (slice 9d-A: DETECT AND REPORT ONLY — no database writes).
+      // Best-effort by design. A sidecar that is missing, malformed, or from a newer
+      // generator must NEVER stop a plain SCORM upload. That is why nothing in this
+      // block calls setError() or setState('error'), and why it is wrapped in try/catch.
+      let parsed: Vc4elResult | null = null;
+      try {
+        const sidecarBytes = unzipped[`${root}vc4el-source.json`];
+        if (sidecarBytes && sidecarBytes.length > 0) {
+          // packagePath values are relative to the PACKAGE ROOT, so the archive
+          // listing handed to the parser must be relative to it too.
+          const archivePaths = Object.keys(unzipped).
+          filter((p) => p.startsWith(root) && !p.endsWith('/')).
+          map((p) => p.slice(root.length));
+          parsed = parseVc4elSource(
+            JSON.parse(new TextDecoder().decode(sidecarBytes)),
+            { archivePaths }
+          );
+        }
+      } catch (err) {
+        console.error('vc4el-source parse failed:', err);
+        parsed = {
+          ok: false,
+          code: 'unparseable',
+          detail: (err as {message?: string;})?.message || 'Sidecar could not be read.'
+        };
+      }
+      setSidecar(parsed);
 
       setManifestInfo(info);
       setUnzippedFiles(unzipped);
@@ -334,9 +366,9 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
     } catch (err) {
       console.error('SCORM upload error:', err);
       const msg =
-        (err as { message?: string } | null)?.message ||
-        (typeof err === 'string' ? err : JSON.stringify(err)) ||
-        dict.studioUpload.uploadFailed;
+      (err as {message?: string;} | null)?.message || (
+      typeof err === 'string' ? err : JSON.stringify(err)) ||
+      dict.studioUpload.uploadFailed;
       setError(msg);
       setState('error');
 
@@ -430,7 +462,56 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 									<span data-ev-id="ev_80c1e01904" className="font-mono text-xs" dir="ltr">{manifestInfo.entryPoint}</span>
 								</p>
 							</div>
-						</>
+
+							{/* vc4el course source — REPORT ONLY in 9d-A. Never gates the upload. */}
+							{sidecar && sidecar.ok &&
+            <div data-ev-id="ev_7fdef921ab" className="p-3 bg-muted rounded-lg space-y-2">
+									<div data-ev-id="ev_23e018765a" className="flex items-center gap-2">
+										<CheckCircle className="w-4 h-4 text-primary" />
+										<span data-ev-id="ev_6f10070fb3" className="text-sm font-medium text-foreground">{dict.studioUpload.sidecarDetected}</span>
+									</div>
+									<p data-ev-id="ev_5cfb4830aa" className="text-sm text-foreground">
+										<span data-ev-id="ev_a7d80c1279" className="text-muted-foreground">{dict.studioUpload.sidecarLanguages}</span>{' '}
+										<span data-ev-id="ev_78b626bc1e" dir="ltr">{sidecar.locales.join(', ').toUpperCase()}</span>
+									</p>
+									<p data-ev-id="ev_91eb3f2ee3" className="text-sm text-foreground">
+										<span data-ev-id="ev_64d8435297" className="text-muted-foreground">{dict.studioUpload.sidecarModules}</span>{' '}
+										{sidecar.modules.length}
+										<span data-ev-id="ev_a30b3eea06" className="text-muted-foreground ms-3">{dict.studioUpload.sidecarQuestions}</span>{' '}
+										{sidecar.modules.reduce((n, m) => n + (m.quiz ? m.quiz.questions.length : 0), 0)}
+									</p>
+									{sidecar.warnings.length > 0 &&
+              <ul data-ev-id="ev_77fb5a0946" className="space-y-1">
+											{sidecar.warnings.map((w, i) =>
+                <li data-ev-id="ev_4d1544e41c" key={i} className="text-xs text-muted-foreground/80" dir="ltr">{w.detail}</li>
+                )}
+										</ul>
+              }
+									{sidecar.problems.length > 0 &&
+              <div data-ev-id="ev_8419af3b7e" className="space-y-1">
+											<p data-ev-id="ev_b9175f7b57" className="text-xs font-medium text-foreground">{dict.studioUpload.sidecarIssues}</p>
+											<ul data-ev-id="ev_abd267fb45" className="max-h-32 overflow-y-auto space-y-1">
+												{sidecar.problems.map((p, i) =>
+                  <li data-ev-id="ev_21fa95ff57" key={i} className="text-xs text-muted-foreground/80" dir="ltr">{p.detail}</li>
+                  )}
+											</ul>
+											<p data-ev-id="ev_1c46bc0760" className="text-xs text-muted-foreground">{dict.studioUpload.sidecarUploadUnaffected}</p>
+										</div>
+              }
+								</div>
+            }
+
+							{sidecar && sidecar.ok === false && sidecar.code !== 'absent' &&
+            <div data-ev-id="ev_70ea8867ca" className="p-3 bg-muted rounded-lg space-y-2">
+									<div data-ev-id="ev_7112893192" className="flex items-center gap-2">
+										<AlertCircle className="w-4 h-4 text-muted-foreground" />
+										<span data-ev-id="ev_6215b407de" className="text-sm font-medium text-foreground">{dict.studioUpload.sidecarUnreadable}</span>
+									</div>
+									<p data-ev-id="ev_bf2e98819e" className="text-xs text-muted-foreground/80" dir="ltr">{sidecar.detail}</p>
+									<p data-ev-id="ev_1a0252c721" className="text-xs text-muted-foreground">{dict.studioUpload.sidecarUploadUnaffected}</p>
+								</div>
+            }
+							</>
           }
 
 					{/* Upload progress */}

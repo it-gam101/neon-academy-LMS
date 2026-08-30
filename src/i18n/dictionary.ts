@@ -134,6 +134,13 @@ export interface Dictionary {
 		uploadNew: string;
 		chooseExisting: string;
 		noPackages: string;
+		sidecarDetected: string;
+		sidecarLanguages: string;
+		sidecarModules: string;
+		sidecarQuestions: string;
+		sidecarIssues: string;
+		sidecarUnreadable: string;
+		sidecarUploadUnaffected: string;
 	};
 	
 	// Studio Blocks
@@ -839,6 +846,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			uploadNew: 'Upload a new package',
 			chooseExisting: 'Choose an existing package',
 			noPackages: 'No packages available yet',
+			sidecarDetected: 'Course source detected',
+			sidecarLanguages: 'Languages:',
+			sidecarModules: 'Modules:',
+			sidecarQuestions: 'Quiz questions:',
+			sidecarIssues: 'Issues found in the course source:',
+			sidecarUnreadable: 'Course source found, but it could not be read',
+			sidecarUploadUnaffected: 'The SCORM package itself will upload and play normally.',
 		},
 		
 		studioBlocks: {
@@ -1519,6 +1533,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			uploadNew: 'העלאת חבילה חדשה',
 			chooseExisting: 'בחירת חבילה קיימת',
 			noPackages: 'אין חבילות זמינות עדיין',
+			sidecarDetected: 'זוהה מקור קורס',
+			sidecarLanguages: 'שפות:',
+			sidecarModules: 'מודולים:',
+			sidecarQuestions: 'שאלות במבחן:',
+			sidecarIssues: 'נמצאו בעיות במקור הקורס:',
+			sidecarUnreadable: 'נמצא מקור קורס, אך לא ניתן לקרוא אותו',
+			sidecarUploadUnaffected: 'חבילת ה-SCORM עצמה תועלה ותפעל כרגיל.',
 		},
 		
 		studioBlocks: {
