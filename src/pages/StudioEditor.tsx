@@ -230,9 +230,9 @@ export default function StudioEditor() {
         showToast('success', dict.studio.courseSaved);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message : dict.common.error;
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      err instanceof Error ? err.message : dict.common.error;
       console.error('handleSave failed:', err);
       showToast('error', msg);
     } finally {
@@ -345,10 +345,23 @@ export default function StudioEditor() {
   const handlePublish = async () => {
     if (!supabase || !courseId) return;
 
-    // Fix: add .select() and check for empty result (RLS-blocked update)
+    // Publish saves the form too. Writing only the status silently discarded
+    // every field the author typed but had not pressed Save Draft on.
     const { data, error } = await supabase.
     from('courses').
-    update({ status: 'published', updated_at: new Date().toISOString() }).
+    update({
+      title_en: titleEn,
+      title_he: titleHe,
+      description_en: descriptionEn || null,
+      description_he: descriptionHe || null,
+      category_id: categoryId || null,
+      thumbnail_url: thumbnailUrl || null,
+      estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
+      is_mandatory: isMandatory,
+      due_days: dueDays ? parseInt(dueDays) : null,
+      status: 'published',
+      updated_at: new Date().toISOString()
+    }).
     eq('id', courseId).
     select();
 
@@ -488,10 +501,10 @@ export default function StudioEditor() {
         setAvailablePackages(data ?? []);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message
-        : (err as { message?: string })?.message || dict.common.error;
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      err instanceof Error ? err.message :
+      (err as {message?: string;})?.message || dict.common.error;
       console.error('handleOpenScormChooser failed:', err);
       showToast('error', msg);
       setAvailablePackages([]);
@@ -583,9 +596,9 @@ export default function StudioEditor() {
         setShowQuizSettingsModal(false);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message : dict.common.error;
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      err instanceof Error ? err.message : dict.common.error;
       console.error('handleSaveQuizSettings failed:', err);
       setQuizSettingsError(msg);
     } finally {
@@ -639,10 +652,10 @@ export default function StudioEditor() {
         setShowModuleTitleModal(false);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message
-        : (err as { message?: string })?.message || dict.common.error;
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      err instanceof Error ? err.message :
+      (err as {message?: string;})?.message || dict.common.error;
       console.error('handleSaveModuleTitle failed:', err);
       showToast('error', msg);
     } finally {
@@ -665,9 +678,9 @@ export default function StudioEditor() {
       // Swap sort_orders
       const [result1, result2] = await withTimeout(
         Promise.all([
-          supabase.from('modules').update({ sort_order: targetOrder }).eq('id', currentModule.id).select(),
-          supabase.from('modules').update({ sort_order: currentOrder }).eq('id', targetModule.id).select()
-        ]),
+        supabase.from('modules').update({ sort_order: targetOrder }).eq('id', currentModule.id).select(),
+        supabase.from('modules').update({ sort_order: currentOrder }).eq('id', targetModule.id).select()]
+        ),
         10000
       );
 
@@ -692,10 +705,10 @@ export default function StudioEditor() {
         });
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message
-        : (err as { message?: string })?.message || dict.common.error;
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      err instanceof Error ? err.message :
+      (err as {message?: string;})?.message || dict.common.error;
       console.error('handleMoveModule failed:', err);
       showToast('error', msg);
     } finally {
@@ -734,9 +747,9 @@ export default function StudioEditor() {
         showToast('success', dict.studio.courseArchived);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message : dict.common.error;
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      err instanceof Error ? err.message : dict.common.error;
       console.error('handleArchive failed:', err);
       showToast('error', msg);
     } finally {
@@ -1055,9 +1068,9 @@ export default function StudioEditor() {
 
 				{/* Actions */}
 				<div data-ev-id="ev_a8097d2908" className="flex items-center justify-between">
-					<Link
-            to={`/course/${courseId}?preview=1`}
-            className="flex items-center gap-2 px-4 py-2 text-foreground border border-border rounded-lg transition-colors hover:bg-muted">
+					<Link data-ev-id="ev_ea31afb70a"
+          to={`/course/${courseId}?preview=1`}
+          className="flex items-center gap-2 px-4 py-2 text-foreground border border-border rounded-lg transition-colors hover:bg-muted">
 
 						<Eye className="w-4 h-4" />
 						{dict.studio.previewAsLearner}
@@ -1074,7 +1087,7 @@ export default function StudioEditor() {
 						</button>
 
 						{/* Readiness indicator badge — computed from modules only (no query). 
-                 The full check including quizzes runs when the modal opens; if they differ, the modal is authoritative. */}
+                        The full check including quizzes runs when the modal opens; if they differ, the modal is authoritative. */}
 						{course.status !== 'published' && (() => {
               const headerBlockers = courseProblems({
                 modules: modules.map((m) => ({

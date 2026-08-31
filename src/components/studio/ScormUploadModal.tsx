@@ -7,7 +7,9 @@ import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { syncCourseType } from '@/lib/courseType';
-import { parseVc4elSource, type Vc4elResult } from '@/lib/vc4elSource';
+import { parseVc4elSource, type Vc4elResult, type Vc4elPlan } from '@/lib/vc4elSource';
+import { buildImportPlan } from '@/lib/vc4elImport';
+import type { Json } from '@/integrations/supabase/types';
 
 type Module = Tables<'modules'>;
 
@@ -44,6 +46,10 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
   const [packageRoot, setPackageRoot] = useState<string>('');
   // Slice 9d-A: sidecar detection is REPORT-ONLY. null = no sidecar in this package.
   const [sidecar, setSidecar] = useState<Vc4elResult | null>(null);
+  // 9d-B: the author opts in to importing the sidecar as editable modules.
+  const [importContent, setImportContent] = useState(true);
+  const [importResult, setImportResult] = useState<{modules: number;questions: number;} | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   // SCORM 1.2 uses adlcp:scormtype, SCORM 2004 uses adlcp:scormType.
   // XML getAttribute is case-sensitive, so match on the local name instead.
@@ -120,6 +126,8 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
     setSelectedFile(file);
     setError(null);
     setSidecar(null);
+    setImportResult(null);
+    setImportError(null);
     setState('parsing');
 
     // Default title from filename without extension
@@ -208,6 +216,104 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
       setError(dict.studioUpload.invalidZip);
       setState('error');
     }
+  };
+
+  // Writes the sidecar into Academy's own tables. Throws on any refusal; the
+  // caller catches and never lets that failure touch the SCORM upload.
+  const importSidecarContent = async (plan: Vc4elPlan, storageBaseUrl: string) => {
+    if (!supabase || !courseId) throw new Error('Not ready');
+    if (!storageBaseUrl) throw new Error('No storage base URL for the package');
+
+    // sort_order must start past EVERY existing module, including the SCORM one
+    // that was just added.
+    const { data: existing, error: orderError } = await supabase.
+    from('modules').
+    select('sort_order').
+    eq('course_id', courseId).
+    order('sort_order', { ascending: false }).
+    limit(1);
+    if (orderError) throw orderError;
+    const startSortOrder = ((existing?.[0]?.sort_order ?? 0) as number) + 1;
+
+    const importPlan = buildImportPlan(plan, { storageBaseUrl, startSortOrder });
+
+    // Fill ONLY empty course fields. Never overwrite what the author typed.
+    const { data: courseRow } = await supabase.
+    from('courses').
+    select('title_en, title_he, description_en, description_he, estimated_minutes').
+    eq('id', courseId).
+    single();
+
+    if (courseRow) {
+      const cf = importPlan.courseFields;
+      const patch: Record<string, unknown> = {};
+      if (!courseRow.title_en?.trim() && cf.title_en) patch.title_en = cf.title_en;
+      if (!courseRow.title_he?.trim() && cf.title_he) patch.title_he = cf.title_he;
+      if (!courseRow.description_en && cf.description_en) patch.description_en = cf.description_en;
+      if (!courseRow.description_he && cf.description_he) patch.description_he = cf.description_he;
+      if (courseRow.estimated_minutes == null && cf.estimated_minutes != null) patch.estimated_minutes = cf.estimated_minutes;
+
+      if (Object.keys(patch).length > 0) {
+        const { data, error } = await supabase.from('courses').update(patch).eq('id', courseId).select();
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error(dict.common.changeRefused);
+      }
+    }
+
+    for (const m of importPlan.modules) {
+      const { data: modRow, error: modError } = await supabase.
+      from('modules').
+      insert({
+        course_id: courseId,
+        title_en: m.title_en,
+        title_he: m.title_he,
+        module_type: m.module_type,
+        sort_order: m.sort_order,
+        content_json: m.content_json as unknown as Json
+      }).
+      select().
+      single();
+      if (modError) throw modError;
+      if (!modRow) throw new Error(dict.common.changeRefused);
+
+      if (m.module_type === 'quiz' && m.quiz) {
+        const { data: quizRow, error: quizError } = await supabase.
+        from('quizzes').
+        insert({
+          module_id: modRow.id,
+          pass_score: m.quiz.pass_score,
+          attempts_allowed: m.quiz.attempts_allowed,
+          time_limit_minutes: m.quiz.time_limit_minutes,
+          shuffle_questions: m.quiz.shuffle_questions
+        }).
+        select().
+        single();
+        if (quizError) throw quizError;
+        if (!quizRow) throw new Error(dict.common.changeRefused);
+
+        if (m.questions.length > 0) {
+          const { data: qRows, error: qError } = await supabase.
+          from('quiz_questions').
+          insert(m.questions.map((q) => ({
+            quiz_id: quizRow.id,
+            question_type: q.question_type,
+            question_en: q.question_en,
+            question_he: q.question_he,
+            options: q.options as unknown as Json,
+            correct: q.correct as unknown as Json,
+            points: q.points,
+            sort_order: q.sort_order,
+            explanation_en: q.explanation_en,
+            explanation_he: q.explanation_he
+          }))).
+          select();
+          if (qError) throw qError;
+          if (!qRows || qRows.length === 0) throw new Error(dict.common.changeRefused);
+        }
+      }
+    }
+
+    return importPlan.counts;
   };
 
   const handleUpload = async () => {
@@ -358,6 +464,23 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 
       setState('success');
 
+      // Sidecar import. Its failure must NEVER undo the SCORM upload, so it has
+      // its own try/catch and never rethrows — the outer catch deletes the module.
+      if (sidecar && sidecar.ok && importContent) {
+        try {
+          const counts = await importSidecarContent(
+            sidecar,
+            (finalizeData as {storage_base_url?: string;})?.storage_base_url || ''
+          );
+          setImportResult(counts);
+        } catch (importErr) {
+          console.error('vc4el-source import failed:', importErr);
+          setImportError(
+            (importErr as {message?: string;})?.message || dict.studioUpload.importFailed
+          );
+        }
+      }
+
       // Sync course type since we added a SCORM module
       await syncCourseType(courseId);
 
@@ -480,6 +603,15 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 										<span data-ev-id="ev_a30b3eea06" className="text-muted-foreground ms-3">{dict.studioUpload.sidecarQuestions}</span>{' '}
 										{sidecar.modules.reduce((n, m) => n + (m.quiz ? m.quiz.questions.length : 0), 0)}
 									</p>
+									<label data-ev-id="ev_e7f3ed8fb8" className="flex items-center gap-2 cursor-pointer">
+										<input data-ev-id="ev_7cca2900f6"
+                type="checkbox"
+                checked={importContent}
+                onChange={(e) => setImportContent(e.target.checked)}
+                disabled={state !== 'idle'}
+                className="w-4 h-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
+										<span data-ev-id="ev_bb839eaa1d" className="text-sm text-foreground">{dict.studioUpload.importContent}</span>
+									</label>
 									{sidecar.warnings.length > 0 &&
               <ul data-ev-id="ev_77fb5a0946" className="space-y-1">
 											{sidecar.warnings.map((w, i) =>
@@ -546,6 +678,25 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
           <div data-ev-id="ev_52a2dd1df9" className="flex items-center gap-3 text-green-500">
 							<CheckCircle className="w-5 h-5" />
 							<span data-ev-id="ev_b9c45cbcc1">{dict.studioUpload.success}</span>
+						</div>
+          }
+
+					{state === 'success' && importResult &&
+          <div data-ev-id="ev_62da6649ef" className="p-3 bg-muted rounded-lg">
+							<p data-ev-id="ev_f74dacb9f5" className="text-sm text-foreground">
+								<span data-ev-id="ev_2cac80b64b" className="text-muted-foreground">{dict.studioUpload.importedContent}</span>{' '}
+								<span data-ev-id="ev_cd78b349b3" className="text-muted-foreground">{dict.studioUpload.sidecarModules}</span>{' '}
+								{importResult.modules}
+								<span data-ev-id="ev_4c9fda16ce" className="text-muted-foreground ms-3">{dict.studioUpload.sidecarQuestions}</span>{' '}
+								{importResult.questions}
+							</p>
+						</div>
+          }
+
+					{state === 'success' && importError &&
+          <div data-ev-id="ev_2d0e1855a6" className="p-3 bg-muted rounded-lg space-y-1">
+							<p data-ev-id="ev_7195797774" className="text-sm text-foreground">{dict.studioUpload.importFailed}</p>
+							<p data-ev-id="ev_0f0787c185" className="text-xs text-muted-foreground/80" dir="ltr">{importError}</p>
 						</div>
           }
 

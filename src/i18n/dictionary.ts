@@ -141,6 +141,9 @@ export interface Dictionary {
 		sidecarIssues: string;
 		sidecarUnreadable: string;
 		sidecarUploadUnaffected: string;
+		importContent: string;
+		importedContent: string;
+		importFailed: string;
 	};
 	
 	// Studio Blocks
@@ -853,6 +856,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			sidecarIssues: 'Issues found in the course source:',
 			sidecarUnreadable: 'Course source found, but it could not be read',
 			sidecarUploadUnaffected: 'The SCORM package itself will upload and play normally.',
+			importContent: 'Also import this content as editable modules',
+			importedContent: 'Imported:',
+			importFailed: 'The package uploaded and works. Its content could not be imported.',
 		},
 		
 		studioBlocks: {
@@ -1540,6 +1546,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			sidecarIssues: 'נמצאו בעיות במקור הקורס:',
 			sidecarUnreadable: 'נמצא מקור קורס, אך לא ניתן לקרוא אותו',
 			sidecarUploadUnaffected: 'חבילת ה-SCORM עצמה תועלה ותפעל כרגיל.',
+			importContent: 'ייבא גם את התוכן כמודולים הניתנים לעריכה',
+			importedContent: 'יובאו:',
+			importFailed: 'החבילה הועלתה ופועלת. לא ניתן היה לייבא את התוכן שלה.',
 		},
 		
 		studioBlocks: {
