@@ -25,6 +25,8 @@ interface ContentBlock {
 interface LessonBlockEditorProps {
   moduleId: string;
   onBlockCountChange?: (count: number) => void;
+  /** Fired ONLY after blocks are successfully written to the database, with what was written. */
+  onPersisted?: (blocks: unknown[]) => void;
   onSaved?: () => void;
   onDirtyChange?: (dirty: boolean) => void;
   focusBlockId?: string; // If set, expand and scroll this block into view on mount
@@ -140,7 +142,7 @@ function convertToEmbedUrl(url: string): {converted: string;wasConverted: boolea
   return { converted: embedUrl, wasConverted: true };
 }
 
-export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDirtyChange, focusBlockId }: LessonBlockEditorProps) {
+export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, onSaved, onDirtyChange, focusBlockId }: LessonBlockEditorProps) {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
 
@@ -176,6 +178,13 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
   useEffect(() => {
     onCountChangeRef.current = onBlockCountChange;
   }, [onBlockCountChange]);
+
+  // Same ref pattern as above: persistBlocks is a useCallback, and reading the
+  // callback through a ref keeps it out of the dependency array.
+  const onPersistedRef = useRef(onPersisted);
+  useEffect(() => {
+    onPersistedRef.current = onPersisted;
+  }, [onPersisted]);
 
   // Fetch existing content
   useEffect(() => {
@@ -287,6 +296,10 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onSaved, onDir
       return { success: false, error: dict.studioBlocks.saveFailed || dict.common.error };
     } else {
       savedSnapshotRef.current = JSON.stringify(sanitizedBlocks);
+      // Tell the parent what is now IN THE DATABASE, so its publish gate and
+      // readiness badge stop reading the empty content_json from page load.
+      // Fires for autosave and explicit save alike — both go through here.
+      onPersistedRef.current?.(sanitizedBlocks);
       return { success: true, error: null };
     }
   }, [moduleId, dict.studioBlocks.saveFailed, dict.common.error]);

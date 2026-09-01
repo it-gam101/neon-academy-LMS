@@ -102,6 +102,19 @@ export default function StudioEditor() {
     }
   }, [editingLessonModuleId]);
 
+  // The block editor writes content_json straight to the database. Without this,
+  // StudioEditor's copy of the module keeps the empty blocks array it was created
+  // with, and the publish gate + readiness badge both report "no content blocks"
+  // for a lesson that has them.
+  const handleBlocksPersisted = useCallback((blocks: unknown[]) => {
+    if (!editingLessonModuleId) return;
+    setModules((prev) => prev.map((m) =>
+    m.id === editingLessonModuleId ?
+    { ...m, content_json: { blocks } as unknown as Module['content_json'] } :
+    m
+    ));
+  }, [editingLessonModuleId]);
+
   // Form state
   const [titleEn, setTitleEn] = useState('');
   const [titleHe, setTitleHe] = useState('');
@@ -1432,6 +1445,7 @@ export default function StudioEditor() {
         <LessonBlockEditor
           moduleId={editingLessonModuleId}
           onBlockCountChange={handleBlockCountChange}
+          onPersisted={handleBlocksPersisted}
           onSaved={() => {setLessonEditorDirty(false);setShowLessonEditorModal(false);setFocusBlockId(undefined);}}
           onDirtyChange={setLessonEditorDirty}
           focusBlockId={focusBlockId} />
