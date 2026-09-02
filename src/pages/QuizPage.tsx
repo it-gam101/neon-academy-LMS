@@ -125,9 +125,14 @@ export default function QuizPage() {
         setResult({ score: score!, passed: passed! });
         setState('results');
 
-        // Mark module complete if passed
-        if (passed && moduleId) {
-          await withTimeout(markModuleProgress(moduleId, 'completed', score), 10000);
+        // Record the outcome either way. A failed attempt is NOT completed — it is
+        // in_progress with passed = false, which is what an HR report needs to see
+        // and what the server-side rollup will read in the next window.
+        if (moduleId) {
+          await withTimeout(
+            markModuleProgress(moduleId, passed ? 'completed' : 'in_progress', score, passed),
+            10000
+          );
         }
       }
     } catch (err) {

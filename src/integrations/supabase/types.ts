@@ -256,6 +256,7 @@ export type Database = {
           enrollment_id: string
           id: string
           module_id: string
+          passed: boolean | null
           score: number | null
           status: string
           time_spent_seconds: number
@@ -266,6 +267,7 @@ export type Database = {
           enrollment_id: string
           id?: string
           module_id: string
+          passed?: boolean | null
           score?: number | null
           status?: string
           time_spent_seconds?: number
@@ -276,6 +278,7 @@ export type Database = {
           enrollment_id?: string
           id?: string
           module_id?: string
+          passed?: boolean | null
           score?: number | null
           status?: string
           time_spent_seconds?: number

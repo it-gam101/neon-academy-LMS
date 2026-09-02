@@ -159,7 +159,7 @@ export function useCourseModules(courseId: string) {
 	const getLocalizedCourseTitle = () =>
 		course ? (locale === 'he' ? course.title_he : course.title_en) : '';
 
-	const markModuleProgress = async (moduleId: string, status: 'in_progress' | 'completed', score?: number) => {
+	const markModuleProgress = async (moduleId: string, status: 'in_progress' | 'completed', score?: number, passed?: boolean) => {
 		if (!supabase || !enrollment) return { error: 'Not enrolled' };
 
 		const { data, error: upsertError } = await supabase
@@ -169,6 +169,9 @@ export function useCourseModules(courseId: string) {
 				module_id: moduleId,
 				status,
 				score,
+				// Only sent when the caller actually knows the answer. Omitted for
+				// lessons, which leaves any existing value untouched on conflict.
+				...(passed !== undefined && { passed }),
 				updated_at: new Date().toISOString(),
 			}, {
 				onConflict: 'enrollment_id,module_id',
@@ -184,8 +187,14 @@ export function useCourseModules(courseId: string) {
 		));
 
 		// Check if all modules are completed
-		const allCompleted = modules.every(m => 
-			m.id === moduleId ? status === 'completed' : m.progress?.status === 'completed'
+		// A module that is completed but FAILED must not roll the course up as complete.
+		// `!== false` and never `=== true`: NULL means not-applicable (a lesson) or
+		// unknown (a legacy row), and must keep behaving exactly as it does today.
+		// Using `=== true` here would stop every lesson in the product from counting.
+		const allCompleted = modules.every(m =>
+			m.id === moduleId
+				? status === 'completed' && passed !== false
+				: m.progress?.status === 'completed' && m.progress?.passed !== false
 		);
 
 		if (allCompleted) {
