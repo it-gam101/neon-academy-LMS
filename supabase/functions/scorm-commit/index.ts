@@ -249,6 +249,14 @@ Deno.serve(async (req: Request) => {
 		// Extract CMI fields
 		const extracted = extractCmiFields(cmi, scormVersion);
 
+		// SCORM 2004 splits completion from success; 1.2 collapses both onto
+		// lesson_status, which extractCmiFields already maps into success_status.
+		// null means the package did not say — that is NOT a failure.
+		const passed =
+			extracted.success_status === 'passed' ? true :
+			extracted.success_status === 'failed' ? false :
+			null;
+
 		// Upsert scorm_registrations
 		const { data: registration, error: upsertError } = await supabaseService
 			.from('scorm_registrations')
@@ -294,6 +302,10 @@ Deno.serve(async (req: Request) => {
 					module_id,
 					status: moduleStatus,
 					score: extracted.score_raw,
+					// Only written when the package actually said. Omitting the key on an
+					// intermediate commit PRESERVES a pass/fail already recorded; sending
+					// null would wipe it on every progress ping.
+					...(passed !== null && { passed }),
 					updated_at: new Date().toISOString(),
 				},
 				{
@@ -318,13 +330,16 @@ Deno.serve(async (req: Request) => {
 			// Get progress for all modules
 			const { data: allProgress } = await supabaseService
 				.from('module_progress')
-				.select('module_id, status, score')
+				.select('module_id, status, score, passed')
 				.eq('enrollment_id', enrollment_id);
 
 			const progressMap = new Map((allProgress || []).map((p) => [p.module_id, p]));
 			const allCompleted = (allModules || []).every((m) => {
 				const prog = progressMap.get(m.id);
-				return prog?.status === 'completed';
+				// `!== false` and NEVER `=== true`: null means not-applicable (a lesson)
+				// or unknown (a legacy row), and must keep counting exactly as it does
+				// today. `=== true` would stop every lesson-only course completing.
+				return prog?.status === 'completed' && prog?.passed !== false;
 			});
 
 			if (allCompleted) {
@@ -345,6 +360,17 @@ Deno.serve(async (req: Request) => {
 					.eq('id', enrollment_id);
 
 				enrollmentStatus = 'completed';
+			} else if (enrollment.status === 'completed') {
+				// The course had already rolled up and a failure has now arrived.
+				// Leaving it "completed" is exactly the misrepresentation this change
+				// exists to end, so demote it and clear the completion average, which
+				// was computed including the failed module.
+				await supabaseService
+					.from('enrollments')
+					.update({ status: 'in_progress', completed_at: null, score: null })
+					.eq('id', enrollment_id);
+
+				enrollmentStatus = 'in_progress';
 			}
 		} else if (enrollment.status === 'not_started') {
 			await supabaseService
@@ -365,6 +391,7 @@ Deno.serve(async (req: Request) => {
 					total_time: extracted.total_time,
 				},
 				module_status: moduleStatus,
+				module_passed: passed,
 				enrollment_status: enrollmentStatus,
 			}),
 			{ status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
