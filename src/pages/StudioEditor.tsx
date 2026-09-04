@@ -394,7 +394,9 @@ export default function StudioEditor() {
   const handleAddModule = async (type: 'lesson' | 'quiz') => {
     if (!supabase || !courseId) return;
 
-    const sortOrder = modules.length + 1;
+    // `modules.length + 1` collides with an existing row as soon as anything is
+    // deleted. Derive the next number from the data instead.
+    const sortOrder = modules.reduce((max, m) => Math.max(max, m.sort_order), 0) + 1;
     const { data, error } = await supabase.
     from('modules').
     insert({
@@ -530,7 +532,9 @@ export default function StudioEditor() {
     if (!supabase || !courseId) return;
     setAddingFromLibrary(true);
 
-    const sortOrder = modules.length + 1;
+    // `modules.length + 1` collides with an existing row as soon as anything is
+    // deleted. Derive the next number from the data instead.
+    const sortOrder = modules.reduce((max, m) => Math.max(max, m.sort_order), 0) + 1;
     const { data, error } = await supabase.
     from('modules').
     insert({
@@ -683,40 +687,43 @@ export default function StudioEditor() {
 
     setReordering(true);
     try {
-      const currentModule = modules[index];
-      const targetModule = modules[newIndex];
-      const currentOrder = currentModule.sort_order;
-      const targetOrder = targetModule.sort_order;
+      // RENUMBER, do not swap. Swapping two sort_orders writes the same number
+      // twice whenever they are equal, which is why reordering silently does
+      // nothing on a course with duplicates. Renumbering the whole list from its
+      // displayed order also REPAIRS a course that already has them.
+      const reordered = [...modules];
+      const [moved] = reordered.splice(index, 1);
+      reordered.splice(newIndex, 0, moved);
 
-      // Swap sort_orders
-      const [result1, result2] = await withTimeout(
-        Promise.all([
-        supabase.from('modules').update({ sort_order: targetOrder }).eq('id', currentModule.id).select(),
-        supabase.from('modules').update({ sort_order: currentOrder }).eq('id', targetModule.id).select()]
-        ),
-        10000
-      );
+      // Only write the rows whose number actually changes.
+      const changed = reordered.
+      map((m, i) => ({ module: m, sortOrder: i + 1 })).
+      filter(({ module, sortOrder }) => module.sort_order !== sortOrder);
 
-      const error1 = result1.error;
-      const error2 = result2.error;
-      const data1 = result1.data;
-      const data2 = result2.data;
+      if (changed.length > 0) {
+        const results = await withTimeout(
+          Promise.all(
+            changed.map(({ module, sortOrder }) =>
+            supabase.from('modules').update({ sort_order: sortOrder }).eq('id', module.id).select()
+            )
+          ),
+          10000
+        );
 
-      if (error1 || error2) {
-        const msg = (error1 as {message?: string;})?.message || (error2 as {message?: string;})?.message || 'Reorder failed';
-        console.error('Reorder error:', error1 || error2);
-        showToast('error', msg);
-      } else if (!data1 || data1.length === 0 || !data2 || data2.length === 0) {
-        showToast('error', dict.studio.deleteFailed);
-      } else {
-        // Update local state
-        setModules((prev) => {
-          const newModules = [...prev];
-          newModules[index] = { ...currentModule, sort_order: targetOrder };
-          newModules[newIndex] = { ...targetModule, sort_order: currentOrder };
-          return newModules.sort((a, b) => a.sort_order - b.sort_order);
-        });
+        const failed = results.find((r) => r.error);
+        if (failed) {
+          console.error('Reorder error:', failed.error);
+          showToast('error', (failed.error as {message?: string;})?.message || dict.common.error);
+          return;
+        }
+        // An RLS refusal returns success with zero rows.
+        if (results.some((r) => !r.data || r.data.length === 0)) {
+          showToast('error', dict.common.changeRefused);
+          return;
+        }
       }
+
+      setModules(reordered.map((m, i) => ({ ...m, sort_order: i + 1 })));
     } catch (err) {
       const msg = err instanceof Error && err.message === 'TIMEOUT' ?
       dict.errors.connectionTimeout :
@@ -1380,7 +1387,7 @@ export default function StudioEditor() {
 			{showScormUploadModal &&
       <ScormUploadModal
         courseId={courseId!}
-        sortOrder={modules.length + 1}
+        sortOrder={modules.reduce((max, m) => Math.max(max, m.sort_order), 0) + 1}
         onClose={() => setShowScormUploadModal(false)}
         onUploaded={(mod) => {
           setModules((prev) => [...prev, mod]);
