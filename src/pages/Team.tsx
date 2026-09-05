@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Users, ChevronRight, ChevronLeft, Calendar, Plus, BookOpen, CheckCircle, AlertTriangle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Users, ChevronRight, ChevronLeft, Calendar, Plus, BookOpen, CheckCircle, AlertTriangle, ArrowLeft, ArrowRight, X } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useTeam } from '@/hooks/useTeam';
@@ -103,22 +103,22 @@ export default function Team() {
   const enrollments = selectedMember?.enrollments || [];
 
   // Detail content for selected member
-  const detailContent = selectedMember && (
-    <div data-ev-id="ev_8e9dec2956">
+  const detailContent = selectedMember &&
+  <div data-ev-id="ev_8e9dec2956">
       <div data-ev-id="ev_2c1f05a058" className="max-w-4xl mx-auto">
         {/* Breadcrumbs */}
         <Breadcrumbs
-          items={[
-            { label: dict.nav.team, href: '#' },
-            { label: selectedMember.full_name || selectedMember.email || '' }
-          ]}
-        />
+        items={[
+        { label: dict.nav.team, href: '#' },
+        { label: selectedMember.full_name || selectedMember.email || '' }]
+        } />
+
 
         <button
-          data-ev-id="ev_8724ac6f5a"
-          onClick={() => setSelectedMemberId(null)}
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors focus-ring rounded-lg py-1"
-        >
+        data-ev-id="ev_8724ac6f5a"
+        onClick={() => setSelectedMemberId(null)}
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors focus-ring rounded-lg py-1">
+
           {dict.team.backToTeam}
         </button>
 
@@ -132,37 +132,37 @@ export default function Team() {
             </p>
           </div>
           <button
-            data-ev-id="ev_41330751e7"
-            onClick={() => openAssignModal([selectedMember.id])}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-          >
+          data-ev-id="ev_41330751e7"
+          onClick={() => openAssignModal([selectedMember.id])}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+
             <Plus className="w-4 h-4" />
             {dict.team.assignCourse}
           </button>
         </div>
 
-        {enrollments.length === 0 ? (
-          <EmptyState
-            icon={BookOpen}
-            title={dict.team.noEnrollments}
-            description={dict.myLearning.noCoursesDescription}
-          />
-        ) : (
-          <div data-ev-id="ev_2d0c6be855" className="space-y-4">
-            {enrollments.map((enrollment) => {
-              const isOverdue =
-                enrollment.status !== 'completed' &&
-                enrollment.due_at &&
-                new Date(enrollment.due_at) < new Date();
-              const title =
-                locale === 'he' ? enrollment.course.title_he : enrollment.course.title_en;
+        {enrollments.length === 0 ?
+      <EmptyState
+        icon={BookOpen}
+        title={dict.team.noEnrollments}
+        description={dict.myLearning.noCoursesDescription} /> :
 
-              return (
-                <div
-                  data-ev-id="ev_6b7df5f098"
-                  key={enrollment.id}
-                  className="bg-card border border-border rounded-lg p-4"
-                >
+
+      <div data-ev-id="ev_2d0c6be855" className="space-y-4">
+            {enrollments.map((enrollment) => {
+          const isOverdue =
+          enrollment.status !== 'completed' &&
+          enrollment.due_at &&
+          new Date(enrollment.due_at) < new Date();
+          const title =
+          locale === 'he' ? enrollment.course.title_he : enrollment.course.title_en;
+
+          return (
+            <div
+              data-ev-id="ev_6b7df5f098"
+              key={enrollment.id}
+              className="bg-card border border-border rounded-lg p-4">
+
                   <div data-ev-id="ev_13aa4ae350" className="flex items-center justify-between">
                     <div data-ev-id="ev_a8a64c0998">
                       <div data-ev-id="ev_97057511b0" className="flex items-center gap-2 mb-1">
@@ -170,55 +170,55 @@ export default function Team() {
                           {title}
                         </h3>
                         <Badge
-                          variant={
-                            enrollment.status === 'completed'
-                              ? 'success'
-                              : isOverdue
-                                ? 'danger'
-                                : 'default'
-                          }
-                        >
-                          {enrollment.status === 'completed'
-                            ? dict.common.completed
-                            : isOverdue
-                              ? dict.common.overdue
-                              : enrollment.status === 'in_progress'
-                                ? dict.course.inProgress
-                                : dict.course.notStarted}
+                      variant={
+                      enrollment.status === 'completed' ?
+                      'success' :
+                      isOverdue ?
+                      'danger' :
+                      'default'
+                      }>
+
+                          {enrollment.status === 'completed' ?
+                      dict.common.completed :
+                      isOverdue ?
+                      dict.common.overdue :
+                      enrollment.status === 'in_progress' ?
+                      dict.course.inProgress :
+                      dict.course.notStarted}
                         </Badge>
                       </div>
-                      {enrollment.due_at && (
-                        <p
-                          data-ev-id="ev_2d33dadf57"
-                          className={`text-sm ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}
-                        >
+                      {enrollment.due_at &&
+                  <p
+                    data-ev-id="ev_2d33dadf57"
+                    className={`text-sm ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
+
                           {dict.course.dueDateLabel}: {formatDate(enrollment.due_at, locale)}
                         </p>
-                      )}
+                  }
                     </div>
                     {/* Actions for manager-assigned, not-started enrollments */}
-                    {enrollment.assigned_by && enrollment.status === 'not_started' && (
-                      <button
-                        data-ev-id="ev_265d31965b"
-                        onClick={() => setRevokingEnrollmentId(enrollment.id)}
-                        className="text-sm text-destructive hover:underline"
-                      >
+                    {enrollment.assigned_by && enrollment.status === 'not_started' &&
+                <button
+                  data-ev-id="ev_265d31965b"
+                  onClick={() => setRevokingEnrollmentId(enrollment.id)}
+                  className="text-sm text-destructive hover:underline">
+
                         {dict.team.revokeEnrollment}
                       </button>
-                    )}
+                }
                   </div>
-                </div>
-              );
-            })}
+                </div>);
+
+        })}
           </div>
-        )}
+      }
       </div>
-    </div>
-  );
+    </div>;
+
 
   // List content for team overview
-  const listContent = (
-    <div data-ev-id="ev_e3e439baf8">
+  const listContent =
+  <div data-ev-id="ev_e3e439baf8">
       <div data-ev-id="ev_32189d9da4" className="max-w-6xl mx-auto">
         {/* Header */}
         <div data-ev-id="ev_49fc0838ee" className="flex items-center justify-between mb-8">
@@ -230,102 +230,102 @@ export default function Team() {
               {dict.team.description}
             </p>
           </div>
-          {filteredMembers.length > 0 && (
-            <button
-              data-ev-id="ev_97635d0419"
-              onClick={() => openAssignModal(filteredMembers.map((m) => m.id))}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-            >
+          {filteredMembers.length > 0 &&
+        <button
+          data-ev-id="ev_97635d0419"
+          onClick={() => openAssignModal(filteredMembers.map((m) => m.id))}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+
               <Plus className="w-4 h-4" />
               {dict.team.bulkAssign}
             </button>
-          )}
+        }
         </div>
 
         {/* Manager filter for super_admin/hr_manager */}
-        {isOrgWideViewer && uniqueManagers.length > 0 && (
-          <div data-ev-id="ev_2e022005b8" className="flex items-center gap-2 mb-4">
+        {isOrgWideViewer && uniqueManagers.length > 0 &&
+      <div data-ev-id="ev_2e022005b8" className="flex items-center gap-2 mb-4">
             <label data-ev-id="ev_deb177b34b" className="text-sm text-muted-foreground">
               {dict.admin.manager}:
             </label>
             <select
-              data-ev-id="ev_db61a428fe"
-              value={managerFilter}
-              onChange={(e) => setManagerFilter(e.target.value)}
-              className="px-3 py-1.5 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
+          data-ev-id="ev_db61a428fe"
+          value={managerFilter}
+          onChange={(e) => setManagerFilter(e.target.value)}
+          className="px-3 py-1.5 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+
               <option data-ev-id="ev_7c4d45973d" value="">
                 {dict.common.all}
               </option>
-              {uniqueManagers.map((mgr) => (
-                <option data-ev-id="ev_18aee2aba0" key={mgr} value={mgr}>
+              {uniqueManagers.map((mgr) =>
+          <option data-ev-id="ev_18aee2aba0" key={mgr} value={mgr}>
                   {mgr}
                 </option>
-              ))}
+          )}
             </select>
           </div>
-        )}
+      }
 
-        {filteredMembers.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title={dict.team.noReports}
-            description={dict.team.noReportsDescription}
-          />
-        ) : (
-          <div data-ev-id="ev_359f687516" className="bg-card border border-border rounded-lg overflow-hidden">
+        {filteredMembers.length === 0 ?
+      <EmptyState
+        icon={Users}
+        title={dict.team.noReports}
+        description={dict.team.noReportsDescription} /> :
+
+
+      <div data-ev-id="ev_359f687516" className="bg-card border border-border rounded-lg overflow-hidden">
             <table data-ev-id="ev_8f3258bc57" className="w-full">
               <thead data-ev-id="ev_a51c5fb992" className="bg-muted">
                 <tr data-ev-id="ev_b95ffa0af0">
                   <th
-                    data-ev-id="ev_53c5b27e79"
-                    className="text-start px-4 py-3 text-sm font-medium text-muted-foreground"
-                  >
+                data-ev-id="ev_53c5b27e79"
+                className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">
+
                     {dict.common.name}
                   </th>
-                  {isOrgWideViewer && (
-                    <th
-                      data-ev-id="ev_c6dc4a7535"
-                      className="text-start px-4 py-3 text-sm font-medium text-muted-foreground"
-                    >
+                  {isOrgWideViewer &&
+              <th
+                data-ev-id="ev_c6dc4a7535"
+                className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">
+
                       {dict.admin.manager}
                     </th>
-                  )}
+              }
                   <th
-                    data-ev-id="ev_e1c17e9b3b"
-                    className="text-start px-4 py-3 text-sm font-medium text-muted-foreground"
-                  >
+                data-ev-id="ev_e1c17e9b3b"
+                className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">
+
                     {dict.team.enrolled}
                   </th>
                   <th
-                    data-ev-id="ev_9ac3912e39"
-                    className="text-start px-4 py-3 text-sm font-medium text-muted-foreground"
-                  >
+                data-ev-id="ev_9ac3912e39"
+                className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">
+
                     {dict.team.completed}
                   </th>
                   <th
-                    data-ev-id="ev_f9a5080ab7"
-                    className="text-start px-4 py-3 text-sm font-medium text-muted-foreground"
-                  >
+                data-ev-id="ev_f9a5080ab7"
+                className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">
+
                     {dict.team.overdue}
                   </th>
                   <th
-                    data-ev-id="ev_5d8fb328e0"
-                    className="text-end px-4 py-3 text-sm font-medium text-muted-foreground"
-                  >
+                data-ev-id="ev_5d8fb328e0"
+                className="text-end px-4 py-3 text-sm font-medium text-muted-foreground">
+
                     {dict.common.actions}
                   </th>
                 </tr>
               </thead>
               <tbody data-ev-id="ev_1f521c1c02" className="divide-y divide-border">
                 {filteredMembers.map((member) => {
-                  const stats = getMemberStats(member);
-                  return (
-                    <tr
-                      data-ev-id="ev_897c7f7389"
-                      key={member.id}
-                      className="hover:bg-muted/50 transition-colors"
-                    >
+              const stats = getMemberStats(member);
+              return (
+                <tr
+                  data-ev-id="ev_897c7f7389"
+                  key={member.id}
+                  className="hover:bg-muted/50 transition-colors">
+
                       <td data-ev-id="ev_eec493c2e5" className="px-4 py-3">
                         <div data-ev-id="ev_9520bbbec2">
                           <p data-ev-id="ev_e50a3ce77d" className="font-medium text-foreground">
@@ -336,38 +336,38 @@ export default function Team() {
                           </p>
                         </div>
                       </td>
-                      {isOrgWideViewer && (
-                        <td data-ev-id="ev_0a3cccee97" className="px-4 py-3">
+                      {isOrgWideViewer &&
+                  <td data-ev-id="ev_0a3cccee97" className="px-4 py-3">
                           <span data-ev-id="ev_3111a77824" className="text-muted-foreground">
                             {member.manager?.[0]?.full_name || '-'}
                           </span>
                         </td>
-                      )}
+                  }
                       <td data-ev-id="ev_eb14e29828" className="px-4 py-3">
                         <span
-                          data-ev-id="ev_c2cab52e0e"
-                          className="flex items-center gap-1 text-foreground"
-                        >
+                      data-ev-id="ev_c2cab52e0e"
+                      className="flex items-center gap-1 text-foreground">
+
                           <BookOpen className="w-4 h-4 text-muted-foreground" />
                           {stats.enrolled}
                         </span>
                       </td>
                       <td data-ev-id="ev_74a00ca98b" className="px-4 py-3">
                         <span
-                          data-ev-id="ev_bcd942f5d5"
-                          className="flex items-center gap-1 text-primary"
-                        >
+                      data-ev-id="ev_bcd942f5d5"
+                      className="flex items-center gap-1 text-primary">
+
                           <CheckCircle className="w-4 h-4" />
                           {stats.completed}
                         </span>
                       </td>
                       <td data-ev-id="ev_7f39849a91" className="px-4 py-3">
                         <span
-                          data-ev-id="ev_6bb30f5e89"
-                          className={`flex items-center gap-1 ${
-                            stats.overdue > 0 ? 'text-destructive' : 'text-muted-foreground'
-                          }`}
-                        >
+                      data-ev-id="ev_6bb30f5e89"
+                      className={`flex items-center gap-1 ${
+                      stats.overdue > 0 ? 'text-destructive' : 'text-muted-foreground'}`
+                      }>
+
                           <AlertTriangle className="w-4 h-4" />
                           {stats.overdue}
                         </span>
@@ -375,33 +375,33 @@ export default function Team() {
                       <td data-ev-id="ev_4627091ed1" className="px-4 py-3 text-end">
                         <div data-ev-id="ev_01fee27dfd" className="flex items-center justify-end gap-2">
                           <button
-                            data-ev-id="ev_54aa067e3e"
-                            onClick={() => openAssignModal([member.id])}
-                            className="p-2 hover:bg-muted rounded-lg transition-colors"
-                            title={dict.team.assignCourse}
-                          >
+                        data-ev-id="ev_54aa067e3e"
+                        onClick={() => openAssignModal([member.id])}
+                        className="p-2 hover:bg-muted rounded-lg transition-colors"
+                        title={dict.team.assignCourse}>
+
                             <Plus className="w-4 h-4 text-muted-foreground" />
                           </button>
                           <button
-                            data-ev-id="ev_2fab873a8b"
-                            onClick={() => setSelectedMemberId(member.id)}
-                            className="p-2 hover:bg-muted rounded-lg transition-colors"
-                            title={dict.team.viewLearning}
-                          >
+                        data-ev-id="ev_2fab873a8b"
+                        onClick={() => setSelectedMemberId(member.id)}
+                        className="p-2 hover:bg-muted rounded-lg transition-colors"
+                        title={dict.team.viewLearning}>
+
                             <Chevron className="w-4 h-4 text-muted-foreground" />
                           </button>
                         </div>
                       </td>
-                    </tr>
-                  );
-                })}
+                    </tr>);
+
+            })}
               </tbody>
             </table>
           </div>
-        )}
+      }
       </div>
-    </div>
-  );
+    </div>;
+
 
   return (
     <>
@@ -429,7 +429,7 @@ export default function Team() {
 						</button>
 						<button data-ev-id="ev_6d34161e03"
           onClick={handleAssign}
-          disabled={!selectedCourse || assigning}
+          disabled={!selectedCourse || assigningTo.length === 0 || assigning}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
 
 							{assigning ? dict.team.assigning : dict.team.assign}
@@ -446,7 +446,19 @@ export default function Team() {
 							{members.
               filter((m) => assigningTo.includes(m.id)).
               map((m) =>
-              <Badge key={m.id} variant="info">{m.full_name}</Badge>
+              <Badge key={m.id} variant="info">
+									<span data-ev-id="ev_5ea3b5ff70" className="inline-flex items-center gap-1.5">
+										{m.full_name}
+										<button data-ev-id="ev_a66fba1372"
+                  type="button"
+                  onClick={() => setAssigningTo((prev) => prev.filter((id) => id !== m.id))}
+                  aria-label={`${dict.common.remove} ${m.full_name}`}
+                  title={dict.common.remove}
+                  className="hover:text-destructive transition-colors focus-ring rounded">
+											<X className="w-3 h-3" />
+										</button>
+									</span>
+								</Badge>
               )}
 						</div>
 					</div>
@@ -485,24 +497,24 @@ export default function Team() {
 
 			{/* Revoke Enrollment Confirm Dialog */}
 			<ConfirmDialog
-				isOpen={revokingEnrollmentId !== null}
-				title={dict.team.confirmRevoke}
-				message={dict.team.confirmRevokeMessage}
-				confirmLabel={dict.common.delete}
-				destructive
-				onConfirm={async () => {
-					if (revokingEnrollmentId) {
-						const { error } = await revokeEnrollment(revokingEnrollmentId);
-						if (error) {
-							showToast('error', error);
-						} else {
-							showToast('success', dict.team.revokeSuccess);
-						}
-					}
-					setRevokingEnrollmentId(null);
-				}}
-				onCancel={() => setRevokingEnrollmentId(null)}
-			/>
-    </>
-  );
+        isOpen={revokingEnrollmentId !== null}
+        title={dict.team.confirmRevoke}
+        message={dict.team.confirmRevokeMessage}
+        confirmLabel={dict.common.delete}
+        destructive
+        onConfirm={async () => {
+          if (revokingEnrollmentId) {
+            const { error } = await revokeEnrollment(revokingEnrollmentId);
+            if (error) {
+              showToast('error', error);
+            } else {
+              showToast('success', dict.team.revokeSuccess);
+            }
+          }
+          setRevokingEnrollmentId(null);
+        }}
+        onCancel={() => setRevokingEnrollmentId(null)} />
+
+    </>);
+
 }

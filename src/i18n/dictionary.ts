@@ -242,6 +242,7 @@ export interface Dictionary {
 		save: string;
 		cancel: string;
 		delete: string;
+		remove: string;
 		edit: string;
 		create: string;
 		search: string;
@@ -953,6 +954,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			save: 'Save',
 			cancel: 'Cancel',
 			delete: 'Delete',
+			remove: 'Remove',
 			edit: 'Edit',
 			create: 'Create',
 			search: 'Search',
@@ -1643,6 +1645,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			save: 'שמור',
 			cancel: 'ביטול',
 			delete: 'מחק',
+			remove: 'הסר',
 			edit: 'ערוך',
 			create: 'צור',
 			search: 'חיפוש',
