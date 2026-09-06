@@ -141,7 +141,12 @@ export interface Dictionary {
 		sidecarIssues: string;
 		sidecarUnreadable: string;
 		sidecarUploadUnaffected: string;
-		importContent: string;
+		importHow: string;
+		importAsPackage: string;
+		importAsPackageDetail: string;
+		importAsModules: string;
+		importAsModulesDetail: string;
+		importPackageKept: string;
 		importedContent: string;
 		importFailed: string;
 	};
@@ -857,7 +862,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			sidecarIssues: 'Issues found in the course source:',
 			sidecarUnreadable: 'Course source found, but it could not be read',
 			sidecarUploadUnaffected: 'The SCORM package itself will upload and play normally.',
-			importContent: 'Also import this content as editable modules',
+			importHow: 'How should this be imported?',
+			importAsPackage: 'Play the SCORM package as delivered',
+			importAsPackageDetail: 'One module. Exactly what a third-party LMS sees.',
+			importAsModules: 'Import as editable modules',
+			importAsModulesDetail: '{count} modules, each counted separately toward completion.',
+			importPackageKept: 'The uploaded package stays in your library either way.',
 			importedContent: 'Imported:',
 			importFailed: 'The package uploaded and works. Its content could not be imported.',
 		},
@@ -1548,7 +1558,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			sidecarIssues: 'נמצאו בעיות במקור הקורס:',
 			sidecarUnreadable: 'נמצא מקור קורס, אך לא ניתן לקרוא אותו',
 			sidecarUploadUnaffected: 'חבילת ה-SCORM עצמה תועלה ותפעל כרגיל.',
-			importContent: 'ייבא גם את התוכן כמודולים הניתנים לעריכה',
+			importHow: 'כיצד לייבא את החבילה?',
+			importAsPackage: 'הפעל את חבילת ה-SCORM כפי שנמסרה',
+			importAsPackageDetail: 'מודול אחד. בדיוק מה שמערכת LMS חיצונית רואה.',
+			importAsModules: 'ייבא כמודולים הניתנים לעריכה',
+			importAsModulesDetail: '{count} מודולים, כל אחד נספר בנפרד לצורך השלמת הקורס.',
+			importPackageKept: 'החבילה שהועלתה נשמרת בספרייה שלך בכל מקרה.',
 			importedContent: 'יובאו:',
 			importFailed: 'החבילה הועלתה ופועלת. לא ניתן היה לייבא את התוכן שלה.',
 		},

@@ -17,7 +17,9 @@ interface ScormUploadModalProps {
   courseId: string;
   sortOrder: number;
   onClose: () => void;
-  onUploaded: (module: Module) => void;
+  /** Fired after a successful upload. The parent must RE-READ its modules: the
+   *  import may have created several, and option A may have removed the block. */
+  onUploaded: () => void;
 }
 
 type UploadState = 'idle' | 'parsing' | 'uploading' | 'registering' | 'success' | 'error';
@@ -466,6 +468,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 
       // Sidecar import. Its failure must NEVER undo the SCORM upload, so it has
       // its own try/catch and never rethrows — the outer catch deletes the module.
+      let imported = false;
       if (sidecar && sidecar.ok && importContent) {
         try {
           const counts = await importSidecarContent(
@@ -473,6 +476,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
             (finalizeData as {storage_base_url?: string;})?.storage_base_url || ''
           );
           setImportResult(counts);
+          imported = true;
         } catch (importErr) {
           console.error('vc4el-source import failed:', importErr);
           setImportError(
@@ -481,11 +485,28 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
         }
       }
 
+      // The package and its unpacked modules are the same course. Keeping both counts
+      // the content twice and makes the course impossible to complete. So the block
+      // goes — but ONLY here, after the import has fully succeeded. A failed import
+      // leaves the working SCORM course untouched, which is the contract rule.
+      if (imported && createdModuleId && supabase) {
+        const { data: removed, error: removeError } = await supabase.
+        from('modules').
+        delete().
+        eq('id', createdModuleId).
+        select();
+
+        if (removeError || !removed || removed.length === 0) {
+          console.error('Could not remove the SCORM block after import:', removeError);
+          setImportError(dict.common.changeRefused);
+        }
+      }
+
       // Sync course type since we added a SCORM module
       await syncCourseType(courseId);
 
       // Return the module to parent
-      onUploaded(moduleData);
+      onUploaded();
     } catch (err) {
       console.error('SCORM upload error:', err);
       const msg =
@@ -603,15 +624,41 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 										<span data-ev-id="ev_a30b3eea06" className="text-muted-foreground ms-3">{dict.studioUpload.sidecarQuestions}</span>{' '}
 										{sidecar.modules.reduce((n, m) => n + (m.quiz ? m.quiz.questions.length : 0), 0)}
 									</p>
-									<label data-ev-id="ev_e7f3ed8fb8" className="flex items-center gap-2 cursor-pointer">
-										<input data-ev-id="ev_7cca2900f6"
-                type="checkbox"
-                checked={importContent}
-                onChange={(e) => setImportContent(e.target.checked)}
-                disabled={state !== 'idle'}
-                className="w-4 h-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
-										<span data-ev-id="ev_bb839eaa1d" className="text-sm text-foreground">{dict.studioUpload.importContent}</span>
-									</label>
+									<div data-ev-id="ev_26da18e56c" className="space-y-2 pt-1">
+										<p data-ev-id="ev_bbc00de248" className="text-sm font-medium text-foreground">{dict.studioUpload.importHow}</p>
+
+										<label data-ev-id="ev_a7d5f19e46" className="flex items-start gap-2 cursor-pointer">
+											<input data-ev-id="ev_f5ff8a7963"
+                  type="radio"
+                  name="vc4el-import-mode"
+                  checked={!importContent}
+                  onChange={() => setImportContent(false)}
+                  disabled={state !== 'idle'}
+                  className="mt-1 w-4 h-4 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
+											<span data-ev-id="ev_3b90d40f37" className="block">
+												<span data-ev-id="ev_83a3cf95f3" className="block text-sm text-foreground">{dict.studioUpload.importAsPackage}</span>
+												<span data-ev-id="ev_1dc6fb0297" className="block text-xs text-muted-foreground">{dict.studioUpload.importAsPackageDetail}</span>
+											</span>
+										</label>
+
+										<label data-ev-id="ev_d6779e9496" className="flex items-start gap-2 cursor-pointer">
+											<input data-ev-id="ev_035ceb91e6"
+                  type="radio"
+                  name="vc4el-import-mode"
+                  checked={importContent}
+                  onChange={() => setImportContent(true)}
+                  disabled={state !== 'idle'}
+                  className="mt-1 w-4 h-4 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
+											<span data-ev-id="ev_3fe887c9ba" className="block">
+												<span data-ev-id="ev_3fba9b40fc" className="block text-sm text-foreground">{dict.studioUpload.importAsModules}</span>
+												<span data-ev-id="ev_56281f9f9f" className="block text-xs text-muted-foreground">
+													{dict.studioUpload.importAsModulesDetail.replace('{count}', String(sidecar.modules.length))}
+												</span>
+											</span>
+										</label>
+
+										<p data-ev-id="ev_d7b781d5a9" className="text-xs text-muted-foreground">{dict.studioUpload.importPackageKept}</p>
+									</div>
 									{sidecar.warnings.length > 0 &&
               <ul data-ev-id="ev_77fb5a0946" className="space-y-1">
 											{sidecar.warnings.map((w, i) =>

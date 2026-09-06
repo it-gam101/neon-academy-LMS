@@ -1389,8 +1389,18 @@ export default function StudioEditor() {
         courseId={courseId!}
         sortOrder={modules.reduce((max, m) => Math.max(max, m.sort_order), 0) + 1}
         onClose={() => setShowScormUploadModal(false)}
-        onUploaded={(mod) => {
-          setModules((prev) => [...prev, mod]);
+        onUploaded={async () => {
+          // Re-read rather than append. The import may have created several modules,
+          // and choosing "editable modules" removes the SCORM block — appending it
+          // would leave a row in the list that no longer exists in the database.
+          if (supabase && courseId) {
+            const { data } = await supabase.
+            from('modules').
+            select('*').
+            eq('course_id', courseId).
+            order('sort_order');
+            if (data) setModules(data);
+          }
           setShowScormUploadModal(false);
         }} />
 
