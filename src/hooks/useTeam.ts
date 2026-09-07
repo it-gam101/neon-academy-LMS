@@ -189,9 +189,19 @@ export function useTeam(options?: UseTeamOptions) {
 				due_at: dueAt,
 			}));
 
+			// ON CONFLICT DO NOTHING. `enrollments` has UNIQUE (user_id, course_id), and a
+			// plain array insert is ONE statement — so a single person who already has the
+			// course aborts the enrolment of everyone else in the batch.
+			//
+			// With ignoreDuplicates, `data` contains ONLY the rows actually inserted, which
+			// is what lets the caller report how many people were really enrolled.
+			//
+			// Deliberately DO NOTHING rather than DO UPDATE: an existing enrolment keeps its
+			// own due date and progress. Silently rewriting someone's deadline during a bulk
+			// action would be worse than skipping them.
 			const { data, error: insertError } = await supabase
 				.from('enrollments')
-				.insert(enrollments)
+				.upsert(enrollments, { onConflict: 'user_id,course_id', ignoreDuplicates: true })
 				.select();
 
 			if (insertError) {

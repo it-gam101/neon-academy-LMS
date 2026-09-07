@@ -467,6 +467,8 @@ export interface Dictionary {
 		assigning: string;
 		assigned: string;
 		assignmentSuccess: string;
+		assignPartial: string;
+		assignAllSkipped: string;
 		assignmentError: string;
 		editDueDate: string;
 		revokeEnrollment: string;
@@ -1178,6 +1180,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			assigning: 'Assigning...',
 			assigned: 'Assigned',
 			assignmentSuccess: 'Course assigned successfully',
+			assignPartial: 'Enrolled {enrolled}. {skipped} already had this course.',
+			assignAllSkipped: 'Everyone selected already has this course.',
 			assignmentError: 'Failed to assign course',
 			editDueDate: 'Edit Due Date',
 			revokeEnrollment: 'Revoke Enrollment',
@@ -1874,6 +1878,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			assigning: 'מקצה...',
 			assigned: 'הוקצה',
 			assignmentSuccess: 'הקורס הוקצה בהצלחה',
+			assignPartial: 'נרשמו {enrolled}. ל-{skipped} כבר היה הקורס.',
+			assignAllSkipped: 'לכל מי שנבחר כבר יש את הקורס הזה.',
 			assignmentError: 'הקצאת הקורס נכשלה',
 			editDueDate: 'ערוך תאריך יעד',
 			revokeEnrollment: 'בטל הרשמה',

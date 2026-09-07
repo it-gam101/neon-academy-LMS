@@ -57,7 +57,7 @@ export default function Team() {
     if (!selectedCourse || assigningTo.length === 0) return;
     setAssigning(true);
 
-    const { error } = await assignCourse(
+    const { data, error } = await assignCourse(
       assigningTo,
       selectedCourse,
       dueDate ? new Date(dueDate).toISOString() : null
@@ -66,7 +66,23 @@ export default function Team() {
     if (error) {
       showToast('error', dict.team.assignmentError);
     } else {
-      showToast('success', dict.team.assignmentSuccess);
+      // `data` holds only the rows actually inserted; anyone who already had the
+      // course was skipped rather than failing the whole batch.
+      const enrolled = data?.length ?? 0;
+      const skipped = assigningTo.length - enrolled;
+
+      if (enrolled === 0) {
+        showToast('info', dict.team.assignAllSkipped);
+      } else if (skipped > 0) {
+        showToast('success',
+        dict.team.assignPartial.
+        replace('{enrolled}', String(enrolled)).
+        replace('{skipped}', String(skipped))
+        );
+      } else {
+        showToast('success', dict.team.assignmentSuccess);
+      }
+
       setShowAssignModal(false);
       setAssigningTo([]);
       setSelectedCourse('');
