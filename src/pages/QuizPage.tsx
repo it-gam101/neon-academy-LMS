@@ -225,7 +225,7 @@ export default function QuizPage() {
 							</div>
 							<div data-ev-id="ev_62312d669a">
 								<span data-ev-id="ev_65afa93033" className="block text-2xl font-bold text-foreground">{questions.length}</span>
-								{dict.quiz.question}s
+								{dict.quiz.questions}
 							</div>
 							<div data-ev-id="ev_ba71bdefd2">
 								<span data-ev-id="ev_a0583fc3e8" className="block text-2xl font-bold text-foreground">
@@ -293,7 +293,7 @@ export default function QuizPage() {
 						</p>
 
 						<p data-ev-id="ev_ecd4d7552f" className="text-sm text-muted-foreground mb-8">
-							{dict.quiz.passingScore}: {quiz.pass_score}% • {dict.quiz.attemptsRemaining}: {attemptsRemaining - 1}
+							{dict.quiz.passingScore}: {quiz.pass_score}% • {dict.quiz.attemptsRemaining}: {attemptsRemaining}
 						</p>
 
 						<div data-ev-id="ev_13acaec1e8" className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -303,7 +303,7 @@ export default function QuizPage() {
 
 								{dict.quiz.reviewAnswers}
 							</button>
-							{!result.passed && canAttempt && attemptsRemaining > 1 &&
+							{!result.passed && canAttempt &&
               <button data-ev-id="ev_52998ac06b"
               onClick={startQuiz}
               className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">

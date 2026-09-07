@@ -392,6 +392,7 @@ export interface Dictionary {
 	// Quiz
 	quiz: {
 		question: string;
+		questions: string;
 		questionOf: string;
 		timeRemaining: string;
 		selectOne: string;
@@ -1107,6 +1108,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		
 		quiz: {
 			question: 'Question',
+			questions: 'Questions',
 			questionOf: 'of',
 			timeRemaining: 'Time remaining',
 			selectOne: 'Select one answer',
@@ -1805,6 +1807,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		
 		quiz: {
 			question: 'שאלה',
+			questions: 'שאלות',
 			questionOf: 'מתוך',
 			timeRemaining: 'זמן נותר',
 			selectOne: 'בחר תשובה אחת',
