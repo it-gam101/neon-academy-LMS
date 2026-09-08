@@ -18,7 +18,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { QuizQuestionEditor } from '@/components/studio/QuizQuestionEditor';
 import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
 import { LessonBlockEditor } from '@/components/studio/LessonBlockEditor';
-import { courseProblems, type CourseProblem, type ProblemCode } from '@/lib/completeness';
+import { courseProblems, type CourseProblem, type ProblemCode, type QuizDataLike } from '@/lib/completeness';
 import { syncCourseType } from '@/lib/courseType';
 
 type Course = Tables<'courses'>;
@@ -43,6 +43,10 @@ export default function StudioEditor() {
   const [publishCheckFailed, setPublishCheckFailed] = useState(false);
   const [checkingPublish, setCheckingPublish] = useState(false);
   const [focusBlockId, setFocusBlockId] = useState<string | undefined>(undefined);
+
+  // Quiz data behind the readiness badge. null means the read failed, so the badge
+  // renders nothing rather than reporting a blocker it cannot substantiate.
+  const [quizzes, setQuizzes] = useState<QuizDataLike[] | null>([]);
 
   // SCORM upload state
   const [showScormUploadModal, setShowScormUploadModal] = useState(false);
@@ -115,6 +119,39 @@ export default function StudioEditor() {
     ));
   }, [editingLessonModuleId]);
 
+  // Loads quiz data for the course's quiz modules. Identity-stable, so it is safe
+  // in the fetch effect's dep array. Returns null when the read fails, which the
+  // badge treats as "unknown" rather than "no questions".
+  const loadQuizzes = useCallback(async (moduleList: Module[]): Promise<QuizDataLike[] | null> => {
+    if (!supabase) return null;
+
+    const quizModuleIds = moduleList.filter((m) => m.module_type === 'quiz').map((m) => m.id);
+    if (quizModuleIds.length === 0) return [];
+
+    try {
+      const { data, error } = await withTimeout(
+        supabase.
+        from('quizzes').
+        select('id, module_id, quiz_questions(*)').
+        in('module_id', quizModuleIds),
+        10000
+      );
+
+      if (error) {
+        console.error('Failed to load quiz data for the readiness badge:', error);
+        return null;
+      }
+
+      return (data ?? []).map((q) => ({
+        module_id: q.module_id,
+        quiz_questions: q.quiz_questions ?? []
+      }));
+    } catch (err) {
+      console.error('Failed to load quiz data for the readiness badge:', err);
+      return null;
+    }
+  }, []);
+
   // Form state
   const [titleEn, setTitleEn] = useState('');
   const [titleHe, setTitleHe] = useState('');
@@ -171,6 +208,9 @@ export default function StudioEditor() {
         if (modulesError) throw modulesError;
         if (modulesData) setModules(modulesData);
 
+        // Same read the publish modal runs, so the badge and the gate agree.
+        setQuizzes(await loadQuizzes(modulesData ?? []));
+
         // Fetch categories
         const { data: categoriesData, error: categoriesError } = await withTimeout(
           supabase.
@@ -191,7 +231,7 @@ export default function StudioEditor() {
     };
 
     fetchData();
-  }, [courseId]);
+  }, [courseId, loadQuizzes]);
 
   // Fetch enrollment count for danger zone
   useEffect(() => {
@@ -584,6 +624,14 @@ export default function StudioEditor() {
     setShowQuizSettingsModal(true);
   };
 
+  // QuizQuestionEditor writes questions straight to the database, so closing the
+  // editor must refresh the badge's copy. Without this the badge keeps the data it
+  // loaded at mount and still reports a quiz the author has just filled in.
+  const handleCloseQuizSettings = useCallback(async () => {
+    setShowQuizSettingsModal(false);
+    setQuizzes(await loadQuizzes(modules));
+  }, [loadQuizzes, modules]);
+
   const handleSaveQuizSettings = async () => {
     if (!supabase || !quizSettings) return;
     setSavingQuizSettings(true);
@@ -610,7 +658,7 @@ export default function StudioEditor() {
         setQuizSettingsError(dict.common.changeRefused);
       } else {
         showToast('success', dict.studio.courseSaved);
-        setShowQuizSettingsModal(false);
+        void handleCloseQuizSettings();
       }
     } catch (err) {
       const msg = err instanceof Error && err.message === 'TIMEOUT' ?
@@ -1106,9 +1154,9 @@ export default function StudioEditor() {
 							{saving ? dict.common.loading : dict.studio.saveDraft}
 						</button>
 
-						{/* Readiness indicator badge — computed from modules only (no query). 
-                        The full check including quizzes runs when the modal opens; if they differ, the modal is authoritative. */}
-						{course.status !== 'published' && (() => {
+						{/* Readiness badge, reading the same quiz data as the publish modal. 
+                        The modal re-reads at publish time and stays the authoritative gate. */}
+						{course.status !== 'published' && quizzes !== null && (() => {
               const headerBlockers = courseProblems({
                 modules: modules.map((m) => ({
                   id: m.id,
@@ -1117,7 +1165,7 @@ export default function StudioEditor() {
                   module_type: m.module_type,
                   content_json: m.content_json
                 })),
-                quizzes: [], // Header badge is approximate; quiz checks run on modal open
+                quizzes,
                 locale
               });
               const hasBlockers = headerBlockers.length > 0;
@@ -1298,14 +1346,14 @@ export default function StudioEditor() {
 			{/* Quiz settings modal */}
 			<Modal
         isOpen={showQuizSettingsModal}
-        onClose={() => setShowQuizSettingsModal(false)}
+        onClose={handleCloseQuizSettings}
         title={dict.studio.quizSettings}
         size="lg"
         error={quizSettingsError}
         footer={
         <>
 						<button data-ev-id="ev_quiz_settings_cancel"
-          onClick={() => setShowQuizSettingsModal(false)}
+          onClick={handleCloseQuizSettings}
           className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 							{dict.common.cancel}
 						</button>
