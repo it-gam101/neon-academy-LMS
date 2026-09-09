@@ -99,6 +99,14 @@ export default function StudioEditor() {
     }
   }, [editingQuizModuleId]);
 
+  // Question count for a quiz module's label. The editor's live count wins while that
+  // editor is open; otherwise fall back to the quiz data the badge already loaded, so the
+  // count is right on a plain page load and after a SCORM import, not only once the editor
+  // has been opened.
+  const quizCountFor = (moduleId: string): number | undefined =>
+  quizQuestionCounts[moduleId] ??
+  quizzes?.find((q) => q.module_id === moduleId)?.quiz_questions?.length;
+
   // Stable callback for lesson block count updates
   const handleBlockCountChange = useCallback((count: number) => {
     if (editingLessonModuleId) {
@@ -1090,7 +1098,7 @@ export default function StudioEditor() {
 									<div data-ev-id="ev_0fd824dbbd" className="flex-1">
 										<span data-ev-id="ev_7bc8188839" className="text-sm text-muted-foreground">
 											{mod.module_type === 'quiz' ?
-                  `${dict.course.quiz} ${index + 1}${quizQuestionCounts[mod.id] ? ` (${quizQuestionCounts[mod.id]} ${locale === 'he' ? 'שאלות' : 'Q'})` : ''}` :
+                  `${dict.course.quiz} ${index + 1}${quizCountFor(mod.id) ? ` (${quizCountFor(mod.id)} ${locale === 'he' ? 'שאלות' : 'Q'})` : ''}` :
                   mod.module_type === 'scorm_package' ?
                   `SCORM ${index + 1}` :
                   `${dict.course.lesson} ${index + 1}${lessonBlockCounts[mod.id] ? ` (${lessonBlockCounts[mod.id]} ${dict.studioBlocks.blocks})` : ''}`}
@@ -1447,7 +1455,13 @@ export default function StudioEditor() {
             select('*').
             eq('course_id', courseId).
             order('sort_order');
-            if (data) setModules(data);
+            if (data) {
+              setModules(data);
+              // The import plan can create quiz modules complete with questions, so the
+              // badge's quiz copy must be refreshed too. Refreshing only the module list
+              // leaves the badge reporting no_questions for a quiz the import just filled.
+              setQuizzes(await loadQuizzes(data));
+            }
           }
           setShowScormUploadModal(false);
         }} />
