@@ -5,6 +5,7 @@ import { withTimeout } from '@/utils/fetchWithTimeout';
 import type { UserRole } from '@/contexts/auth-context';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
+import { useAuth } from '@/hooks/useAuth';
 
 type Profile = Tables<'profiles'>;
 type Enrollment = Tables<'enrollments'>;
@@ -37,6 +38,7 @@ export function useTeam(options?: UseTeamOptions) {
 
 	const { locale } = useLocale();
 	const dict = getDictionary(locale);
+	const { user } = useAuth();
 
 	const viewerRole = options?.viewerRole;
 
@@ -50,7 +52,6 @@ export function useTeam(options?: UseTeamOptions) {
 			setLoading(true);
 			setError(null);
 
-			const { data: { user } } = await supabase.auth.getUser();
 			if (!user) {
 				setError('TIMEOUT');
 				setLoading(false);
@@ -158,7 +159,7 @@ export function useTeam(options?: UseTeamOptions) {
 		} finally {
 			setLoading(false);
 		}
-	}, [viewerRole, dict.errors?.failedToLoad]);
+	}, [viewerRole, dict.errors?.failedToLoad, user]);
 
 	useEffect(() => {
 		fetchTeam();
@@ -179,7 +180,6 @@ export function useTeam(options?: UseTeamOptions) {
 		if (!supabase) return { error: 'Database not available' };
 
 		try {
-			const { data: { user } } = await supabase.auth.getUser();
 			if (!user) return { error: 'Not authenticated' };
 
 			const enrollments = userIds.map(userId => ({

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { useLocale } from '@/hooks/useLocale';
 import { withTimeout } from '@/utils/fetchWithTimeout';
+import { useAuth } from '@/hooks/useAuth';
 
 export type Enrollment = Tables<'enrollments'>;
 
@@ -19,6 +20,7 @@ export function useEnrollments(userId?: string) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const { locale } = useLocale();
+	const { user } = useAuth();
 
 	const fetchEnrollments = useCallback(async () => {
 		if (!supabase) {
@@ -30,7 +32,7 @@ export function useEnrollments(userId?: string) {
 			setLoading(true);
 			setError(null);
 
-			const targetUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+			const targetUserId = userId || user?.id;
 			if (!targetUserId) {
 				setError('TIMEOUT');
 				setLoading(false);
@@ -64,7 +66,7 @@ export function useEnrollments(userId?: string) {
 		} finally {
 			setLoading(false);
 		}
-	}, [userId]);
+	}, [userId, user?.id]);
 
 	useEffect(() => {
 		fetchEnrollments();

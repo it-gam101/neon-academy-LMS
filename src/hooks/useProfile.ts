@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
+import { useAuth } from '@/hooks/useAuth';
 
 export type Profile = Tables<'profiles'>;
 export type UserRole = 'super_admin' | 'hr_manager' | 'team_manager' | 'instructor' | 'employee';
 
 export function useProfile() {
+	const { user, isLoading: authLoading } = useAuth();
 	const [profile, setProfile] = useState<Profile | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -16,14 +18,19 @@ export function useProfile() {
 			return;
 		}
 
+		// AuthProvider already tracks the session, so this hook derives from it rather
+		// than making its own getUser() round-trip. Hold `loading` while auth is still
+		// booting, or consumers briefly see a resolved "no profile" state.
+		if (authLoading) return;
+
+		if (!user) {
+			setProfile(null);
+			setLoading(false);
+			return;
+		}
+
 		const fetchProfile = async () => {
 			try {
-				const { data: { user } } = await supabase.auth.getUser();
-				if (!user) {
-					setLoading(false);
-					return;
-				}
-
 				const { data, error: profileError } = await supabase
 					.from('profiles')
 					.select('*')
@@ -40,13 +47,9 @@ export function useProfile() {
 		};
 
 		fetchProfile();
-
-		const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-			fetchProfile();
-		});
-
-		return () => subscription.unsubscribe();
-	}, []);
+		// The context's own onAuthStateChange drives `user`, so a second subscription
+		// here would only add a duplicate fetch on every auth event.
+	}, [user, authLoading]);
 
 	const updateProfile = async (updates: Partial<Profile>) => {
 		if (!supabase || !profile) return { error: 'Not authenticated' };

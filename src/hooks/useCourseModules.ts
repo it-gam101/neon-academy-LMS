@@ -4,6 +4,7 @@ import type { Tables } from '@/integrations/supabase/helpers';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { withTimeout } from '@/utils/fetchWithTimeout';
+import { useAuth } from '@/hooks/useAuth';
 
 export type Module = Tables<'modules'>;
 export type ModuleProgress = Tables<'module_progress'>;
@@ -24,6 +25,7 @@ export function useCourseModules(courseId: string) {
 	const [error, setError] = useState<string | null>(null);
 	const { locale } = useLocale();
 	const dict = getDictionary(locale);
+	const { user } = useAuth();
 
 	const fetchModules = useCallback(async () => {
 		if (!supabase || !courseId) {
@@ -66,7 +68,6 @@ export function useCourseModules(courseId: string) {
 			if (modulesError) throw modulesError;
 
 			// Fetch user's enrollment and progress
-			const { data: { user } } = await supabase.auth.getUser();
 			let enrollmentData: Tables<'enrollments'> | null = null;
 			let progressData: ModuleProgress[] = [];
 			let attemptsData: Tables<'quiz_attempts'>[] = [];
@@ -147,7 +148,7 @@ export function useCourseModules(courseId: string) {
 		} finally {
 			setLoading(false);
 		}
-	}, [courseId]);
+	}, [courseId, user]);
 
 	useEffect(() => {
 		fetchModules();

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { useLocale } from '@/hooks/useLocale';
 import { withTimeout } from '@/utils/fetchWithTimeout';
+import { useAuth } from '@/hooks/useAuth';
 
 export type Quiz = Tables<'quizzes'>;
 export type QuizQuestion = Tables<'quiz_questions'>;
@@ -20,6 +21,7 @@ export function useQuiz(moduleId: string) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const { locale } = useLocale();
+	const { user } = useAuth();
 
 	const fetchQuiz = useCallback(async () => {
 		if (!supabase || !moduleId) {
@@ -57,7 +59,6 @@ export function useQuiz(moduleId: string) {
 			setQuestions(questionsData || []);
 
 			// Fetch user's attempts
-			const { data: { user } } = await supabase.auth.getUser();
 			if (user) {
 				const { data: attemptsData } = await withTimeout(
 					supabase
@@ -79,7 +80,7 @@ export function useQuiz(moduleId: string) {
 		} finally {
 			setLoading(false);
 		}
-	}, [moduleId]);
+	}, [moduleId, user]);
 
 	useEffect(() => {
 		fetchQuiz();
@@ -108,7 +109,6 @@ export function useQuiz(moduleId: string) {
 	const submitQuiz = async (answers: Record<string, number | number[]>) => {
 		if (!supabase || !quiz) return { error: 'Quiz not loaded' };
 
-		const { data: { user } } = await supabase.auth.getUser();
 		if (!user) return { error: 'Not authenticated' };
 
 		// Calculate score

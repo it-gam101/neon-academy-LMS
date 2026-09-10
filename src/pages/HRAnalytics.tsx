@@ -3,6 +3,7 @@ import { BarChart3, Users, AlertTriangle, TrendingUp, Download, Save } from 'luc
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Tabs } from '@/components/ui/Tabs';
@@ -37,6 +38,7 @@ interface ReportData {
 export default function HRAnalytics() {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
+  const { user } = useAuth();
 
   const [kpis, setKpis] = useState<KPIs | null>(null);
   const [loading, setLoading] = useState(true);
@@ -284,7 +286,6 @@ export default function HRAnalytics() {
   const saveSnapshot = async () => {
     if (!supabase || !reportData) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     const { error } = await supabase.from('report_snapshots').insert({

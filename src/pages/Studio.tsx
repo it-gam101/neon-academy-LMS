@@ -6,6 +6,7 @@ import { getDictionary } from '@/i18n/dictionary';
 import { useCourses } from '@/hooks/useCourses';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/hooks/useAuth';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -17,6 +18,7 @@ export default function Studio() {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
   const { profile } = useProfile();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const Chevron = locale === 'he' ? ChevronLeft : ChevronRight;
 
@@ -58,7 +60,6 @@ export default function Studio() {
   const handleCreateCourse = async () => {
     if (!supabase) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     const { data, error } = await supabase.
@@ -134,7 +135,7 @@ export default function Studio() {
 								</button>
 							</div>
             }
-						<Link
+						<Link data-ev-id="ev_9dddf3eb36"
             to="/studio/media"
             className="flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors">
 							<Image className="w-4 h-4" />
@@ -164,10 +165,10 @@ export default function Studio() {
 
         <div data-ev-id="ev_1e8ab6cf5f" className="space-y-4">
 						{courses.map((course) =>
-          <Link
-            key={course.id}
-            to={`/studio/${course.id}`}
-            className="group flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all relative">
+          <Link data-ev-id="ev_832c1fa550"
+          key={course.id}
+          to={`/studio/${course.id}`}
+          className="group flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all relative">
 
 								<div data-ev-id="ev_2137b3c806" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
 

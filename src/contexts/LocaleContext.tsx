@@ -33,7 +33,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 		
 		// Try to persist to profile if logged in
 		if (supabase) {
-			const { data: { user } } = await supabase.auth.getUser();
+			// LocaleProvider sits ABOVE AuthProvider in the tree, so useAuth() is not
+			// available here and would throw. getSession() is a local read, no network.
+			const { data: { session } } = await supabase.auth.getSession();
+			const user = session?.user ?? null;
 			if (user) {
 				await supabase
 					.from('profiles')

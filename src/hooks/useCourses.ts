@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { useLocale } from '@/hooks/useLocale';
 import { withTimeout } from '@/utils/fetchWithTimeout';
+import { useAuth } from '@/hooks/useAuth';
 
 export type Course = Tables<'courses'>;
 export type Category = Tables<'course_categories'>;
@@ -19,6 +20,7 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const { locale } = useLocale();
+	const { user } = useAuth();
 
 	const fetchCourses = useCallback(async () => {
 		if (!supabase) {
@@ -56,11 +58,8 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 				query = query.eq('status', 'published');
 			}
 
-			if (options?.onlyOwn) {
-				const { data: { user } } = await supabase.auth.getUser();
-				if (user) {
-					query = query.eq('created_by', user.id);
-				}
+			if (options?.onlyOwn && user) {
+				query = query.eq('created_by', user.id);
 			}
 
 			const { data: coursesData, error: coursesError } = await withTimeout(query.then(r => r), 10000);
@@ -68,7 +67,6 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 			if (coursesError) throw coursesError;
 
 			// Fetch user's enrollments
-			const { data: { user } } = await supabase.auth.getUser();
 			let enrollments: Tables<'enrollments'>[] = [];
 			
 			if (user) {
@@ -98,7 +96,7 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 		} finally {
 			setLoading(false);
 		}
-	}, [options?.onlyPublished, options?.onlyOwn]);
+	}, [options?.onlyPublished, options?.onlyOwn, user]);
 
 	useEffect(() => {
 		fetchCourses();
@@ -116,7 +114,6 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 	const enrollInCourse = async (courseId: string) => {
 		if (!supabase) return { error: 'Database not available' };
 
-		const { data: { user } } = await supabase.auth.getUser();
 		if (!user) return { error: 'Not authenticated' };
 
 		// Get course for due_days
