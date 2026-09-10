@@ -159,6 +159,7 @@ export function useTeam(options?: UseTeamOptions) {
 		} finally {
 			setLoading(false);
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id not user: avoids refetch on token refresh
 	}, [viewerRole, dict.errors?.failedToLoad, user?.id]);
 
 	useEffect(() => {

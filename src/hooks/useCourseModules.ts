@@ -148,6 +148,7 @@ export function useCourseModules(courseId: string) {
 		} finally {
 			setLoading(false);
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id not user: avoids refetch on token refresh
 	}, [courseId, user?.id]);
 
 	useEffect(() => {

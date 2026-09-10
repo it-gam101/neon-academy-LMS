@@ -49,6 +49,7 @@ export function useProfile() {
 		fetchProfile();
 		// The context's own onAuthStateChange drives `user`, so a second subscription
 		// here would only add a duplicate fetch on every auth event.
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id not user: avoids refetch on token refresh
 	}, [user?.id, authLoading]);
 
 	const updateProfile = async (updates: Partial<Profile>) => {

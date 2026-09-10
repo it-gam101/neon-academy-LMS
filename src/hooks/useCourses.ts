@@ -96,6 +96,7 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 		} finally {
 			setLoading(false);
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id not user: avoids refetch on token refresh
 	}, [options?.onlyPublished, options?.onlyOwn, user?.id]);
 
 	useEffect(() => {

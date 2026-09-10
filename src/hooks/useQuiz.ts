@@ -80,6 +80,7 @@ export function useQuiz(moduleId: string) {
 		} finally {
 			setLoading(false);
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id not user: avoids refetch on token refresh
 	}, [moduleId, user?.id]);
 
 	useEffect(() => {
