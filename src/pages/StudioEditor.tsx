@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, Settings, Package, Archive, AlertTriangle, Pencil, ChevronUp, ChevronDown, Edit, Loader2 } from 'lucide-react';
 import { withTimeout } from '@/utils/fetchWithTimeout';
@@ -171,6 +171,27 @@ export default function StudioEditor() {
   const [isMandatory, setIsMandatory] = useState(false);
   const [dueDays, setDueDays] = useState('');
 
+  // Course fields are written ONLY by Save Draft and Publish. A route change unmounts this
+  // page, so anything typed and not saved is lost — and `beforeunload` does NOT cover a route
+  // change. Hold the latest values here and flush them in the unmount cleanup.
+  // A ref, not state: a cleanup closure captures the values from the render that registered
+  // it, which would flush whatever was on screen when the page first loaded.
+  const pendingSaveRef = useRef<{
+    dirty: boolean;
+    values: {
+      title_en: string;
+      title_he: string;
+      description_en: string | null;
+      description_he: string | null;
+      category_id: string | null;
+      thumbnail_url: string | null;
+      estimated_minutes: number | null;
+      is_mandatory: boolean;
+      due_days: number | null;
+    };
+    dict: typeof dict;
+  } | null>(null);
+
   useEffect(() => {
     if (!supabase || !courseId) return;
 
@@ -241,6 +262,70 @@ export default function StudioEditor() {
     fetchData();
   }, [courseId, loadQuizzes]);
 
+  // Refreshed after every render so the unmount cleanup below reads the CURRENT values.
+  // No dependency array on purpose.
+  useEffect(() => {
+    pendingSaveRef.current = course ?
+    {
+      dirty:
+      titleEn !== course.title_en ||
+      titleHe !== course.title_he ||
+      (descriptionEn || '') !== (course.description_en || '') ||
+      (descriptionHe || '') !== (course.description_he || '') ||
+      (categoryId || '') !== (course.category_id || '') ||
+      (thumbnailUrl || '') !== (course.thumbnail_url || '') ||
+      (estimatedMinutes || '') !== (course.estimated_minutes?.toString() || '') ||
+      isMandatory !== course.is_mandatory ||
+      (dueDays || '') !== (course.due_days?.toString() || ''),
+      values: {
+        title_en: titleEn,
+        title_he: titleHe,
+        description_en: descriptionEn || null,
+        description_he: descriptionHe || null,
+        category_id: categoryId || null,
+        thumbnail_url: thumbnailUrl || null,
+        estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
+        is_mandatory: isMandatory,
+        due_days: dueDays ? parseInt(dueDays) : null
+      },
+      dict
+    } :
+    null;
+  });
+
+  // Flush unsaved course fields on the way out. Depends on courseId ONLY: adding `dict` or any
+  // form value would re-register the effect and fire this cleanup on an ordinary keystroke.
+  useEffect(() => {
+    return () => {
+      const pending = pendingSaveRef.current;
+      if (!supabase || !courseId || !pending?.dirty) return;
+
+      void (async () => {
+        try {
+          const { data, error } = await withTimeout(
+            supabase.
+            from('courses').
+            update({ ...pending.values, updated_at: new Date().toISOString() }).
+            eq('id', courseId).
+            select(),
+            10000
+          );
+
+          if (error) {
+            showToast('error', error.message);
+          } else if (!data || data.length === 0) {
+            showToast('error', pending.dict.common.changeRefused);
+          } else {
+            showToast('success', pending.dict.studio.courseSaved);
+          }
+        } catch (err) {
+          console.error('Unsaved course fields flush failed:', err);
+          showToast('error', pending.dict.common.error);
+        }
+      })();
+    };
+  }, [courseId]);
+
   // Fetch enrollment count for danger zone
   useEffect(() => {
     if (!supabase || !courseId) return;
@@ -288,6 +373,9 @@ export default function StudioEditor() {
       } else if (!data || data.length === 0) {
         showToast('error', dict.common.changeRefused);
       } else {
+        // Sync the loaded row, or the form still reads as unsaved and the unmount
+        // flush writes a second time on the way out.
+        setCourse(data[0]);
         showToast('success', dict.studio.courseSaved);
       }
     } catch (err) {
@@ -434,7 +522,9 @@ export default function StudioEditor() {
       showToast('error', dict.studio.deleteFailed);
     } else {
       showToast('success', dict.studio.publishSuccess);
-      setCourse((prev) => prev ? { ...prev, status: 'published' } : null);
+      // Publish writes every field, so take the whole saved row. Merging only `status`
+      // left the rest reading as unsaved and triggered a redundant flush on leaving.
+      setCourse(data[0]);
     }
     setShowPublishModal(false);
   };
