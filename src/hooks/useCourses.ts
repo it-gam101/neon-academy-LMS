@@ -96,7 +96,7 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 		} finally {
 			setLoading(false);
 		}
-	}, [options?.onlyPublished, options?.onlyOwn, user]);
+	}, [options?.onlyPublished, options?.onlyOwn, user?.id]);
 
 	useEffect(() => {
 		fetchCourses();

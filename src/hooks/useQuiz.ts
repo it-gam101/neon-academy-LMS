@@ -80,7 +80,7 @@ export function useQuiz(moduleId: string) {
 		} finally {
 			setLoading(false);
 		}
-	}, [moduleId, user]);
+	}, [moduleId, user?.id]);
 
 	useEffect(() => {
 		fetchQuiz();

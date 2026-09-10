@@ -159,7 +159,7 @@ export function useTeam(options?: UseTeamOptions) {
 		} finally {
 			setLoading(false);
 		}
-	}, [viewerRole, dict.errors?.failedToLoad, user]);
+	}, [viewerRole, dict.errors?.failedToLoad, user?.id]);
 
 	useEffect(() => {
 		fetchTeam();

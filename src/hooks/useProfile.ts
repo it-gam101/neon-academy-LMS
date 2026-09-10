@@ -49,7 +49,7 @@ export function useProfile() {
 		fetchProfile();
 		// The context's own onAuthStateChange drives `user`, so a second subscription
 		// here would only add a duplicate fetch on every auth event.
-	}, [user, authLoading]);
+	}, [user?.id, authLoading]);
 
 	const updateProfile = async (updates: Partial<Profile>) => {
 		if (!supabase || !profile) return { error: 'Not authenticated' };

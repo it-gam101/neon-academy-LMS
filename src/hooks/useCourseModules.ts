@@ -148,7 +148,7 @@ export function useCourseModules(courseId: string) {
 		} finally {
 			setLoading(false);
 		}
-	}, [courseId, user]);
+	}, [courseId, user?.id]);
 
 	useEffect(() => {
 		fetchModules();
