@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
 import { navItems, universalNavItems } from '@/components/layout/nav-config';
 import logoSrc from '@/assets/logo.svg';
+import { useOrgSettings } from '@/hooks/useOrgSettings';
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface MobileNavProps {
 export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
   const { profile } = useAuth();
   const { t, isRTL } = useLocale();
+  const { orgName, logoUrl } = useOrgSettings();
   const drawerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const previousOverflowRef = useRef<string | null>(null);
@@ -122,7 +124,7 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
             {/* Header */}
             <div data-ev-id="ev_de02b54979" className="flex items-center justify-between px-4 h-16 border-b border-border">
               <div data-ev-id="ev_dbaa91c85d" className="flex items-center gap-3">
-                <img data-ev-id="ev_021b8610d3" src={logoSrc} alt="" className="w-8 h-8 rounded-lg" />
+                <img data-ev-id="ev_021b8610d3" src={logoUrl ?? logoSrc} alt="" className="w-8 h-8 rounded-lg" />
                 <span data-ev-id="ev_abdeba1958" className="text-lg font-semibold text-foreground">
                   {t.nav.menuTitle}
                 </span>

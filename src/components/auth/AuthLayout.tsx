@@ -4,6 +4,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import logoSrc from '@/assets/logo.svg';
+import { useOrgSettings } from '@/hooks/useOrgSettings';
 
 interface AuthLayoutProps {
   title: string;
@@ -12,6 +13,7 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ title, children }: AuthLayoutProps) {
   const { t, isRTL } = useLocale();
+  const { orgName, logoUrl } = useOrgSettings();
 
   return (
     <div data-ev-id="ev_428f2f0803" className="min-h-screen bg-background bg-grid-texture flex flex-col">
@@ -25,8 +27,8 @@ export function AuthLayout({ title, children }: AuthLayoutProps) {
 				<div data-ev-id="ev_ed8620bc02" className="w-full max-w-md">
 					{/* Logo and app name */}
 					<div data-ev-id="ev_4dc04a9fbb" className="text-center mb-8">
-						<img data-ev-id="ev_f2654a32bb" src={logoSrc} alt="Neon Academy" className="w-16 h-16 rounded-xl mx-auto mb-4" />
-						<h1 data-ev-id="ev_39feb958d4" className="text-2xl font-bold text-foreground">{t.appName}</h1>
+						<img data-ev-id="ev_f2654a32bb" src={logoUrl ?? logoSrc} alt={orgName ?? t.appName} className="w-16 h-16 rounded-xl mx-auto mb-4" />
+						<h1 data-ev-id="ev_39feb958d4" className="text-2xl font-bold text-foreground">{orgName ?? t.appName}</h1>
 						<p data-ev-id="ev_ae115b1ab5" className="text-foreground-muted text-sm mt-1">{t.tagline}</p>
 					</div>
 					
@@ -40,9 +42,9 @@ export function AuthLayout({ title, children }: AuthLayoutProps) {
 					
 					{/* Back to landing link */}
 					<div data-ev-id="ev_29ae7cd96a" className="mt-6 text-center">
-						<Link
-              to="/"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors focus-ring rounded">
+						<Link data-ev-id="ev_5f7642abc2"
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors focus-ring rounded">
 
 							{isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
 							{t.landing.backToOverview}

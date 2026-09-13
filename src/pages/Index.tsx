@@ -14,6 +14,7 @@ import { LightboxImage } from '@/components/ui/Lightbox';
 import { BookOpen, GraduationCap, Users, PenTool, BarChart3, Settings, ChevronRight, ChevronLeft, PlayCircle, Clock, Sparkles, Mail } from 'lucide-react';
 import type { UserRole } from '@/contexts/auth-context';
 import logoSrc from '@/assets/logo.svg';
+import { useOrgSettings } from '@/hooks/useOrgSettings';
 
 interface QuickAction {
   path: string;
@@ -73,6 +74,7 @@ const IMG_BASE = 'https://pub-390efbd60a134343a0477c83ce0cebfb.r2.dev/site';
 export default function Index() {
   const { isAuthenticated, profile } = useAuth();
   const { t, isRTL, locale } = useLocale();
+  const { orgName, logoUrl } = useOrgSettings();
   const navigate = useNavigate();
   const heroHeadingRef = useRef<HTMLHeadingElement>(null);
 
@@ -146,8 +148,8 @@ export default function Index() {
           onClick={scrollToHero}
           className="flex items-center gap-3 focus-ring rounded-xl transition-colors hover:opacity-80">
 
-            <img data-ev-id="ev_64376f8554" src={logoSrc} alt={t.appName} className="w-10 h-10 rounded-xl" />
-            <span data-ev-id="ev_2d684d230e" className="text-lg font-semibold text-foreground hidden sm:block">{t.appName}</span>
+            <img data-ev-id="ev_64376f8554" src={logoUrl ?? logoSrc} alt={orgName ?? t.appName} className="w-10 h-10 rounded-xl" />
+            <span data-ev-id="ev_2d684d230e" className="text-lg font-semibold text-foreground hidden sm:block">{orgName ?? t.appName}</span>
           </button>
           <LanguageToggle />
         </header>
@@ -156,8 +158,8 @@ export default function Index() {
           {/* HERO */}
           <section data-ev-id="ev_02b6e611be" className="px-4 py-16 md:py-24 text-center max-w-4xl mx-auto">
             <img data-ev-id="ev_063371539e"
-            src={logoSrc}
-            alt={t.appName}
+            src={logoUrl ?? logoSrc}
+            alt={orgName ?? t.appName}
             className="w-24 h-24 md:w-32 md:h-32 rounded-2xl mx-auto mb-8" />
 
             <h1 data-ev-id="ev_034017b2d2"
