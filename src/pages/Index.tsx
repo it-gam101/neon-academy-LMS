@@ -361,8 +361,18 @@ export default function Index() {
         <footer data-ev-id="ev_29517d74b9" className="px-4 py-8 border-t border-border">
           <div data-ev-id="ev_e1d1c4d784" className="max-w-4xl mx-auto text-center text-sm text-muted-foreground">
             <p data-ev-id="ev_4444ae5dc0" className="mb-2">{t.landing.footerText}</p>
+            <a data-ev-id="ev_vc4el_site"
+            href="https://vibe-coding4elearning.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            dir="ltr"
+            className="text-primary hover:underline block mb-2">
+
+              {t.landing.vc4elSite}
+            </a>
             <a data-ev-id="ev_6923574a26"
             href="mailto:hello@vibe-coding4elearning.com"
+            dir="ltr"
             className="text-primary hover:underline">
 
               hello@vibe-coding4elearning.com

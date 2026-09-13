@@ -150,24 +150,24 @@ export default function MediaLibrary() {
     const fetchPackages = async () => {
       setPackagesLoading(true);
 
-      const { data: pkgData, error: pkgErr } = await supabase
-        .from('scorm_packages')
-        .select('id, title, scorm_version, size_bytes, created_at')
-        .order('created_at', { ascending: false });
+      const { data: pkgData, error: pkgErr } = await supabase.
+      from('scorm_packages').
+      select('id, title, scorm_version, size_bytes, created_at').
+      order('created_at', { ascending: false });
 
       if (pkgErr) {
         console.error('Failed to load SCORM packages:', pkgErr);
       } else {
-        setPackages((pkgData as ScormPackage[]) || []);
+        setPackages(pkgData as ScormPackage[] || []);
       }
 
       // Fetch module usage counts
-      const { data: modData } = await supabase
-        .from('modules')
-        .select('scorm_package_id');
+      const { data: modData } = await supabase.
+      from('modules').
+      select('scorm_package_id');
 
       const modMap = new Map<string, number>();
-      (modData || []).forEach((m: { scorm_package_id: string | null }) => {
+      (modData || []).forEach((m: {scorm_package_id: string | null;}) => {
         if (m.scorm_package_id) {
           modMap.set(m.scorm_package_id, (modMap.get(m.scorm_package_id) || 0) + 1);
         }
@@ -175,12 +175,12 @@ export default function MediaLibrary() {
       setModuleUsage(modMap);
 
       // Fetch registration usage counts
-      const { data: regData } = await supabase
-        .from('scorm_registrations')
-        .select('package_id');
+      const { data: regData } = await supabase.
+      from('scorm_registrations').
+      select('package_id');
 
       const regMap = new Map<string, number>();
-      (regData || []).forEach((r: { package_id: string | null }) => {
+      (regData || []).forEach((r: {package_id: string | null;}) => {
         if (r.package_id) {
           regMap.set(r.package_id, (regMap.get(r.package_id) || 0) + 1);
         }
@@ -222,14 +222,14 @@ export default function MediaLibrary() {
         setDeleteError(msg);
         return;
       }
-      
+
       setAssets((prev) => prev.filter((a) => a.id !== deleteTarget.id));
       showToast('success', dict.media.deleted);
       setDeleteTarget(null);
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : await functionErrorMessage(err, dict.common.error);
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      await functionErrorMessage(err, dict.common.error);
       console.error('handleDelete failed:', err);
       setDeleteError(msg);
     } finally {
@@ -262,9 +262,9 @@ export default function MediaLibrary() {
       showToast('success', dict.media.packageDeleted);
       setDeletePackageTarget(null);
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : await functionErrorMessage(err, dict.common.error);
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      await functionErrorMessage(err, dict.common.error);
       console.error('handleDeletePackage failed:', err);
       setDeletePackageError(msg);
     } finally {
@@ -309,34 +309,40 @@ export default function MediaLibrary() {
 			<div data-ev-id="ev_206d1e50aa" className="flex items-center justify-between mb-8">
 				<div data-ev-id="ev_3ea3e307af">
 					<div data-ev-id="ev_9ee233bf4d" className="flex items-center gap-3 mb-2">
-						<Link to="/studio" className="text-muted-foreground hover:text-foreground transition-colors">
+						<Link data-ev-id="ev_861f67e304" to="/studio" className="text-muted-foreground hover:text-foreground transition-colors">
 							<BackArrow className="w-5 h-5" />
 						</Link>
 						<h1 data-ev-id="ev_56eb286770" className="text-3xl font-bold text-foreground">{dict.media.title}</h1>
 					</div>
 				</div>
+				<Link data-ev-id="ev_media_sandbox"
+        to="/sandbox"
+        className="flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors">
+					<Package className="w-4 h-4" />
+					{dict.landing.trySandbox}
+				</Link>
 			</div>
 
 			{/* Tab row for super_admin/hr_manager */}
 			{canManagePackages &&
       <div data-ev-id="ev_media_tabs" className="flex items-center bg-muted rounded-lg p-1 mb-6">
 					<button data-ev-id="ev_tab_files"
-          onClick={() => setActiveTab('files')}
-          className={`px-4 py-2 text-sm rounded-md transition-colors ${
-          activeTab === 'files' ?
-          'bg-background text-foreground shadow-sm' :
-          'text-muted-foreground hover:text-foreground'}`
-          }>
+        onClick={() => setActiveTab('files')}
+        className={`px-4 py-2 text-sm rounded-md transition-colors ${
+        activeTab === 'files' ?
+        'bg-background text-foreground shadow-sm' :
+        'text-muted-foreground hover:text-foreground'}`
+        }>
 
 						{dict.media.tabFiles}
 					</button>
 					<button data-ev-id="ev_tab_packages"
-          onClick={() => setActiveTab('packages')}
-          className={`px-4 py-2 text-sm rounded-md transition-colors ${
-          activeTab === 'packages' ?
-          'bg-background text-foreground shadow-sm' :
-          'text-muted-foreground hover:text-foreground'}`
-          }>
+        onClick={() => setActiveTab('packages')}
+        className={`px-4 py-2 text-sm rounded-md transition-colors ${
+        activeTab === 'packages' ?
+        'bg-background text-foreground shadow-sm' :
+        'text-muted-foreground hover:text-foreground'}`
+        }>
 
 						{dict.media.tabPackages}
 					</button>
@@ -352,43 +358,43 @@ export default function MediaLibrary() {
 				<div data-ev-id="ev_781b12b6a2" className="relative flex-1 max-w-md">
 					<Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
 					<input data-ev-id="ev_b720f70981"
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={dict.common.search}
-          className="w-full ps-10 pe-4 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={dict.common.search}
+            className="w-full ps-10 pe-4 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 
 				</div>
 
 				{/* Kind filter */}
 				<div data-ev-id="ev_033a0b251a" className="flex items-center bg-muted rounded-lg p-1">
 					<button data-ev-id="ev_c47da7cc8a"
-          onClick={() => setKindFilter('all')}
-          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-          kindFilter === 'all' ?
-          'bg-background text-foreground shadow-sm' :
-          'text-muted-foreground hover:text-foreground'}`
-          }>
+            onClick={() => setKindFilter('all')}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+            kindFilter === 'all' ?
+            'bg-background text-foreground shadow-sm' :
+            'text-muted-foreground hover:text-foreground'}`
+            }>
 
 						{dict.common.all}
 					</button>
 					<button data-ev-id="ev_fd95fb4535"
-          onClick={() => setKindFilter('image')}
-          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-          kindFilter === 'image' ?
-          'bg-background text-foreground shadow-sm' :
-          'text-muted-foreground hover:text-foreground'}`
-          }>
+            onClick={() => setKindFilter('image')}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+            kindFilter === 'image' ?
+            'bg-background text-foreground shadow-sm' :
+            'text-muted-foreground hover:text-foreground'}`
+            }>
 
 						{dict.media.images}
 					</button>
 					<button data-ev-id="ev_e5ddb0cff4"
-          onClick={() => setKindFilter('pdf')}
-          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-          kindFilter === 'pdf' ?
-          'bg-background text-foreground shadow-sm' :
-          'text-muted-foreground hover:text-foreground'}`
-          }>
+            onClick={() => setKindFilter('pdf')}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+            kindFilter === 'pdf' ?
+            'bg-background text-foreground shadow-sm' :
+            'text-muted-foreground hover:text-foreground'}`
+            }>
 
 						{dict.media.pdfs}
 					</button>
@@ -397,37 +403,37 @@ export default function MediaLibrary() {
 
 			{/* Content */}
 			{assets.length === 0 ?
-      <EmptyState
-        icon={Image}
-        title={dict.media.empty}
-        description="" /> :
+        <EmptyState
+          icon={Image}
+          title={dict.media.empty}
+          description="" /> :
 
-      filteredAssets.length === 0 ?
-      <EmptyState
-        icon={Search}
-        title={dict.common.noResults}
-        description="" /> :
+        filteredAssets.length === 0 ?
+        <EmptyState
+          icon={Search}
+          title={dict.common.noResults}
+          description="" /> :
 
 
-      <div data-ev-id="ev_12d901e7a4" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div data-ev-id="ev_12d901e7a4" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 					{filteredAssets.map((asset) =>
-        <div data-ev-id="ev_d6f1f04d27"
-        key={asset.id}
-        className="bg-card border border-border rounded-lg overflow-hidden group">
+          <div data-ev-id="ev_d6f1f04d27"
+          key={asset.id}
+          className="bg-card border border-border rounded-lg overflow-hidden group">
 
 							{/* Preview */}
 							<div data-ev-id="ev_78ab794bd3" className="aspect-square bg-muted flex items-center justify-center relative">
 								{asset.kind === 'image' ?
-            <ImageThumbnail url={asset.url} filename={asset.filename} /> :
+              <ImageThumbnail url={asset.url} filename={asset.filename} /> :
 
-            <FileText className="w-12 h-12 text-muted-foreground" />
-            }
+              <FileText className="w-12 h-12 text-muted-foreground" />
+              }
 
 								{/* Delete button overlay */}
 								<button data-ev-id="ev_dd21be1b92"
-            onClick={() => openDeleteDialog(asset)}
-            className="absolute top-2 end-2 p-1.5 bg-destructive text-destructive-foreground rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-            title={dict.common.delete}>
+              onClick={() => openDeleteDialog(asset)}
+              className="absolute top-2 end-2 p-1.5 bg-destructive text-destructive-foreground rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+              title={dict.common.delete}>
 
 									<Trash2 className="w-4 h-4" />
 								</button>
@@ -442,15 +448,15 @@ export default function MediaLibrary() {
 									{formatFileSize(asset.size_bytes)} · {formatDate(asset.created_at, locale)}
 								</p>
 								{isSuperAdmin && asset.owner_id && ownerNames.get(asset.owner_id) &&
-            <p data-ev-id="ev_007df96659" className="text-xs text-muted-foreground mt-1">
+              <p data-ev-id="ev_007df96659" className="text-xs text-muted-foreground mt-1">
 										{dict.media.uploadedBy}: {ownerNames.get(asset.owner_id)}
 									</p>
-            }
+              }
 							</div>
 						</div>
-        )}
+          )}
 				</div>
-      }
+        }
       </>
       }
 
@@ -458,23 +464,23 @@ export default function MediaLibrary() {
 			{canManagePackages && activeTab === 'packages' &&
       <div data-ev-id="ev_packages_section">
 					{packagesLoading ?
-          <LoadingSkeleton variant="list" count={4} /> :
-          packages.length === 0 ?
-          <EmptyState
-            icon={Package}
-            title={dict.common.noResults}
-            description="" /> :
+        <LoadingSkeleton variant="list" count={4} /> :
+        packages.length === 0 ?
+        <EmptyState
+          icon={Package}
+          title={dict.common.noResults}
+          description="" /> :
 
-          <div data-ev-id="ev_packages_list" className="flex flex-col gap-3">
+        <div data-ev-id="ev_packages_list" className="flex flex-col gap-3">
 							{packages.map((pkg) => {
-              const modCount = moduleUsage.get(pkg.id) || 0;
-              const regCount = registrationUsage.get(pkg.id) || 0;
-              const inUse = modCount > 0 || regCount > 0;
+            const modCount = moduleUsage.get(pkg.id) || 0;
+            const regCount = registrationUsage.get(pkg.id) || 0;
+            const inUse = modCount > 0 || regCount > 0;
 
-              return (
-                <div data-ev-id="ev_package_row"
-                key={pkg.id}
-                className="p-4 bg-card border border-border rounded-lg flex items-center justify-between gap-4">
+            return (
+              <div data-ev-id="ev_package_row"
+              key={pkg.id}
+              className="p-4 bg-card border border-border rounded-lg flex items-center justify-between gap-4">
 
 										<div data-ev-id="ev_package_info" className="flex-1 min-w-0">
 											<p data-ev-id="ev_package_title" className="font-medium text-foreground truncate">{pkg.title}</p>
@@ -488,24 +494,24 @@ export default function MediaLibrary() {
 
 										<div data-ev-id="ev_package_actions" className="flex items-center gap-3">
 											{inUse &&
-                      <span data-ev-id="ev_package_in_use" className="text-xs text-muted-foreground max-w-[200px]">
+                  <span data-ev-id="ev_package_in_use" className="text-xs text-muted-foreground max-w-[200px]">
 													{dict.media.packageInUse}
 												</span>
-                      }
+                  }
 											<button data-ev-id="ev_delete_package"
-                      onClick={() => openDeletePackageDialog(pkg)}
-                      disabled={inUse}
-                      className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                      title={dict.common.delete}>
+                  onClick={() => openDeletePackageDialog(pkg)}
+                  disabled={inUse}
+                  className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={dict.common.delete}>
 
 												<Trash2 className="w-4 h-4" />
 											</button>
 										</div>
 									</div>);
 
-            })}
+          })}
 						</div>
-          }
+        }
 				</div>
       }
 
@@ -515,18 +521,18 @@ export default function MediaLibrary() {
         onClose={closeDeleteDialog}
         title={dict.media.deleteTitle}
         footer={
-          <div data-ev-id="ev_delete_footer" className="flex gap-3 justify-end">
+        <div data-ev-id="ev_delete_footer" className="flex gap-3 justify-end">
             <button data-ev-id="ev_delete_cancel"
-              type="button"
-              onClick={closeDeleteDialog}
-              className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
+          type="button"
+          onClick={closeDeleteDialog}
+          className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
               {dict.common.cancel}
             </button>
             <button data-ev-id="ev_delete_confirm"
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
+          type="button"
+          onClick={handleDelete}
+          disabled={deleting}
+          className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
               {deleting ? dict.common.loading : dict.common.delete}
             </button>
           </div>
@@ -544,18 +550,18 @@ export default function MediaLibrary() {
         onClose={closeDeletePackageDialog}
         title={dict.media.deletePackageTitle}
         footer={
-          <div data-ev-id="ev_delete_pkg_footer" className="flex gap-3 justify-end">
+        <div data-ev-id="ev_delete_pkg_footer" className="flex gap-3 justify-end">
             <button data-ev-id="ev_delete_pkg_cancel"
-              type="button"
-              onClick={closeDeletePackageDialog}
-              className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
+          type="button"
+          onClick={closeDeletePackageDialog}
+          className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
               {dict.common.cancel}
             </button>
             <button data-ev-id="ev_delete_pkg_confirm"
-              type="button"
-              onClick={handleDeletePackage}
-              disabled={deletingPackage}
-              className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
+          type="button"
+          onClick={handleDeletePackage}
+          disabled={deletingPackage}
+          className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
               {deletingPackage ? dict.common.loading : dict.common.delete}
             </button>
           </div>

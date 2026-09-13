@@ -724,6 +724,7 @@ export interface Dictionary {
 		ctaTitle: string;
 		ctaSub: string;
 		footerText: string;
+		vc4elSite: string;
 		enlargeImage: string;
 		toggleZoom: string;
 		backToOverview: string;
@@ -1424,6 +1425,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			ctaTitle: 'See it with your own content.',
 			ctaSub: 'We\'ll walk you through Neon Academy with your courses and your org structure - in English, in Hebrew, or both.',
 			footerText: 'Neon Academy is a vibe-coding4elearning (vc4el) product, built on Sticklight.',
+			vc4elSite: 'vibe-coding4elearning.com',
 			enlargeImage: 'Enlarge image',
 			toggleZoom: 'Toggle zoom',
 			backToOverview: 'Back to overview',
@@ -2123,6 +2125,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			ctaTitle: 'תראו את זה עם התוכן שלכם.',
 			ctaSub: 'נלווה אתכם בסיור באקדמיית ניאון עם הקורסים והמבנה הארגוני שלכם - בעברית, באנגלית, או בשתיהן.',
 			footerText: 'אקדמיית ניאון היא מוצר של vibe-coding4elearning (vc4el), בנוי על Sticklight.',
+			vc4elSite: 'vibe-coding4elearning.com',
 			enlargeImage: 'הגדלת תמונה',
 			toggleZoom: 'מיקוד תצוגה',
 			backToOverview: 'חזרה לעמוד הראשי',

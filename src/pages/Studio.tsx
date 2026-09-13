@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Plus, BookOpen, Edit, Eye, ChevronRight, ChevronLeft, ArrowLeft, ArrowRight, FileQuestion, Image } from 'lucide-react';
+import { Plus, BookOpen, Edit, Eye, ChevronRight, ChevronLeft, ArrowLeft, ArrowRight, FileQuestion, Image, Package } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useCourses } from '@/hooks/useCourses';
@@ -135,6 +135,12 @@ export default function Studio() {
 								</button>
 							</div>
             }
+						<Link data-ev-id="ev_studio_sandbox"
+            to="/sandbox"
+            className="flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors">
+							<Package className="w-4 h-4" />
+							{dict.landing.trySandbox}
+						</Link>
 						<Link data-ev-id="ev_9dddf3eb36"
             to="/studio/media"
             className="flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors">
