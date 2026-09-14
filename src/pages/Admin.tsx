@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Users, FolderTree, FileText, Building, Plus, Search, Edit, Trash2, Save } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Users, FolderTree, FileText, Building, Plus, Search, Edit, Trash2, Save, Upload } from 'lucide-react';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
 import { isRecentlyRegistered } from '@/lib/newUsers';
+import { functionErrorMessage } from '@/lib/functionError';
+import { resizeImageToBlob } from '@/lib/resizeImage';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -210,6 +212,79 @@ export default function Admin() {
 
   const [savingSettings, setSavingSettings] = useState(false);
   const [orgSettingsSaved, setOrgSettingsSaved] = useState(false);
+
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
+
+  // Uploads a logo and puts its public URL in the Logo URL field. It does NOT save —
+  // the existing Save button still writes the row, exactly as the avatar upload works.
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !supabase || !orgSettings) return;
+
+    // Reset the input so the same file can be chosen again after a failure.
+    if (logoInputRef.current) logoInputRef.current.value = '';
+
+    setLogoUploadError(null);
+    setUploadingLogo(true);
+
+    try {
+      // 512px: the landing hero renders the logo at up to 128 CSS px, so this covers 2x displays.
+      const resized = await resizeImageToBlob(file, 512);
+
+      // purpose 'media' is role-gated to super_admin/hr_manager/instructor and org settings is
+      // super_admin-only, so this path is already permitted — no Edge Function change needed.
+      // media-finalize is deliberately SKIPPED, exactly as avatars do, so the org logo never
+      // appears in the instructors' media library.
+      const { data: presign, error: presignError } = await withTimeout(
+        supabase.functions.invoke('media-presign', {
+          body: {
+            purpose: 'media',
+            filename: file.name,
+            mimeType: resized.type,
+            size: resized.size
+          }
+        }),
+        10000
+      );
+
+      if (presignError) {
+        console.error('Logo presign error:', presignError);
+        setLogoUploadError(await functionErrorMessage(presignError, dict.common.error));
+        return;
+      }
+
+      if (!presign?.uploadUrl || !presign?.publicUrl) {
+        console.error('Invalid presign response:', presign);
+        setLogoUploadError(presign?.error || dict.common.error);
+        return;
+      }
+
+      const put = await fetch(presign.uploadUrl, {
+        method: 'PUT',
+        body: resized,
+        headers: { 'Content-Type': resized.type }
+      });
+
+      if (!put.ok) {
+        console.error('Logo upload failed:', put.status, put.statusText);
+        setLogoUploadError(dict.common.error);
+        return;
+      }
+
+      setOrgSettingsSaved(false);
+      setOrgSettings({ ...orgSettings, logo_url: presign.publicUrl });
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      await functionErrorMessage(err, dict.common.error);
+      console.error('handleLogoUpload failed:', err);
+      setLogoUploadError(msg);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const handleSaveOrgSettings = async () => {
     if (!supabase || !orgSettings) return;
@@ -497,6 +572,28 @@ export default function Admin() {
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     dir="ltr" />
 
+											<input data-ev-id="ev_logo_file"
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden" />
+
+											<button data-ev-id="ev_logo_upload_btn"
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={uploadingLogo}
+                    className="mt-2 inline-flex items-center gap-2 px-3 py-2 text-sm border border-border text-foreground rounded-lg hover:bg-muted transition-colors disabled:opacity-50 focus-ring">
+
+												<Upload className="w-4 h-4" />
+												{uploadingLogo ? dict.admin.uploadingLogo : dict.admin.uploadLogo}
+											</button>
+
+											{logoUploadError &&
+                    <p data-ev-id="ev_logo_upload_error" role="alert" className="mt-1 text-sm text-destructive">
+												{logoUploadError}
+											</p>
+                    }
 										</div>
 
 										<div data-ev-id="ev_fe1dc72438">

@@ -679,6 +679,8 @@ export interface Dictionary {
 		orgSettingsTitle: string;
 		orgName: string;
 		logoUrl: string;
+		uploadLogo: string;
+		uploadingLogo: string;
 		defaultLocale: string;
 		settingsSaved: string;
 		newRegistrations: string;
@@ -1383,6 +1385,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			orgSettingsTitle: 'Organization Settings',
 			orgName: 'Organization name',
 			logoUrl: 'Logo URL',
+			uploadLogo: 'Upload logo',
+			uploadingLogo: 'Uploading…',
 			defaultLocale: 'Default language',
 			settingsSaved: 'Settings saved',
 			newRegistrations: 'New registrations this week',
@@ -2083,6 +2087,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			orgSettingsTitle: 'הגדרות ארגון',
 			orgName: 'שם הארגון',
 			logoUrl: 'כתובת לוגו',
+			uploadLogo: 'העלאת לוגו',
+			uploadingLogo: 'מעלה…',
 			defaultLocale: 'שפת ברירת מחדל',
 			settingsSaved: 'ההגדרות נשמרו',
 			newRegistrations: 'הרשמות חדשות השבוע',
