@@ -155,8 +155,18 @@ export default function ScormPlayer() {
     loadData();
   }, [enrollmentId, moduleId, dict]);
 
+  // One scorm-commit in flight per player, in the order the package asked for.
+  //
+  // ⚠️ A SCORM package calls Commit() and then Terminate() back to back when the learner
+  // finishes, so two requests could reach the Edge Function within milliseconds carrying the
+  // SAME upsert key (user_id, package_id, enrollment_id). Two concurrent
+  // INSERT ... ON CONFLICT DO UPDATE on one key can raise a unique violation instead of
+  // resolving, which scorm-commit returns as 500 and the learner reads as
+  // "Your progress was not saved". BACKLOG item 101.
+  const commitChainRef = useRef<Promise<void>>(Promise.resolve());
+
   // Commit CMI data to Edge Function
-  const commitCmi = useCallback(
+  const performCommit = useCallback(
     async (cmi: Record<string, unknown>, event: 'commit' | 'terminate') => {
       if (!scormPackage || !enrollmentId || !moduleId || !session?.access_token) return;
 
@@ -199,6 +209,17 @@ export default function ScormPlayer() {
       }
     },
     [scormPackage, enrollmentId, moduleId, session?.access_token]
+  );
+
+  const commitCmi = useCallback(
+    (cmi: Record<string, unknown>, event: 'commit' | 'terminate') => {
+      const next = commitChainRef.current.then(() => performCommit(cmi, event));
+      // performCommit swallows its own errors; this keeps a rejection from poisoning the
+      // chain for every later commit even so.
+      commitChainRef.current = next.catch(() => {});
+      return next;
+    },
+    [performCommit]
   );
 
   // Handle postMessage from bridge
