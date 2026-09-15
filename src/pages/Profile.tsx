@@ -11,6 +11,7 @@ import { formatDate } from '@/utils/formatDate';
 import { functionErrorMessage } from '@/lib/functionError';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { resizeImageToBlob } from '@/lib/resizeImage';
+import { ensureSession } from '@/lib/ensureSession';
 
 export default function Profile() {
   const { locale, t } = useLocale();
@@ -159,6 +160,14 @@ export default function Profile() {
     setJustUploaded(false);
 
     try {
+      // A failed refresh makes supabase-js send the ANON KEY, and the Edge Function then
+      // answers "Invalid or expired token" — which reads like a token problem when the user
+      // is simply signed out. Say the true thing instead. BACKLOG item 104.
+      if (!(await ensureSession())) {
+        setUploadError(t.errors.sessionExpired);
+        return;
+      }
+
       // 1. Resize the image (use RESIZED blob's type and size for presign)
       const resizedBlob = await resizeImageToBlob(file, 256);
 

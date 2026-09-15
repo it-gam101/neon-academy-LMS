@@ -696,6 +696,7 @@ export interface Dictionary {
 	// Errors
 	errors: {
 		connectionTimeout: string;
+		sessionExpired: string;
 		failedToLoad: string;
 		retry: string;
 		noAccess: string;
@@ -1400,6 +1401,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		
 		errors: {
 			connectionTimeout: 'Connection timed out',
+			sessionExpired: 'Your session has expired. Please sign in again.',
 			failedToLoad: 'Failed to load data',
 			retry: 'Retry',
 			noAccess: 'You don\'t have access to this content',
@@ -2102,6 +2104,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 		
 		errors: {
 			connectionTimeout: 'הזמן הקצוב לחיבור עבר',
+			sessionExpired: 'החיבור שלך פג. יש להתחבר מחדש.',
 			failedToLoad: 'טעינת הנתונים נכשלה',
 			retry: 'נסה שוב',
 			noAccess: 'אין לך גישה לתוכן זה',

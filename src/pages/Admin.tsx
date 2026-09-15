@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { isRecentlyRegistered } from '@/lib/newUsers';
 import { functionErrorMessage } from '@/lib/functionError';
 import { resizeImageToBlob } from '@/lib/resizeImage';
+import { ensureSession } from '@/lib/ensureSession';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -230,6 +231,14 @@ export default function Admin() {
     setUploadingLogo(true);
 
     try {
+      // A failed refresh makes supabase-js send the ANON KEY, and the Edge Function then
+      // answers "Invalid or expired token" — which reads like a token problem when the user
+      // is simply signed out. Say the true thing instead. BACKLOG item 104.
+      if (!(await ensureSession())) {
+        setLogoUploadError(dict.errors.sessionExpired);
+        return;
+      }
+
       // 512px: the landing hero renders the logo at up to 128 CSS px, so this covers 2x displays.
       const resized = await resizeImageToBlob(file, 512);
 
