@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContext, type Profile } from '@/contexts/auth-context';
 import { withTimeout } from '@/utils/fetchWithTimeout';
+import { ensureSession } from '@/lib/ensureSession';
 import { useLocale } from '@/hooks/useLocale';
 
 const PROFILE_TIMEOUT_MS = 10000;
@@ -145,9 +146,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [loadProfile]);
 	
 	const signOut = async () => {
-		if (supabase) {
-			await supabase.auth.signOut();
+		if (!supabase) return;
+
+		// ⚠️ auth-js returns from signOut BEFORE removing anything when the session cannot be
+		// loaded: _signOut() bails on sessionError ahead of _removeSession()
+		// (GoTrueClient.js:1535-1539). A session that will not refresh therefore leaves the
+		// user signed IN, and the old code discarded the returned error, so nothing said so.
+		// Heal the session first so the normal path can run. BACKLOG item 104.
+		await ensureSession();
+
+		try {
+			const { error } = await withTimeout(supabase.auth.signOut(), 10000);
+			if (!error) return;
+			console.error('signOut returned an error; clearing this device anyway:', error);
+		} catch (err) {
+			console.error('signOut timed out or threw; clearing this device anyway:', err);
 		}
+
+		// Last resort. Never leave someone believing they signed out while their session is
+		// still on the device — on a shared machine that is a security problem, not a bug.
+		// The storage key is supabase-js's default, confirmed by the lock name in our own
+		// console evidence: "lock:sb-rrrngknuiannsjoifmmq-auth-token".
+		try {
+			const ref = new URL(import.meta.env.VITE_SUPABASE_URL).hostname.split('.')[0];
+			localStorage.removeItem(`sb-${ref}-auth-token`);
+		} catch (err) {
+			console.error('Could not clear the stored session:', err);
+		}
+		window.location.assign('/');
 	};
 	
 	return (
