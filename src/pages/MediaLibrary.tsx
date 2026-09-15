@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { showToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { functionErrorMessage } from '@/lib/functionError';
+import { ensureSession } from '@/lib/ensureSession';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 
 interface MediaAsset {
@@ -209,6 +210,13 @@ export default function MediaLibrary() {
     setDeleteError(null);
 
     try {
+      // BACKLOG item 104 — no live session means the anon key goes out and the Edge
+      // Function answers "Invalid or expired token".
+      if (!(await ensureSession())) {
+        setDeleteError(dict.errors.sessionExpired);
+        return;
+      }
+
       const { error } = await withTimeout(
         supabase.functions.invoke('media-delete', {
           body: { id: deleteTarget.id }
@@ -244,6 +252,12 @@ export default function MediaLibrary() {
     setDeletePackageError(null);
 
     try {
+      // BACKLOG item 104 — see handleDelete above.
+      if (!(await ensureSession())) {
+        setDeletePackageError(dict.errors.sessionExpired);
+        return;
+      }
+
       const { error } = await withTimeout(
         supabase.functions.invoke('scorm-package-delete', {
           body: { id: deletePackageTarget.id }

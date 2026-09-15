@@ -6,6 +6,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable, sortableKeyb
 import { CSS } from '@dnd-kit/utilities';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
+import { ensureSession } from '@/lib/ensureSession';
 import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
@@ -462,6 +463,14 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
     setUploadError(null);
 
     try {
+      // Without a live session supabase-js sends the ANON KEY and the Edge Function answers
+      // "Invalid or expired token". Say the true thing instead. BACKLOG item 104.
+      if (!(await ensureSession())) {
+        setUploadError({ index, message: dict.errors.sessionExpired });
+        setUploadingIndex(null);
+        return;
+      }
+
       // Call media-presign
       const { data: presignData, error: presignError } = await supabase.functions.invoke('media-presign', {
         body: {

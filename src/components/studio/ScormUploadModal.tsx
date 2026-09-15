@@ -4,6 +4,7 @@ import { unzipSync } from 'fflate';
 import { useLocale } from '@/hooks/useLocale';
 import { useAuth } from '@/hooks/useAuth';
 import { getDictionary } from '@/i18n/dictionary';
+import { ensureSession } from '@/lib/ensureSession';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { syncCourseType } from '@/lib/courseType';
@@ -327,6 +328,15 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
     let createdModuleId: string | null = null;
 
     try {
+      // BACKLOG item 104. Take the token ensureSession returns rather than the context's
+      // copy: the context updates on an auth event, so its token can still be the stale one.
+      const freshToken = await ensureSession();
+      if (!freshToken) {
+        setError(dict.errors.sessionExpired);
+        setState('idle');
+        return;
+      }
+
       // 1. Create the module row FIRST so we have a moduleId
       const { data: moduleData, error: moduleError } = await supabase.
       from('modules').
@@ -379,7 +389,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${freshToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -438,7 +448,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${freshToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({

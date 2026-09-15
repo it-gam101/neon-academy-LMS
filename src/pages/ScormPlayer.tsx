@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
+import { ensureSession } from '@/lib/ensureSession';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Badge } from '@/components/ui/Badge';
 import type { Tables } from '@/integrations/supabase/helpers';
@@ -434,6 +435,11 @@ export default function ScormPlayer() {
         onClick={async () => {
           setRetryingCommit(true);
           try {
+            // Heal the session before retrying — a stale token is one reason the first
+            // attempt failed. ⚠️ Deliberately NOT done on the normal commit/terminate path:
+            // that runs with keepalive during unload, where an extra await could lose the
+            // commit outright. BACKLOG item 104.
+            await ensureSession();
             await commitCmi(failedCommit.cmi, failedCommit.event);
           } finally {
             setRetryingCommit(false);
