@@ -147,6 +147,7 @@ export interface Dictionary {
 		importAsModules: string;
 		importAsModulesDetail: string;
 		importPackageKept: string;
+		importNeedsCourse: string;
 		importedContent: string;
 		importFailed: string;
 	};
@@ -228,6 +229,9 @@ export interface Dictionary {
 		deletePackageTitle: string;
 		deletePackageMessage: string;
 		packageDeleted: string;
+		uploadPackage: string;
+		packagesEmpty: string;
+		packagesEmptyDesc: string;
 	};
 	
 	// Roles
@@ -875,6 +879,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			importAsModules: 'Import as editable modules',
 			importAsModulesDetail: '{count} modules, each counted separately toward completion.',
 			importPackageKept: 'The uploaded package stays in your library either way.',
+			importNeedsCourse: 'This package carries editable course content. Import it as modules by uploading from inside a course — a library upload stores the package only.',
 			importedContent: 'Imported:',
 			importFailed: 'The package uploaded and works. Its content could not be imported.',
 		},
@@ -954,6 +959,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			deletePackageTitle: 'Delete SCORM package?',
 			deletePackageMessage: 'This permanently deletes the package and all its files. Only unused packages can be deleted.',
 			packageDeleted: 'Package deleted',
+			uploadPackage: 'Upload package',
+			packagesEmpty: 'No SCORM packages yet',
+			packagesEmptyDesc: 'Upload a SCORM package here, or from inside a course. Packages uploaded here can be opened in the Sandbox and attached to a course later.',
 		},
 		
 		roles: {
@@ -1578,6 +1586,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			importAsModules: 'ייבא כמודולים הניתנים לעריכה',
 			importAsModulesDetail: '{count} מודולים, כל אחד נספר בנפרד לצורך השלמת הקורס.',
 			importPackageKept: 'החבילה שהועלתה נשמרת בספרייה שלך בכל מקרה.',
+			importNeedsCourse: 'חבילה זו כוללת תוכן קורס הניתן לעריכה. כדי לייבא אותו כמודולים, העלו אותה מתוך קורס — העלאה לספרייה שומרת את החבילה בלבד.',
 			importedContent: 'יובאו:',
 			importFailed: 'החבילה הועלתה ופועלת. לא ניתן היה לייבא את התוכן שלה.',
 		},
@@ -1657,6 +1666,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			deletePackageTitle: 'למחוק את חבילת ה-SCORM?',
 			deletePackageMessage: 'פעולה זו מוחקת לצמיתות את החבילה ואת כל קבציה. ניתן למחוק חבילות שאינן בשימוש בלבד.',
 			packageDeleted: 'החבילה נמחקה',
+			uploadPackage: 'העלאת חבילה',
+			packagesEmpty: 'אין עדיין חבילות SCORM',
+			packagesEmptyDesc: 'ניתן להעלות חבילת SCORM כאן או מתוך קורס. חבילות שהועלו כאן ניתנות לפתיחה בארגז החול ולשיוך לקורס בהמשך.',
 		},
 		
 		roles: {

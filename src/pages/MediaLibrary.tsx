@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router';
-import { Image, FileText, Trash2, Search, ArrowLeft, ArrowRight, Package } from 'lucide-react';
+import { Image, FileText, Trash2, Search, ArrowLeft, ArrowRight, Package, Upload } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { useProfile } from '@/hooks/useProfile';
@@ -9,6 +9,7 @@ import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { showToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
+import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
 import { functionErrorMessage } from '@/lib/functionError';
 import { ensureSession } from '@/lib/ensureSession';
 import { withTimeout } from '@/utils/fetchWithTimeout';
@@ -87,10 +88,18 @@ export default function MediaLibrary() {
   const [deletePackageTarget, setDeletePackageTarget] = useState<ScormPackage | null>(null);
   const [deletingPackage, setDeletingPackage] = useState(false);
   const [deletePackageError, setDeletePackageError] = useState<string | null>(null);
+  // Item 103: course-free SCORM upload from the library.
+  const [showPackageUpload, setShowPackageUpload] = useState(false);
 
   const isSuperAdmin = profile?.role === 'super_admin';
   const isHrManager = profile?.role === 'hr_manager';
-  const canManagePackages = isSuperAdmin || isHrManager;
+  // Item 103: the tab was gated at admin only to protect the DELETE button, which
+  // is the blunt version of the real rule. scorm-finalize already lets instructors
+  // create packages (ALLOWED_ROLES) and RLS already lets any authenticated user
+  // read non-sandbox ones, so viewing and uploading open to instructors here.
+  // Deleting stays admin-only, matching "DELETE by owner or is_admin()".
+  const canViewPackages = isSuperAdmin || isHrManager || profile?.role === 'instructor';
+  const canDeletePackages = isSuperAdmin || isHrManager;
 
   // Fetch assets
   useEffect(() => {
@@ -144,13 +153,14 @@ export default function MediaLibrary() {
     fetchOwners();
   }, [isSuperAdmin, assets]);
 
-  // Fetch SCORM packages and usage counts for super_admin/hr_manager
-  useEffect(() => {
-    if (!supabase || !canManagePackages) return;
+  // Fetch SCORM packages and usage counts. Item 103: hoisted out of the effect so
+  // the upload modal can refresh the list on success. Its only dependency is a
+  // boolean, so the identity is stable and rule 6 is satisfied.
+  const fetchPackages = useCallback(async () => {
+    if (!supabase || !canViewPackages) return;
 
-    const fetchPackages = async () => {
-      setPackagesLoading(true);
-
+    setPackagesLoading(true);
+    try {
       const { data: pkgData, error: pkgErr } = await supabase.
       from('scorm_packages').
       select('id, title, scorm_version, size_bytes, created_at').
@@ -187,12 +197,14 @@ export default function MediaLibrary() {
         }
       });
       setRegistrationUsage(regMap);
-
+    } finally {
       setPackagesLoading(false);
-    };
+    }
+  }, [canViewPackages]);
 
+  useEffect(() => {
     fetchPackages();
-  }, [canManagePackages]);
+  }, [fetchPackages]);
 
   // Filtered assets
   const filteredAssets = useMemo(() => {
@@ -337,8 +349,8 @@ export default function MediaLibrary() {
 				</Link>
 			</div>
 
-			{/* Tab row for super_admin/hr_manager */}
-			{canManagePackages &&
+			{/* Tab row for anyone who can view packages (instructor+) */}
+			{canViewPackages &&
       <div data-ev-id="ev_media_tabs" className="flex items-center bg-muted rounded-lg p-1 mb-6">
 					<button data-ev-id="ev_tab_files"
         onClick={() => setActiveTab('files')}
@@ -364,7 +376,7 @@ export default function MediaLibrary() {
       }
 
 			{/* Files tab content */}
-			{(!canManagePackages || activeTab === 'files') &&
+			{(!canViewPackages || activeTab === 'files') &&
       <>
 			{/* Filters */}
 			<div data-ev-id="ev_4de62d9ea8" className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -475,15 +487,25 @@ export default function MediaLibrary() {
       }
 
 			{/* SCORM Packages tab */}
-			{canManagePackages && activeTab === 'packages' &&
+			{canViewPackages && activeTab === 'packages' &&
       <div data-ev-id="ev_packages_section">
+					{/* Item 103: upload a package with no course. */}
+					<div data-ev-id="ev_packages_toolbar" className="flex justify-end mb-4">
+						<button data-ev-id="ev_upload_package"
+          onClick={() => setShowPackageUpload(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+							<Upload className="w-4 h-4" />
+							{dict.media.uploadPackage}
+						</button>
+					</div>
 					{packagesLoading ?
         <LoadingSkeleton variant="list" count={4} /> :
         packages.length === 0 ?
         <EmptyState
           icon={Package}
-          title={dict.common.noResults}
-          description="" /> :
+          title={dict.media.packagesEmpty}
+          description={dict.media.packagesEmptyDesc}
+          action={{ label: dict.media.uploadPackage, onClick: () => setShowPackageUpload(true) }} /> :
 
         <div data-ev-id="ev_packages_list" className="flex flex-col gap-3">
 							{packages.map((pkg) => {
@@ -501,18 +523,25 @@ export default function MediaLibrary() {
 											<p data-ev-id="ev_package_meta" className="text-xs text-muted-foreground mt-1">
 												{pkg.scorm_version} · {formatFileSize(pkg.size_bytes)} · {formatDate(pkg.created_at, locale)}
 											</p>
-											<p data-ev-id="ev_package_usage" className="text-xs text-muted-foreground mt-1">
+											{/* Item 103: these counts exist to explain the disabled delete, and RLS
+											    shows a non-admin ZERO scorm_registrations rows — verified live, an
+											    instructor reads 0 of them. Rendering that as "Learner records: 0"
+											    would be a lying empty state, so the line goes with the button. */}
+											{canDeletePackages &&
+                  <p data-ev-id="ev_package_usage" className="text-xs text-muted-foreground mt-1">
 												{dict.media.usedByModules}: {modCount} · {dict.media.learnerRecords}: {regCount}
 											</p>
+                  }
 										</div>
 
 										<div data-ev-id="ev_package_actions" className="flex items-center gap-3">
-											{inUse &&
+											{inUse && canDeletePackages &&
                   <span data-ev-id="ev_package_in_use" className="text-xs text-muted-foreground max-w-[200px]">
 													{dict.media.packageInUse}
 												</span>
                   }
-											<button data-ev-id="ev_delete_package"
+											{canDeletePackages &&
+                  <button data-ev-id="ev_delete_package"
                   onClick={() => openDeletePackageDialog(pkg)}
                   disabled={inUse}
                   className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -520,6 +549,7 @@ export default function MediaLibrary() {
 
 												<Trash2 className="w-4 h-4" />
 											</button>
+                  }
 										</div>
 									</div>);
 
@@ -586,6 +616,18 @@ export default function MediaLibrary() {
         <p data-ev-id="ev_delete_pkg_error" className="text-sm text-destructive mt-3">{deletePackageError}</p>
         }
 			</Modal>
+
+			{/* Item 103: course-free SCORM upload. No courseId, so no module is created
+			    and the sidecar stays report-only. */}
+			{showPackageUpload &&
+      <ScormUploadModal
+        onClose={() => setShowPackageUpload(false)}
+        onUploaded={() => {
+          fetchPackages();
+          setShowPackageUpload(false);
+        }} />
+
+      }
 
 		</div>);
 

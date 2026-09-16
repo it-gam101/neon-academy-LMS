@@ -15,8 +15,13 @@ import type { Json } from '@/integrations/supabase/types';
 type Module = Tables<'modules'>;
 
 interface ScormUploadModalProps {
-  courseId: string;
-  sortOrder: number;
+  /** Item 103: OMITTED means a course-free upload from the Media Library. The
+   *  package row is created either way — scorm-finalize takes moduleId as
+   *  optional and links a module only when one is supplied. With no course
+   *  there is no module to create, nothing to sync, and nowhere to import a
+   *  sidecar INTO, so all three are skipped. */
+  courseId?: string;
+  sortOrder?: number;
   onClose: () => void;
   /** Fired after a successful upload. The parent must RE-READ its modules: the
    *  import may have created several, and option A may have removed the block. */
@@ -38,6 +43,11 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
   const { session } = useAuth();
   const dict = getDictionary(locale);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Item 103: the sidecar import writes modules/quizzes into a COURSE. Without
+  // one there is no destination, so the import half is unavailable and the
+  // sidecar falls back to the report-only behaviour slice 9d-A shipped.
+  const canImportContent = !!courseId;
 
   const [state, setState] = useState<UploadState>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -337,29 +347,34 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
         return;
       }
 
-      // 1. Create the module row FIRST so we have a moduleId
-      const { data: moduleData, error: moduleError } = await supabase.
-      from('modules').
-      insert({
-        course_id: courseId,
-        title_en: packageTitle,
-        title_he: packageTitle,
-        module_type: 'scorm_package',
-        sort_order: sortOrder,
-        content_json: null
-      }).
-      select().
-      single();
+      // 1. Create the module row FIRST so we have a moduleId.
+      //    Item 103: skipped entirely for a course-free upload. createdModuleId
+      //    stays null, finalize receives no moduleId and links nothing, and the
+      //    catch below has no module to clean up.
+      if (courseId) {
+        const { data: moduleData, error: moduleError } = await supabase.
+        from('modules').
+        insert({
+          course_id: courseId,
+          title_en: packageTitle,
+          title_he: packageTitle,
+          module_type: 'scorm_package',
+          sort_order: sortOrder ?? 0,
+          content_json: null
+        }).
+        select().
+        single();
 
-      if (moduleError || !moduleData) {
-        const msg = moduleError?.message || 'Failed to create module';
-        console.error('Module creation error:', moduleError);
-        setError(msg);
-        setState('error');
-        return;
+        if (moduleError || !moduleData) {
+          const msg = moduleError?.message || 'Failed to create module';
+          console.error('Module creation error:', moduleError);
+          setError(msg);
+          setState('error');
+          return;
+        }
+
+        createdModuleId = moduleData.id;
       }
-
-      createdModuleId = moduleData.id;
 
       // 2. Build file list for presigning (strip package root prefix)
       const filesToUpload: Array<{path: string;size: number;data: Uint8Array;}> = [];
@@ -479,7 +494,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
       // Sidecar import. Its failure must NEVER undo the SCORM upload, so it has
       // its own try/catch and never rethrows — the outer catch deletes the module.
       let imported = false;
-      if (sidecar && sidecar.ok && importContent) {
+      if (sidecar && sidecar.ok && importContent && canImportContent) {
         try {
           const counts = await importSidecarContent(
             sidecar,
@@ -512,8 +527,8 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
         }
       }
 
-      // Sync course type since we added a SCORM module
-      await syncCourseType(courseId);
+      // Sync course type since we added a SCORM module. No course, nothing to sync.
+      if (courseId) await syncCourseType(courseId);
 
       // Return the module to parent
       onUploaded();
@@ -634,7 +649,14 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 										<span data-ev-id="ev_a30b3eea06" className="text-muted-foreground ms-3">{dict.studioUpload.sidecarQuestions}</span>{' '}
 										{sidecar.modules.reduce((n, m) => n + (m.quiz ? m.quiz.questions.length : 0), 0)}
 									</p>
-									<div data-ev-id="ev_26da18e56c" className="space-y-2 pt-1">
+									{/* Item 103: the import writes into a course. Course-free, offer nothing. */}
+									{!canImportContent &&
+              <p data-ev-id="ev_import_needs_course" className="text-xs text-muted-foreground pt-1">
+										{dict.studioUpload.importNeedsCourse}
+									</p>
+              }
+									{canImportContent &&
+              <div data-ev-id="ev_26da18e56c" className="space-y-2 pt-1">
 										<p data-ev-id="ev_bbc00de248" className="text-sm font-medium text-foreground">{dict.studioUpload.importHow}</p>
 
 										<label data-ev-id="ev_a7d5f19e46" className="flex items-start gap-2 cursor-pointer">
@@ -669,6 +691,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 
 										<p data-ev-id="ev_d7b781d5a9" className="text-xs text-muted-foreground">{dict.studioUpload.importPackageKept}</p>
 									</div>
+              }
 									{sidecar.warnings.length > 0 &&
               <ul data-ev-id="ev_77fb5a0946" className="space-y-1">
 											{sidecar.warnings.map((w, i) =>
