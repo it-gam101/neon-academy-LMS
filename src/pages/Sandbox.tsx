@@ -67,6 +67,11 @@ export default function Sandbox() {
   // Package picker state (only for authenticated instructors+)
   const [packages, setPackages] = useState<ScormPackage[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
+
+  // Item 102: the picker is OPTIONAL. Its failure must never reach `error`, which
+  // replaces the whole page — that would take the default demo down with it, and
+  // the Sandbox is the public showcase.
+  const [packagesError, setPackagesError] = useState<string | null>(null);
   const [selectedPackageId, setSelectedPackageId] = useState<string>(DEFAULT_PACKAGE_ID);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -112,6 +117,7 @@ export default function Sandbox() {
 
     const fetchPackages = async () => {
       setPackagesLoading(true);
+      setPackagesError(null);
       try {
         const { data, error: fetchError } = await supabase.
         from('scorm_packages').
@@ -121,13 +127,14 @@ export default function Sandbox() {
 
         if (fetchError) {
           console.error('Failed to load packages:', fetchError);
-          setError(dict.sandbox.packageLoadError);
+          // Rule 4: surface what actually broke, not a generic label.
+          setPackagesError(fetchError.message || dict.sandbox.packageLoadError);
         } else {
           setPackages(data ?? []);
         }
       } catch (err) {
         console.error('Failed to load packages:', err);
-        setError(dict.sandbox.packageLoadError);
+        setPackagesError((err as {message?: string;})?.message || dict.sandbox.packageLoadError);
       } finally {
         setPackagesLoading(false);
       }
@@ -258,7 +265,7 @@ export default function Sandbox() {
           <div data-ev-id="ev_563cabe32e" className="flex items-start justify-between gap-3 flex-wrap">
             <div data-ev-id="ev_51128fa7b7" className="min-w-0">
               <div data-ev-id="ev_326efd7679" className="flex items-center gap-3">
-                <Link to="/" className="text-xl font-semibold text-foreground hover:text-primary transition-colors">{dict.sandbox.title}</Link>
+                <Link data-ev-id="ev_3f491cf838" to="/" className="text-xl font-semibold text-foreground hover:text-primary transition-colors">{dict.sandbox.title}</Link>
                 <Badge>
                   <Package className="w-3 h-3 me-1" />
                   SCORM {displayVersion}
@@ -287,14 +294,31 @@ export default function Sandbox() {
                       </option>
                   )}
                   </select>
+                  {/* Item 102: the dropdown is never literally empty — the default demo is
+                     always an option — so the gap is "no packages of MY OWN, and no route
+                     to add one". Every role that reaches this picker (PICKER_ROLES) can
+                     also reach the Media Library and upload there, so the route is true
+                     for all of them. It does NOT require a course. */}
+                  {!packagesLoading && !packagesError && packages.length === 0 &&
+                <Link data-ev-id="ev_sandbox_no_packages"
+                to="/studio/media?tab=packages"
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 whitespace-nowrap">
+                      {dict.sandbox.noPackagesYet}
+                    </Link>
+                }
+                  {packagesError &&
+                <span data-ev-id="ev_sandbox_packages_error" className="text-xs text-destructive max-w-[220px]">
+                      {packagesError}
+                    </span>
+                }
                 </div>
               }
               <LanguageToggle />
-              {isAuthenticated ? (
-                <Link to="/" className="px-4 py-2 rounded-lg font-medium text-sm border border-border text-foreground hover:bg-muted transition-colors focus-ring">{dict.sandbox.backToAcademy}</Link>
-              ) : (
-                <Link to="/auth/login" className="px-4 py-2 rounded-lg font-medium text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus-ring">{dict.auth.login}</Link>
-              )}
+              {isAuthenticated ?
+              <Link data-ev-id="ev_0ba70177ae" to="/" className="px-4 py-2 rounded-lg font-medium text-sm border border-border text-foreground hover:bg-muted transition-colors focus-ring">{dict.sandbox.backToAcademy}</Link> :
+
+              <Link data-ev-id="ev_13ac5af6fb" to="/auth/login" className="px-4 py-2 rounded-lg font-medium text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus-ring">{dict.auth.login}</Link>
+              }
               <button data-ev-id="ev_48108b3bd0"
               onClick={handleReset}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
