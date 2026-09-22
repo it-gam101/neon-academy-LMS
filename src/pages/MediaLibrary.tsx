@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link } from 'react-router';
 import { Image, FileText, Trash2, Search, ArrowLeft, ArrowRight, Package, Upload } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
@@ -80,13 +80,7 @@ export default function MediaLibrary() {
   const [deleteTarget, setDeleteTarget] = useState<MediaAsset | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  // Item 102: the Sandbox empty state links here promising "upload one", so honour
-  // ?tab=packages and land on the tab that actually offers it. The render still
-  // gates on canViewPackages, so a role without access falls back to Files.
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'files' | 'packages'>(
-    searchParams.get('tab') === 'packages' ? 'packages' : 'files'
-  );
+  const [activeTab, setActiveTab] = useState<'files' | 'packages'>('files');
   const [packages, setPackages] = useState<ScormPackage[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [moduleUsage, setModuleUsage] = useState<Map<string, number>>(new Map());
