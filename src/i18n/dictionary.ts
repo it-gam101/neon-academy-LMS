@@ -149,6 +149,7 @@ export interface Dictionary {
 		importAsModulesDetail: string;
 		importPackageKept: string;
 		importNeedsCourse: string;
+		libraryImportPackageKept: string;
 		importedContent: string;
 		importFailed: string;
 	};
@@ -882,6 +883,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			importAsModulesDetail: '{count} modules, each counted separately toward completion.',
 			importPackageKept: 'The uploaded package stays in your library either way.',
 			importNeedsCourse: 'This package carries editable course content. Import it as modules by uploading from inside a course — a library upload stores the package only.',
+			libraryImportPackageKept: 'The package stays in your library either way, and can still be added to other courses.',
 			importedContent: 'Imported:',
 			importFailed: 'The package uploaded and works. Its content could not be imported.',
 		},
@@ -1590,6 +1592,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			importAsModulesDetail: '{count} מודולים, כל אחד נספר בנפרד לצורך השלמת הקורס.',
 			importPackageKept: 'החבילה שהועלתה נשמרת בספרייה שלך בכל מקרה.',
 			importNeedsCourse: 'חבילה זו כוללת תוכן קורס הניתן לעריכה. כדי לייבא אותו כמודולים, העלו אותה מתוך קורס — העלאה לספרייה שומרת את החבילה בלבד.',
+			libraryImportPackageKept: 'החבילה נשארת בספרייה שלכם בכל מקרה, וניתן להוסיף אותה גם לקורסים אחרים.',
 			importedContent: 'יובאו:',
 			importFailed: 'החבילה הועלתה ופועלת. לא ניתן היה לייבא את התוכן שלה.',
 		},

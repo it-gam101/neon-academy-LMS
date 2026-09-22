@@ -20,8 +20,13 @@ import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
 import { LessonBlockEditor } from '@/components/studio/LessonBlockEditor';
 import { courseProblems, type CourseProblem, type ProblemCode, type QuizDataLike } from '@/lib/completeness';
 import { syncCourseType } from '@/lib/courseType';
+import { parseVc4elSource, type Vc4elPlan } from '@/lib/vc4elSource';
+import { importSidecarContent } from '@/lib/importSidecar';
 
 type Course = Tables<'courses'>;
+
+/** Item 105: storage_base_url is what locates the sidecar in R2. */
+type ChoosablePackage = {id: string;title: string;scorm_version: string;created_at: string;storage_base_url: string;};
 type Module = Tables<'modules'>;
 type Category = Tables<'course_categories'>;
 type Quiz = Tables<'quizzes'>;
@@ -51,9 +56,17 @@ export default function StudioEditor() {
   // SCORM upload state
   const [showScormUploadModal, setShowScormUploadModal] = useState(false);
   const [showScormChooser, setShowScormChooser] = useState(false);
-  const [availablePackages, setAvailablePackages] = useState<Array<{id: string;title: string;scorm_version: string;created_at: string;}>>([]);
+  const [availablePackages, setAvailablePackages] = useState<Array<ChoosablePackage>>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [addingFromLibrary, setAddingFromLibrary] = useState(false);
+  // Item 105: a package already in the library may still carry an editable
+  // vc4el sidecar. It lives in R2 next to the package, so it can be fetched
+  // and offered — the choice the UPLOAD path has always had.
+  const [pendingPackage, setPendingPackage] = useState<ChoosablePackage | null>(null);
+  const [pendingSidecar, setPendingSidecar] = useState<Vc4elPlan | null>(null);
+  const [checkingSidecar, setCheckingSidecar] = useState(false);
+  const [importAsModules, setImportAsModules] = useState(true);
+  const [libraryImportError, setLibraryImportError] = useState<string | null>(null);
 
   // Profile for permission checks
   const { profile } = useProfile();
@@ -641,7 +654,7 @@ export default function StudioEditor() {
       const { data, error } = await withTimeout(
         supabase.
         from('scorm_packages').
-        select('id, title, scorm_version, created_at').
+        select('id, title, scorm_version, created_at, storage_base_url').
         eq('is_public_sandbox', false).
         order('created_at', { ascending: false }),
         10000
@@ -663,6 +676,92 @@ export default function StudioEditor() {
       setAvailablePackages([]);
     } finally {
       setLoadingPackages(false);
+    }
+  };
+
+  const clearPending = () => {
+    setPendingPackage(null);
+    setPendingSidecar(null);
+    setLibraryImportError(null);
+  };
+
+  // Item 105. The sidecar lives in R2 beside the package, so an ALREADY-UPLOADED
+  // package can still offer the import choice. A miss is the NORMAL case and must
+  // attach exactly as before — this probe may never block or fail the attach.
+  const handlePickPackage = async (pkg: ChoosablePackage) => {
+    if (!supabase || !courseId) return;
+    setLibraryImportError(null);
+    setCheckingSidecar(true);
+
+    let plan: Vc4elPlan | null = null;
+    try {
+      const res = await withTimeout(fetch(`${pkg.storage_base_url}/vc4el-source.json`), 10000);
+      if (res.ok) {
+        // archivePaths: null — we cannot list an R2 prefix, so media resolution is
+        // skipped. URLs still build from storage_base_url, which is where the files
+        // already are; what is lost is only the warning for a path that is absent.
+        const parsed = parseVc4elSource(await res.json(), { archivePaths: null });
+        if (parsed.ok) plan = parsed;
+      }
+    } catch (err) {
+      console.error('vc4el-source probe failed (attaching as a package):', err);
+    } finally {
+      setCheckingSidecar(false);
+    }
+
+    if (!plan) {
+      await handleSelectExistingPackage(pkg);
+      return;
+    }
+
+    setPendingPackage(pkg);
+    setPendingSidecar(plan);
+    setImportAsModules(true);
+  };
+
+  const handleConfirmLibraryChoice = async () => {
+    if (!pendingPackage || !pendingSidecar || !courseId) return;
+
+    if (!importAsModules) {
+      const pkg = pendingPackage;
+      clearPending();
+      await handleSelectExistingPackage(pkg);
+      return;
+    }
+
+    setAddingFromLibrary(true);
+    setLibraryImportError(null);
+    try {
+      await importSidecarContent(pendingSidecar, {
+        courseId,
+        storageBaseUrl: pendingPackage.storage_base_url,
+        refusedMessage: dict.common.changeRefused
+      });
+
+      // Re-read rather than append: the import creates several modules, and the
+      // badge reads quiz data too (item 100 — refreshing modules alone leaves it
+      // reporting no_questions for a quiz the import just filled).
+      const { data } = await supabase.
+      from('modules').
+      select('*').
+      eq('course_id', courseId).
+      order('sort_order');
+      if (data) {
+        setModules(data);
+        setQuizzes(await loadQuizzes(data));
+      }
+      await syncCourseType(courseId);
+
+      // Close BEFORE the toast: a toast fired under an open dialog paints beneath
+      // its ::backdrop (rule 9b).
+      setShowScormChooser(false);
+      clearPending();
+      showToast('success', dict.studioUpload.success);
+    } catch (err) {
+      console.error('Library sidecar import failed:', err);
+      setLibraryImportError((err as {message?: string;})?.message || dict.common.error);
+    } finally {
+      setAddingFromLibrary(false);
     }
   };
 
@@ -1723,8 +1822,70 @@ export default function StudioEditor() {
 			{/* SCORM Chooser Modal */}
 			<Modal
         isOpen={showScormChooser}
-        onClose={() => setShowScormChooser(false)}
-        title={dict.studioUpload.addScorm}>
+        onClose={() => {setShowScormChooser(false);clearPending();}}
+        title={dict.studioUpload.addScorm}
+        error={libraryImportError}>
+
+				{/* Item 105: step two — this package carries editable content, so offer the
+				    same choice the upload path gives. Only reachable when a sidecar parsed. */}
+				{pendingSidecar && pendingPackage ?
+        <div data-ev-id="ev_library_import_choice" className="flex flex-col gap-4">
+						<p data-ev-id="ev_lic_pkg" className="text-sm text-muted-foreground">
+							{pendingPackage.title}
+						</p>
+						<div data-ev-id="ev_lic_summary" className="p-3 bg-muted rounded-lg text-sm text-foreground">
+							<span data-ev-id="ev_lic_mods_label" className="text-muted-foreground">{dict.studioUpload.sidecarModules}</span>{' '}
+							{pendingSidecar.modules.length}
+							<span data-ev-id="ev_lic_q_label" className="text-muted-foreground ms-3">{dict.studioUpload.sidecarQuestions}</span>{' '}
+							{pendingSidecar.modules.reduce((n, m) => n + (m.quiz ? m.quiz.questions.length : 0), 0)}
+						</div>
+						<p data-ev-id="ev_lic_how" className="text-sm font-medium text-foreground">{dict.studioUpload.importHow}</p>
+						<label data-ev-id="ev_lic_opt_pkg" className="flex items-start gap-2 cursor-pointer">
+							<input data-ev-id="ev_lic_radio_pkg"
+            type="radio"
+            name="vc4el-library-import-mode"
+            checked={!importAsModules}
+            onChange={() => setImportAsModules(false)}
+            disabled={addingFromLibrary}
+            className="mt-1 w-4 h-4 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
+							<span data-ev-id="ev_lic_pkg_text" className="block">
+								<span data-ev-id="ev_lic_pkg_t" className="block text-sm text-foreground">{dict.studioUpload.importAsPackage}</span>
+								<span data-ev-id="ev_lic_pkg_d" className="block text-xs text-muted-foreground">{dict.studioUpload.importAsPackageDetail}</span>
+							</span>
+						</label>
+						<label data-ev-id="ev_lic_opt_mods" className="flex items-start gap-2 cursor-pointer">
+							<input data-ev-id="ev_lic_radio_mods"
+            type="radio"
+            name="vc4el-library-import-mode"
+            checked={importAsModules}
+            onChange={() => setImportAsModules(true)}
+            disabled={addingFromLibrary}
+            className="mt-1 w-4 h-4 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
+							<span data-ev-id="ev_lic_mods_text" className="block">
+								<span data-ev-id="ev_lic_mods_t" className="block text-sm text-foreground">{dict.studioUpload.importAsModules}</span>
+								<span data-ev-id="ev_lic_mods_d" className="block text-xs text-muted-foreground">
+									{dict.studioUpload.importAsModulesDetail.replace('{count}', String(pendingSidecar.modules.length))}
+								</span>
+							</span>
+						</label>
+						<p data-ev-id="ev_lic_kept" className="text-xs text-muted-foreground">{dict.studioUpload.libraryImportPackageKept}</p>
+						<div data-ev-id="ev_lic_actions" className="flex gap-3 justify-end">
+							<button data-ev-id="ev_lic_back"
+            type="button"
+            onClick={clearPending}
+            disabled={addingFromLibrary}
+            className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50">
+								{dict.common.cancel}
+							</button>
+							<button data-ev-id="ev_lic_confirm"
+            type="button"
+            onClick={handleConfirmLibraryChoice}
+            disabled={addingFromLibrary}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
+								{addingFromLibrary ? dict.common.loading : dict.common.create}
+							</button>
+						</div>
+					</div> :
 
 				<div data-ev-id="ev_scorm_chooser" className="flex flex-col gap-4">
 					{/* Upload new option */}
@@ -1757,8 +1918,8 @@ export default function StudioEditor() {
             <button data-ev-id="ev_pkg_item"
             key={pkg.id}
             type="button"
-            disabled={addingFromLibrary}
-            onClick={() => handleSelectExistingPackage(pkg)}
+            disabled={addingFromLibrary || checkingSidecar}
+            onClick={() => handlePickPackage(pkg)}
             className="flex items-center gap-3 p-3 text-start bg-background border border-border rounded-lg hover:border-primary transition-colors disabled:opacity-50">
 
 									<div data-ev-id="ev_pkg_info" className="flex-1 min-w-0">
@@ -1772,6 +1933,7 @@ export default function StudioEditor() {
 						</div>
           }
 				</div>
+        }
 			</Modal>
 
 		</div>);
