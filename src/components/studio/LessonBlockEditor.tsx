@@ -21,6 +21,9 @@ interface ContentBlock {
   type: 'heading' | 'text' | 'video' | 'image' | 'pdf';
   content: {en: string;he: string;};
   url?: string;
+  /** Item 109: an imported rich enhancement. Not editable here yet — but it MUST
+   *  survive a load/save round trip, or editing a lesson's text would erase it. */
+  interaction?: Record<string, unknown>;
 }
 
 interface LessonBlockEditorProps {
@@ -205,14 +208,16 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
         console.error('Failed to load content:', error);
         showToast('error', (error as {message?: string;})?.message || dict.common.error);
       } else if (data?.content_json) {
-        const json = data.content_json as {blocks?: Array<{type: string;content: unknown;url?: string;}>;};
+        const json = data.content_json as {blocks?: Array<{type: string;content: unknown;url?: string;interaction?: Record<string, unknown>;}>;};
         const rawBlocks = json.blocks || [];
         // Normalise all blocks, generating ids for legacy blocks that have none
         const normalised: ContentBlock[] = rawBlocks.map((b) => ({
           id: (b as {id?: string;}).id ?? crypto.randomUUID(),
           type: b.type as 'heading' | 'text' | 'video' | 'image' | 'pdf',
           content: normaliseContent(b.content as {en: string;he: string;} | string),
-          url: b.url
+          url: b.url,
+          // Item 109: carried through untouched; persistBlocks spreads the block, so it is saved back.
+          ...(b.interaction ? { interaction: b.interaction } : {})
         }));
         setBlocks(normalised);
         savedSnapshotRef.current = JSON.stringify(normalised);

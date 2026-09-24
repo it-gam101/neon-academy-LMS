@@ -28,6 +28,30 @@ export interface ImportBlock {
 	type: string;
 	content: { en: string; he: string };
 	url?: string;
+	/** Item 109: the block's rich enhancement, with package-relative media made absolute. */
+	interaction?: Record<string, unknown>;
+}
+
+/** Same keys the parser treats as media inside an interaction. */
+const INTERACTION_MEDIA_KEYS = new Set(['image', 'packagePath']);
+
+/**
+ * Returns a copy of an interaction with every package-relative media path turned into
+ * the consumer's own public URL — the same rule mapBlock applies to `packagePath`.
+ * The parser has already nulled anything unsafe or missing from the archive.
+ */
+function resolveInteractionMedia(node: unknown, base: string): unknown {
+	if (Array.isArray(node)) return node.map((x) => resolveInteractionMedia(x, base));
+	if (node === null || typeof node !== 'object') return node;
+	const out: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+		if (INTERACTION_MEDIA_KEYS.has(key) && typeof value === 'string' && !/^https:\/\//.test(value)) {
+			out[key] = `${base}/${value}`;
+		} else {
+			out[key] = resolveInteractionMedia(value, base);
+		}
+	}
+	return out;
 }
 
 export interface ImportQuestionRow {
@@ -150,6 +174,11 @@ function mapBlock(b: Vc4elBlock, base: string): ImportBlock {
 		out.url = `${base}/${b.packagePath}`;
 	} else if (typeof b.url === 'string' && b.url.length > 0) {
 		out.url = b.url;
+	}
+
+	// Item 109: carry the interaction through instead of dropping it.
+	if (b.interaction) {
+		out.interaction = resolveInteractionMedia(b.interaction, base) as Record<string, unknown>;
 	}
 
 	return out;

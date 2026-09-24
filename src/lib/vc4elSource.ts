@@ -47,6 +47,13 @@ export interface Vc4elBlock {
 	content: Record<string, string>;
 	packagePath?: string | null;
 	url?: string;
+	/**
+	 * Item 109: a rich enhancement (cinematic-scroll, hotspot, branching, simulator)
+	 * riding on an ordinary block. Kept VERBATIM so it can be rendered later.
+	 * ⚠️ Its strings are UNTRUSTED text from an uploaded file: render them as text
+	 * (React escaping), never through innerHTML, and never evaluate any of them.
+	 */
+	interaction?: Record<string, unknown>;
 }
 
 export type Vc4elQuestion = {
@@ -101,6 +108,40 @@ interface ParseCtx {
 	required: string[];
 	problems: Vc4elNote[];
 	mediaRefs: { path: string; block: Vc4elBlock }[];
+	/** Item 109: package-relative media found INSIDE an interaction (e.g. a scene's `image`). */
+	interactionRefs: { path: string; holder: Record<string, unknown>; key: string }[];
+}
+
+/** Keys inside an interaction whose string value names a file in the package. */
+const INTERACTION_MEDIA_KEYS = new Set(['image', 'packagePath']);
+
+/** Contract v2 path rules: relative, forward slashes, no leading "/", no "./" or "..", no "\\", no NUL, no scheme. */
+function isSafeRelPath(p: string): boolean {
+	if (!p || p.startsWith('/') || p.includes('\\') || p.includes('\0')) return false;
+	if (/^[a-z][a-z0-9+.-]*:/i.test(p)) return false;
+	return !p.split('/').some((seg) => seg === '' || seg === '.' || seg === '..');
+}
+
+/**
+ * Walks a copied interaction and registers every package-relative media path so it
+ * is resolved like a block's `packagePath`. An unsafe path is nulled and reported.
+ */
+function collectInteractionMedia(node: unknown, moduleOrder: number, ctx: ParseCtx): void {
+	if (Array.isArray(node)) { for (const x of node) collectInteractionMedia(x, moduleOrder, ctx); return; }
+	if (!isObj(node)) return;
+	for (const [key, value] of Object.entries(node)) {
+		if (INTERACTION_MEDIA_KEYS.has(key) && typeof value === 'string') {
+			if (HTTPS_ABS.test(value)) continue; // an absolute https URL is left as it is
+			if (isSafeRelPath(value)) {
+				ctx.interactionRefs.push({ path: value, holder: node, key });
+			} else {
+				ctx.problems.push({ code: 'bad_path', detail: `module ${moduleOrder}: interaction media path "${value}" is not a safe package path.` });
+				node[key] = null;
+			}
+		} else {
+			collectInteractionMedia(value, moduleOrder, ctx);
+		}
+	}
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
@@ -188,7 +229,8 @@ export function parseVc4elSource(raw: unknown, opts: Vc4elParseOptions = {}): Vc
 	if (!Array.isArray(raw.modules)) return refuse('unparseable', 'modules is missing or not an array.');
 
 	const mediaRefs: ParseCtx['mediaRefs'] = [];
-	const ctx: ParseCtx = { required, problems, mediaRefs };
+	const interactionRefs: ParseCtx['interactionRefs'] = [];
+	const ctx: ParseCtx = { required, problems, mediaRefs, interactionRefs };
 	const modules = raw.modules.map((m, i) => parseModule(m, i, ctx));
 
 	// sourceModule anchors resolve by sort_order against LESSON modules only.
@@ -224,6 +266,15 @@ export function parseVc4elSource(raw: unknown, opts: Vc4elParseOptions = {}): Vc
 				// Case-variant paths land here too — R2 keys are case-sensitive.
 				problems.push({ code: 'unresolved', detail: `packagePath "${ref.path}" is not in the archive.` });
 				ref.block.packagePath = null;
+			}
+		}
+		// Item 109: media inside interactions follows the same exact-match rule.
+		for (const ref of interactionRefs) {
+			if (present.has(ref.path)) {
+				referenced.add(ref.path);
+			} else {
+				problems.push({ code: 'unresolved', detail: `interaction media "${ref.path}" is not in the archive.` });
+				ref.holder[ref.key] = null;
 			}
 		}
 		const mediaLike = archivePaths.filter((p) => /\.(png|jpe?g|gif|svg|webp|pdf|mp4|webm)$/i.test(p));
@@ -298,6 +349,15 @@ function parseBlock(b: unknown, moduleOrder: number, ctx: ParseCtx): Vc4elBlock 
 		const ok = out.type === 'video' ? YOUTUBE_EMBED.test(url) : HTTPS_ABS.test(url);
 		if (ok) out.url = url;
 		else problems.push({ code: 'bad_url', detail: `${out.type} block url rejected by the allowlist: ${url}` });
+	}
+
+	// Item 109: keep the rich enhancement. Contract v2 tells consumers to IGNORE unknown
+	// keys when they cannot use them — which is right — but discarding it here lost every
+	// Spark interaction on import. A deep copy, so nulling a bad path cannot touch the input.
+	if (isObj(src.interaction)) {
+		const copy = JSON.parse(JSON.stringify(src.interaction)) as Record<string, unknown>;
+		collectInteractionMedia(copy, moduleOrder, ctx);
+		out.interaction = copy;
 	}
 	return out;
 }
