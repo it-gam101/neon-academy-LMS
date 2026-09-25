@@ -157,6 +157,7 @@ export interface Dictionary {
 		importPackageKept: string;
 		importNeedsCourse: string;
 		libraryImportPackageKept: string;
+		interactionsNotShown: string;
 		importedContent: string;
 		importFailed: string;
 	};
@@ -898,6 +899,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			importPackageKept: 'The uploaded package stays in your library either way.',
 			importNeedsCourse: 'This package carries editable course content. Import it as modules by uploading from inside a course — a library upload stores the package only.',
 			libraryImportPackageKept: 'The package stays in your library either way, and can still be added to other courses.',
+			interactionsNotShown: 'Interactive elements in this package: {count}. Imported as editable modules, they are kept but not yet displayed — learners see the text version instead. To show them as designed, play the package as delivered.',
 			importedContent: 'Imported:',
 			importFailed: 'The package uploaded and works. Its content could not be imported.',
 		},
@@ -1614,6 +1616,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			importPackageKept: 'החבילה שהועלתה נשמרת בספרייה שלך בכל מקרה.',
 			importNeedsCourse: 'חבילה זו כוללת תוכן קורס הניתן לעריכה. כדי לייבא אותו כמודולים, העלו אותה מתוך קורס — העלאה לספרייה שומרת את החבילה בלבד.',
 			libraryImportPackageKept: 'החבילה נשארת בספרייה שלכם בכל מקרה, וניתן להוסיף אותה גם לקורסים אחרים.',
+			interactionsNotShown: 'רכיבים אינטראקטיביים בחבילה: {count}. בייבוא כמודולים הניתנים לעריכה הם נשמרים אך עדיין אינם מוצגים — הלומדים יראו במקומם את גרסת הטקסט. כדי להציגם כפי שעוצבו, הפעילו את החבילה כפי שנמסרה.',
 			importedContent: 'יובאו:',
 			importFailed: 'החבילה הועלתה ופועלת. לא ניתן היה לייבא את התוכן שלה.',
 		},

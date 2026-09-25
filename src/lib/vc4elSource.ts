@@ -80,6 +80,18 @@ export type Vc4elModule = {
 	content_json?: { blocks: Vc4elBlock[] };
 } & Record<string, unknown>;
 
+/**
+ * Item 109 step 1b: how many rich interactions a plan carries. Counted on `text` blocks
+ * only — the contract ignores an `interaction` on any other block type. The import
+ * dialogs use it to tell the author these are kept but not yet displayed.
+ */
+export function countInteractions(plan: { modules: Vc4elModule[] }): number {
+	return plan.modules.reduce(
+		(n, m) => n + (m.content_json?.blocks ?? []).filter((b) => b.type === 'text' && b.interaction).length,
+		0
+	);
+}
+
 export type Vc4elCourse = {
 	estimated_minutes: number | null;
 } & Record<string, unknown>;
@@ -131,7 +143,8 @@ function collectInteractionMedia(node: unknown, moduleOrder: number, ctx: ParseC
 	if (!isObj(node)) return;
 	for (const [key, value] of Object.entries(node)) {
 		if (INTERACTION_MEDIA_KEYS.has(key) && typeof value === 'string') {
-			if (HTTPS_ABS.test(value)) continue; // an absolute https URL is left as it is
+			// An absolute URL is NOT a package path (contract, "Media inside an interaction"): it fails
+			// isSafeRelPath below, so it is nulled and reported as missing media.
 			if (isSafeRelPath(value)) {
 				ctx.interactionRefs.push({ path: value, holder: node, key });
 			} else {

@@ -8,7 +8,7 @@ import { ensureSession } from '@/lib/ensureSession';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { syncCourseType } from '@/lib/courseType';
-import { parseVc4elSource, type Vc4elResult } from '@/lib/vc4elSource';
+import { parseVc4elSource, countInteractions, type Vc4elResult } from '@/lib/vc4elSource';
 import { importSidecarContent } from '@/lib/importSidecar';
 
 
@@ -219,6 +219,10 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
         };
       }
       setSidecar(parsed);
+      // Item 109 step 1b: the Academy keeps interactions on import but cannot display them yet,
+      // so a package that has any defaults to "Play the SCORM package as delivered" — the designed experience.
+      // The author can still choose editable modules; the notice below says what that means.
+      setImportContent(!(parsed && parsed.ok && countInteractions(parsed) > 0));
 
       setManifestInfo(info);
       setUnzippedFiles(unzipped);
@@ -560,6 +564,11 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
               }
 									{canImportContent &&
               <div data-ev-id="ev_26da18e56c" className="space-y-2 pt-1">
+										{countInteractions(sidecar) > 0 &&
+                <p data-ev-id="ev_interactions_not_shown" className="text-xs text-muted-foreground">
+												{dict.studioUpload.interactionsNotShown.replace('{count}', String(countInteractions(sidecar)))}
+											</p>
+                }
 										<p data-ev-id="ev_bbc00de248" className="text-sm font-medium text-foreground">{dict.studioUpload.importHow}</p>
 
 										<label data-ev-id="ev_a7d5f19e46" className="flex items-start gap-2 cursor-pointer">

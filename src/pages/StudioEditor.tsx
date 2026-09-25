@@ -20,7 +20,7 @@ import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
 import { LessonBlockEditor } from '@/components/studio/LessonBlockEditor';
 import { courseProblems, type CourseProblem, type ProblemCode, type QuizDataLike } from '@/lib/completeness';
 import { syncCourseType } from '@/lib/courseType';
-import { parseVc4elSource, type Vc4elPlan } from '@/lib/vc4elSource';
+import { parseVc4elSource, countInteractions, type Vc4elPlan } from '@/lib/vc4elSource';
 import { importSidecarContent } from '@/lib/importSidecar';
 
 type Course = Tables<'courses'>;
@@ -716,7 +716,9 @@ export default function StudioEditor() {
 
     setPendingPackage(pkg);
     setPendingSidecar(plan);
-    setImportAsModules(true);
+    // Item 109 step 1b: interactions are kept but not yet displayed, so a package that has
+    // any defaults to playing the package as delivered. Same rule as the upload dialog.
+    setImportAsModules(countInteractions(plan) === 0);
   };
 
   const handleConfirmLibraryChoice = async () => {
@@ -1839,6 +1841,11 @@ export default function StudioEditor() {
 							<span data-ev-id="ev_lic_q_label" className="text-muted-foreground ms-3">{dict.studioUpload.sidecarQuestions}</span>{' '}
 							{pendingSidecar.modules.reduce((n, m) => n + (m.quiz ? m.quiz.questions.length : 0), 0)}
 						</div>
+						{countInteractions(pendingSidecar) > 0 &&
+          <p data-ev-id="ev_lic_interactions_not_shown" className="text-xs text-muted-foreground">
+								{dict.studioUpload.interactionsNotShown.replace('{count}', String(countInteractions(pendingSidecar)))}
+							</p>
+          }
 						<p data-ev-id="ev_lic_how" className="text-sm font-medium text-foreground">{dict.studioUpload.importHow}</p>
 						<label data-ev-id="ev_lic_opt_pkg" className="flex items-start gap-2 cursor-pointer">
 							<input data-ev-id="ev_lic_radio_pkg"
