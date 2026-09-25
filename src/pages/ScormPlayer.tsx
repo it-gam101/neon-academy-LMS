@@ -24,6 +24,27 @@ interface ScormMessage {
   };
 }
 
+/** What scorm-commit reports back about the registration it just saved. */
+interface CommitResult {
+  completion_status?: string | null;
+  success_status?: string | null;
+  score_raw?: number | null;
+}
+
+type FinishOutcome = 'passed' | 'failed' | 'completed' | 'saved';
+
+/**
+ * Item 112. How a package that has just TERMINATED left things. Success status wins over
+ * completion, matching the header badge; anything short of completed means the learner
+ * exited part-way (e.g. "save and continue later"), so their progress is saved, not finished.
+ */
+function finishOutcome(r: CommitResult): FinishOutcome {
+  if (r.success_status === 'failed') return 'failed';
+  if (r.success_status === 'passed') return 'passed';
+  if (r.completion_status === 'completed') return 'completed';
+  return 'saved';
+}
+
 export default function ScormPlayer() {
   const { enrollmentId, moduleId } = useParams<{enrollmentId: string;moduleId: string;}>();
   const navigate = useNavigate();
@@ -46,6 +67,8 @@ export default function ScormPlayer() {
   // The last CMI payload that failed to reach the server, kept so Retry can re-send it.
   const [failedCommit, setFailedCommit] = useState<{cmi: Record<string, unknown>;event: 'commit' | 'terminate';} | null>(null);
   const [retryingCommit, setRetryingCommit] = useState(false);
+  // Item 112: the package has finished and its result is SAVED — show where the learner stands.
+  const [finished, setFinished] = useState<{outcome: FinishOutcome;score: number | null;} | null>(null);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bucketOriginRef = useRef<string | null>(null);
@@ -164,12 +187,13 @@ export default function ScormPlayer() {
   // INSERT ... ON CONFLICT DO UPDATE on one key can raise a unique violation instead of
   // resolving, which scorm-commit returns as 500 and the learner reads as
   // "Your progress was not saved". BACKLOG item 101.
-  const commitChainRef = useRef<Promise<void>>(Promise.resolve());
+  const commitChainRef = useRef<Promise<unknown>>(Promise.resolve());
 
   // Commit CMI data to Edge Function
+  // Item 112: resolves to what the server saved, or null when nothing was saved.
   const performCommit = useCallback(
-    async (cmi: Record<string, unknown>, event: 'commit' | 'terminate') => {
-      if (!scormPackage || !enrollmentId || !moduleId || !session?.access_token) return;
+    async (cmi: Record<string, unknown>, event: 'commit' | 'terminate'): Promise<CommitResult | null> => {
+      if (!scormPackage || !enrollmentId || !moduleId || !session?.access_token) return null;
 
       try {
         const response = await fetch(
@@ -199,14 +223,17 @@ export default function ScormPlayer() {
             setSuccessStatus(data.registration.success_status);
           }
           setFailedCommit(null); // recovered
+          return (data.registration ?? null) as CommitResult | null;
         } else {
           // A non-2xx is a LOST completion, not a no-op. 401/500/RLS all land here.
           console.error('scorm-commit returned', response.status);
           setFailedCommit({ cmi, event });
+          return null;
         }
       } catch (err) {
         console.error('Failed to commit SCORM data:', err);
         setFailedCommit({ cmi, event });
+        return null;
       }
     },
     [scormPackage, enrollmentId, moduleId, session?.access_token]
@@ -217,7 +244,7 @@ export default function ScormPlayer() {
       const next = commitChainRef.current.then(() => performCommit(cmi, event));
       // performCommit swallows its own errors; this keeps a rejection from poisoning the
       // chain for every later commit even so.
-      commitChainRef.current = next.catch(() => {});
+      commitChainRef.current = next.catch(() => null);
       return next;
     },
     [performCommit]
@@ -246,7 +273,17 @@ export default function ScormPlayer() {
 
         case 'scorm:terminate':
           if (payload?.cmi) {
-            void commitCmi(payload.cmi, 'terminate');
+            // Item 112: once the finish is SAVED, tell the learner where they stand and offer a
+            // way back. Visibility is read NOW, when the finish arrives: the bridge also posts a
+            // terminate on pagehide, by which time the page is already hidden — and checking after
+            // the save instead would lose the panel for a learner who switched tabs meanwhile.
+            // A failed save shows the Retry bar instead.
+            const finishedInView = document.visibilityState === 'visible';
+            void commitCmi(payload.cmi, 'terminate').then((saved) => {
+              if (saved && finishedInView) {
+                setFinished({ outcome: finishOutcome(saved), score: saved.score_raw ?? null });
+              }
+            });
           }
           break;
 
@@ -440,7 +477,11 @@ export default function ScormPlayer() {
             // that runs with keepalive during unload, where an extra await could lose the
             // commit outright. BACKLOG item 104.
             await ensureSession();
-            await commitCmi(failedCommit.cmi, failedCommit.event);
+            const saved = await commitCmi(failedCommit.cmi, failedCommit.event);
+            // Item 112: a retried FINISH that now saves shows the same result panel.
+            if (saved && failedCommit.event === 'terminate') {
+              setFinished({ outcome: finishOutcome(saved), score: saved.score_raw ?? null });
+            }
           } finally {
             setRetryingCommit(false);
           }
@@ -469,6 +510,50 @@ export default function ScormPlayer() {
         style={{ minHeight: 'calc(100vh - 100px)' }}
         sandbox="allow-scripts allow-same-origin allow-modals" />
 
+				{/* Item 112: the finish is saved. Laid OVER the player rather than replacing it, so the
+				    package's own last screen (a certificate, "Print / Save as PDF") stays reachable
+				    through "Stay on this page". No automatic redirect. */}
+				{finished &&
+        <div data-ev-id="ev_scorm_finished"
+        role="status"
+        aria-live="polite"
+        className="absolute inset-0 z-20 flex items-center justify-center bg-background/90 p-4">
+						<div data-ev-id="ev_scorm_finished_card" className="w-full max-w-md rounded-lg border border-border bg-card p-6 text-center">
+							{finished.outcome === 'failed' ?
+            <XCircle className="mx-auto mb-3 h-10 w-10 text-destructive" /> :
+            <CheckCircle className="mx-auto mb-3 h-10 w-10 text-primary" />
+            }
+							<h2 data-ev-id="ev_scorm_finished_title" className="text-xl font-semibold text-foreground">
+								{finished.outcome === 'passed' ? dict.scorm.finishedPassed :
+              finished.outcome === 'failed' ? dict.scorm.finishedFailed :
+              finished.outcome === 'completed' ? dict.scorm.finishedCompleted :
+              dict.scorm.finishedSaved}
+							</h2>
+							{finished.outcome === 'saved' ?
+            <p data-ev-id="ev_scorm_finished_saved" className="mt-2 text-muted-foreground">{dict.scorm.finishedSavedBody}</p> :
+            finished.score != null &&
+            <p data-ev-id="ev_scorm_finished_score" className="mt-2 text-muted-foreground">
+									{dict.scorm.finishedScore.replace('{score}', String(finished.score))}
+								</p>
+            }
+							<div data-ev-id="ev_scorm_finished_actions" className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+								<button data-ev-id="ev_scorm_finished_back"
+              type="button"
+              autoFocus
+              onClick={() => navigate(course ? `/course/${course.id}` : '/my-learning')}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+									{dict.course.backToCourse}
+								</button>
+								<button data-ev-id="ev_scorm_finished_stay"
+              type="button"
+              onClick={() => setFinished(null)}
+              className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors">
+									{dict.scorm.finishedStay}
+								</button>
+							</div>
+						</div>
+					</div>
+        }
 			</div>
 		</div>);
 

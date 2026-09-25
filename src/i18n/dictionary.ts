@@ -97,6 +97,13 @@ export interface Dictionary {
 		runtimeError: string;
 		progressNotSaved: string;
 		scormPackage: string;
+		finishedCompleted: string;
+		finishedPassed: string;
+		finishedFailed: string;
+		finishedSaved: string;
+		finishedSavedBody: string;
+		finishedScore: string;
+		finishedStay: string;
 	};
 	
 	// Sandbox
@@ -833,6 +840,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			runtimeError: 'SCORM runtime error',
 			progressNotSaved: 'Your progress was not saved. Check your connection and try again.',
 			scormPackage: 'SCORM Package',
+			finishedCompleted: 'Module completed',
+			finishedPassed: 'You passed',
+			finishedFailed: 'Not passed this time',
+			finishedSaved: 'Your progress is saved',
+			finishedSavedBody: 'You can continue from where you left off.',
+			finishedScore: 'Score: {score}%',
+			finishedStay: 'Stay on this page',
 		},
 		
 		sandbox: {
@@ -1542,6 +1556,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			runtimeError: 'שגיאת זמן ריצה של SCORM',
 			progressNotSaved: 'ההתקדמות שלך לא נשמרה. בדקו את החיבור ונסו שוב.',
 			scormPackage: 'חבילת SCORM',
+			finishedCompleted: 'היחידה הושלמה',
+			finishedPassed: 'עברתם בהצלחה',
+			finishedFailed: 'הפעם לא עברתם',
+			finishedSaved: 'ההתקדמות שלכם נשמרה',
+			finishedSavedBody: 'תוכלו להמשיך מהמקום שבו עצרתם.',
+			finishedScore: 'ציון: {score}%',
+			finishedStay: 'להישאר בדף זה',
 		},
 		
 		sandbox: {
