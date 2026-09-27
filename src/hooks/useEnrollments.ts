@@ -4,13 +4,14 @@ import type { Tables } from '@/integrations/supabase/helpers';
 import { useLocale } from '@/hooks/useLocale';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useAuth } from '@/hooks/useAuth';
+import { isModuleDone, countModulesAddedSince } from '@/lib/courseProgress';
 
 export type Enrollment = Tables<'enrollments'>;
 
 interface EnrollmentWithCourse extends Enrollment {
 	course: Tables<'courses'> & {
 		category?: Tables<'course_categories'>;
-		modules?: { id: string }[];
+		modules?: { id: string; created_at: string }[];
 	};
 	module_progress?: Tables<'module_progress'>[];
 }
@@ -47,7 +48,7 @@ export function useEnrollments(userId?: string) {
 						course:courses(
 							*,
 							category:course_categories(*),
-							modules(id)
+							modules(id, created_at)
 						),
 						module_progress(*)
 					`)
@@ -82,11 +83,23 @@ export function useEnrollments(userId?: string) {
 		const totalModules = enrollment.course.modules?.length || 0;
 		if (totalModules === 0) return 0;
 		
+		// Item 106: a completion is sticky (policy C), so a completed course reads 100% even
+		// after a module is added; the "new content" marker says what changed.
+		if (enrollment.status === 'completed') return 100;
+
+		// Same rule as the rollup: a FAILED module is not done. Only modules still in the course.
+		const moduleIds = new Set(enrollment.course.modules?.map((m) => m.id) ?? []);
 		const completedModules = enrollment.module_progress?.filter(
-			mp => mp.status === 'completed'
+			mp => moduleIds.has(mp.module_id) && isModuleDone(mp)
 		).length || 0;
 		
-		return Math.round((completedModules / totalModules) * 100);
+		return Math.min(100, Math.round((completedModules / totalModules) * 100));
+	};
+
+	// Item 106: modules added to the course after this learner completed it.
+	const newModulesSinceCompleted = (enrollment: EnrollmentWithCourse) => {
+		if (enrollment?.status !== 'completed') return 0;
+		return countModulesAddedSince(enrollment.course?.modules, enrollment.completed_at);
 	};
 
 	const isOverdue = (enrollment: EnrollmentWithCourse) => {
@@ -114,6 +127,7 @@ export function useEnrollments(userId?: string) {
 		refetch: fetchEnrollments,
 		getLocalizedTitle,
 		calculateProgress,
+		newModulesSinceCompleted,
 		isOverdue,
 	};
 }

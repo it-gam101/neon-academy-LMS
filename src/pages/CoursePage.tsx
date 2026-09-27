@@ -16,6 +16,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
 import { PreviewBanner } from '@/components/studio/PreviewBanner';
 import { formatRelativeDate } from '@/utils/formatDate';
+import { countModulesAddedSince } from '@/lib/courseProgress';
 import { useState } from 'react';
 
 export default function CoursePage() {
@@ -72,6 +73,8 @@ export default function CoursePage() {
   const description = locale === 'he' ? course.description_he || '' : course.description_en || '';
   const isEnrolled = !!enrollment;
   const isCompleted = enrollment?.status === 'completed';
+  // Item 106, policy C: completion is sticky; say so when the course has gained modules since.
+  const newSinceCompleted = isCompleted ? countModulesAddedSince(modules, enrollment?.completed_at) : 0;
   const isOverdue = enrollment && enrollment.due_at &&
   new Date(enrollment.due_at) < new Date() && enrollment.status !== 'completed';
 
@@ -88,16 +91,16 @@ export default function CoursePage() {
     setEnrolling(false);
   };
 
-  const content = (
-    <div data-ev-id="ev_825ddcb642">
+  const content =
+  <div data-ev-id="ev_825ddcb642">
 			<div data-ev-id="ev_0004629ff6" className="max-w-4xl mx-auto">
 				{/* Breadcrumbs */}
 				<Breadcrumbs
-          showHome={false}
-          items={[
-          { label: dict.nav.catalogue, href: '/catalogue' },
-          { label: title }]
-          } />
+        showHome={false}
+        items={[
+        { label: dict.nav.catalogue, href: '/catalogue' },
+        { label: title }]
+        } />
 
 				
 				{/* Back button */}
@@ -109,26 +112,26 @@ export default function CoursePage() {
 						{/* Thumbnail */}
 						<div data-ev-id="ev_7bfea69526" className="lg:w-64 h-40 lg:h-auto bg-muted rounded-lg overflow-hidden flex-shrink-0">
 							{course.thumbnail_url ?
-              <img data-ev-id="ev_6192811443" src={course.thumbnail_url} alt={title} className="w-full h-full object-cover" /> :
+            <img data-ev-id="ev_6192811443" src={course.thumbnail_url} alt={title} className="w-full h-full object-cover" /> :
 
-              <div data-ev-id="ev_2d873d0df2" className="w-full h-full flex items-center justify-center">
+            <div data-ev-id="ev_2d873d0df2" className="w-full h-full flex items-center justify-center">
 									<BookOpen className="w-12 h-12 text-muted-foreground" />
 								</div>
-              }
+            }
 						</div>
 
 						{/* Details */}
 						<div data-ev-id="ev_747b051bba" className="flex-1">
 							<div data-ev-id="ev_3a922e93ce" className="flex flex-wrap gap-2 mb-3">
 								{course.is_mandatory &&
-                <Badge variant="danger">{dict.catalogue.mandatory}</Badge>
-                }
+              <Badge variant="danger">{dict.catalogue.mandatory}</Badge>
+              }
 								{isCompleted &&
-                <Badge variant="success">{dict.common.completed}</Badge>
-                }
+              <Badge variant="success">{dict.common.completed}</Badge>
+              }
 								{isOverdue &&
-                <Badge variant="warning">{dict.common.overdue}</Badge>
-                }
+              <Badge variant="warning">{dict.common.overdue}</Badge>
+              }
 							</div>
 
 							<h1 data-ev-id="ev_55add39692" className="text-2xl font-bold text-foreground mb-2">{title}</h1>
@@ -136,26 +139,26 @@ export default function CoursePage() {
 
 							<div data-ev-id="ev_32443aeeae" className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
 								{course.estimated_minutes &&
-                <span data-ev-id="ev_5d745fefc0" className="flex items-center gap-1">
+              <span data-ev-id="ev_5d745fefc0" className="flex items-center gap-1">
 										<Clock className="w-4 h-4" />
 										{course.estimated_minutes} {dict.common.minutes}
 									</span>
-                }
+              }
 								<span data-ev-id="ev_489dee5e7d" className="flex items-center gap-1">
 									<BookOpen className="w-4 h-4" />
 									{totalCount} {dict.catalogue.modules}
 								</span>
 								{enrollment?.due_at &&
-                <span data-ev-id="ev_21e86ad763" className="flex items-center gap-1">
+              <span data-ev-id="ev_21e86ad763" className="flex items-center gap-1">
 										<Calendar className="w-4 h-4" />
 										{dict.course.dueDateLabel}: {formatRelativeDate(enrollment.due_at, locale)}
 									</span>
-                }
+              }
 							</div>
 
 							{/* Progress or enroll button */}
 							{isEnrolled ?
-              <div data-ev-id="ev_f8380e2c18">
+            <div data-ev-id="ev_f8380e2c18">
 									<div data-ev-id="ev_81cb7d0b55" className="flex items-center justify-between text-sm mb-2">
 										<span data-ev-id="ev_5491c82e0d" className="text-muted-foreground">{dict.course.moduleProgress}</span>
 										<span data-ev-id="ev_6864330b20" className="text-foreground font-medium">
@@ -164,20 +167,25 @@ export default function CoursePage() {
 									</div>
 									<ProgressBar value={progressPercent} />
 									{isCompleted && enrollment.score &&
-                <p data-ev-id="ev_c188806412" className="mt-2 text-sm text-muted-foreground">
+              <p data-ev-id="ev_c188806412" className="mt-2 text-sm text-muted-foreground">
 											{dict.course.yourScore}: {Math.round(enrollment.score)}%
 										</p>
-                }
+              }
+									{newSinceCompleted > 0 &&
+              <p data-ev-id="ev_course_new_since_completed" className="mt-2 text-sm text-primary">
+											{dict.course.newContentSinceCompleted.replace('{count}', String(newSinceCompleted))}
+										</p>
+              }
 								</div> :
 
-              <button data-ev-id="ev_84b0c9d34e"
-              onClick={handleEnroll}
-              disabled={enrolling}
-              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+            <button data-ev-id="ev_84b0c9d34e"
+            onClick={handleEnroll}
+            disabled={enrolling}
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 
 									{enrolling ? dict.common.loading : dict.catalogue.enroll}
 								</button>
-              }
+            }
 						</div>
 					</div>
 				</div>
@@ -186,29 +194,29 @@ export default function CoursePage() {
 				<div data-ev-id="ev_423f96bb38">
 					<h2 data-ev-id="ev_c1c131f524" className="text-xl font-semibold text-foreground mb-4">{dict.course.modules}</h2>
 					<ModuleList
-            courseId={courseId || ''}
-            modules={modules}
-            enrolled={isEnrolled || isPreview}
-            enrollmentId={enrollment?.id}
-            isPreview={isPreview} />
+          courseId={courseId || ''}
+          modules={modules}
+          enrolled={isEnrolled || isPreview}
+          enrollmentId={enrollment?.id}
+          isPreview={isPreview} />
 
 				</div>
 
 				{/* Completion message */}
 				{isCompleted &&
-        <div data-ev-id="ev_dc180930aa" className="mt-8 p-6 bg-primary/10 border border-primary/30 rounded-lg text-center">
+      <div data-ev-id="ev_dc180930aa" className="mt-8 p-6 bg-primary/10 border border-primary/30 rounded-lg text-center">
 						<h3 data-ev-id="ev_739caeedf9" className="text-xl font-semibold text-primary mb-2">{dict.course.courseCompleted}</h3>
 						<p data-ev-id="ev_0a4eae3796" className="text-muted-foreground">{dict.course.courseCompletedMessage}</p>
-						<Link
-							to="/my-learning"
-							className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+						<Link data-ev-id="ev_0b236806d5"
+        to="/my-learning"
+        className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 							{dict.nav.myLearning}
 						</Link>
 					</div>
-        }
+      }
 			</div>
-		</div>
-  );
+		</div>;
+
 
   if (isPreview) {
     return <PreviewBanner courseId={courseId || ''}>{content}</PreviewBanner>;

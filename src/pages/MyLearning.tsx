@@ -15,7 +15,7 @@ import { formatRelativeDate } from '@/utils/formatDate';
 export default function MyLearning() {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
-  const { enrollments, inProgress, completed, overdue, loading, error, refetch, getLocalizedTitle, calculateProgress, isOverdue } = useEnrollments();
+  const { enrollments, inProgress, completed, overdue, loading, error, refetch, getLocalizedTitle, calculateProgress, newModulesSinceCompleted, isOverdue } = useEnrollments();
   const Chevron = locale === 'he' ? ChevronLeft : ChevronRight;
 
   const tabs = [
@@ -55,9 +55,9 @@ export default function MyLearning() {
 
 				{/* Continue where you left off */}
 				{continueEnrollment &&
-        <Link
-          to={`/course/${continueEnrollment.course_id}`}
-          className="group block bg-card border border-border rounded-lg p-6 mb-8 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 relative">
+        <Link data-ev-id="ev_a6e0365fbc"
+        to={`/course/${continueEnrollment.course_id}`}
+        className="group block bg-card border border-border rounded-lg p-6 mb-8 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 relative">
 
 						<div data-ev-id="ev_0cfe95060b" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
 						
@@ -107,10 +107,10 @@ export default function MyLearning() {
             return (
               <div data-ev-id="ev_0000c02e8b" className="space-y-4">
 									{items.map((enrollment) =>
-                <Link
-                  key={enrollment.id}
-                  to={`/course/${enrollment.course_id}`}
-                  className="group flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all relative">
+                <Link data-ev-id="ev_4b728bcaaf"
+                key={enrollment.id}
+                to={`/course/${enrollment.course_id}`}
+                className="group flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all relative">
 
 											<div data-ev-id="ev_6ee4161168" className="absolute top-0 bottom-0 start-0 w-1 bg-transparent group-hover:bg-primary transition-colors rounded-s-lg" />
 
@@ -159,6 +159,13 @@ export default function MyLearning() {
 												{activeTab === 'completed' && enrollment.score &&
                     <p data-ev-id="ev_287fa120a8" className="text-sm text-muted-foreground mt-1">
 														{dict.course.yourScore}: {Math.round(enrollment.score)}%
+													</p>
+                    }
+
+												{/* Item 106: the course gained content after this learner completed it */}
+												{activeTab === 'completed' && newModulesSinceCompleted(enrollment) > 0 &&
+                    <p data-ev-id="ev_ml_new_since_completed" className="text-sm text-primary mt-1">
+														{dict.course.newContentSinceCompleted.replace('{count}', String(newModulesSinceCompleted(enrollment)))}
 													</p>
                     }
 											</div>

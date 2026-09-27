@@ -5,6 +5,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useAuth } from '@/hooks/useAuth';
+import { isModuleDone } from '@/lib/courseProgress';
 
 export type Module = Tables<'modules'>;
 export type ModuleProgress = Tables<'module_progress'>;
@@ -248,7 +249,8 @@ export function useCourseModules(courseId: string) {
 		return { data };
 	};
 
-	const completedCount = modules.filter(m => m.progress?.status === 'completed').length;
+	// Item 106: same rule as the rollup — a FAILED module is not done.
+	const completedCount = modules.filter(m => isModuleDone(m.progress)).length;
 	const totalCount = modules.length;
 	const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 

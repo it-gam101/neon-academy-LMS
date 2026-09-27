@@ -392,6 +392,7 @@ export interface Dictionary {
 		courseCompleted: string;
 		courseCompletedMessage: string;
 		yourScore: string;
+		newContentSinceCompleted: string;
 		notStarted: string;
 		inProgress: string;
 		lesson: string;
@@ -1127,6 +1128,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			courseCompleted: 'Course Completed!',
 			courseCompletedMessage: 'Congratulations! You have completed this course.',
 			yourScore: 'Your score',
+			newContentSinceCompleted: 'Modules added since you completed this course: {count}',
 			notStarted: 'Not Started',
 			inProgress: 'In Progress',
 			lesson: 'Lesson',
@@ -1844,6 +1846,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			courseCompleted: 'הקורס הושלם!',
 			courseCompletedMessage: 'מזל טוב! השלמת את הקורס.',
 			yourScore: 'הציון שלך',
+			newContentSinceCompleted: 'יחידות שנוספו מאז שהשלמתם את הקורס: {count}',
 			notStarted: 'לא התחיל',
 			inProgress: 'בתהליך',
 			lesson: 'שיעור',
