@@ -16,6 +16,9 @@ export interface AuthContextType {
 	isAuthenticated: boolean;
 	profileError: string | null;
 	isDeactivated: boolean;
+	/** Item 113: called once the deactivation notice has been SHOWN, so the flag cannot
+	 *  misroute a later sign-in (a different, active account) or an anonymous visit. */
+	clearDeactivated: () => void;
 	signOut: () => Promise<void>;
 	refreshProfile: () => Promise<void>;
 }

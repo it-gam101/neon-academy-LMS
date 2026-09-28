@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, Link, Navigate } from 'react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { newUserWindowStartISO } from '@/lib/newUsers';
 import { useAuth } from '@/hooks/useAuth';
@@ -72,7 +72,7 @@ const quickActions: QuickAction[] = [
 const IMG_BASE = 'https://pub-390efbd60a134343a0477c83ce0cebfb.r2.dev/site';
 
 export default function Index() {
-  const { isAuthenticated, profile } = useAuth();
+  const { isAuthenticated, profile, isDeactivated } = useAuth();
   const { t, isRTL, locale } = useLocale();
   const { orgName, logoUrl } = useOrgSettings();
   const navigate = useNavigate();
@@ -136,6 +136,13 @@ export default function Index() {
     heroHeadingRef.current?.scrollIntoView({ behavior: 'smooth' });
     setTimeout(() => heroHeadingRef.current?.focus(), 500);
   };
+
+  // Item 113: every sign-in path (Login, Signup, AuthCallback) lands HERE, and this route is not
+  // behind ProtectedRoute — so a deactivated account must be sent to its notice from here too.
+  // Checked before the landing page, because deactivation also signs the user out.
+  if (isDeactivated) {
+    return <Navigate to="/auth/deactivated" replace />;
+  }
 
   // Marketing landing page for unauthenticated users
   if (!isAuthenticated) {

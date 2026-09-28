@@ -76,6 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	}, [applyLocale]);
 	
+	// Item 113: the deactivation notice has been shown — see auth-context.ts.
+	const clearDeactivated = useCallback(() => setIsDeactivated(false), []);
+
 	const refreshProfile = useCallback(async () => {
 		if (user) {
 			await loadProfile(user.id);
@@ -186,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				isAuthenticated: !!user,
 				profileError,
 				isDeactivated,
+				clearDeactivated,
 				signOut,
 				refreshProfile,
 			}}
