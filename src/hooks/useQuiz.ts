@@ -4,6 +4,7 @@ import type { Tables } from '@/integrations/supabase/helpers';
 import { useLocale } from '@/hooks/useLocale';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useAuth } from '@/hooks/useAuth';
+import { scoreQuiz } from '@/lib/grading';
 
 export type Quiz = Tables<'quizzes'>;
 export type QuizQuestion = Tables<'quiz_questions'>;
@@ -112,31 +113,8 @@ export function useQuiz(moduleId: string) {
 
 		if (!user) return { error: 'Not authenticated' };
 
-		// Calculate score
-		let earnedPoints = 0;
-		let totalPoints = 0;
-
-		questions.forEach(q => {
-			totalPoints += q.points || 1;
-			const userAnswer = answers[q.id];
-			const correctAnswer = q.correct;
-
-			if (q.question_type === 'multi') {
-				// Multi-select: compare arrays
-				const correct = correctAnswer as number[];
-				const user = (userAnswer || []) as number[];
-				if (correct.length === user.length && correct.every(c => user.includes(c))) {
-					earnedPoints += q.points || 1;
-				}
-			} else {
-				// Single/true_false: compare single value
-				if (String(userAnswer) === String(correctAnswer)) {
-					earnedPoints += q.points || 1;
-				}
-			}
-		});
-
-		const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
+		// Item 116: the contract's Scoring section — partial credit for multi, one shared grader.
+		const score = scoreQuiz(questions, answers);
 		const passed = score >= (quiz.pass_score || 70);
 
 		// Insert attempt

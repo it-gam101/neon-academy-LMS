@@ -16,6 +16,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { PreviewBanner } from '@/components/studio/PreviewBanner';
+import { scoreQuiz, questionFraction, verdictOf } from '@/lib/grading';
 
 type QuizState = 'info' | 'playing' | 'results' | 'review';
 
@@ -87,25 +88,8 @@ export default function QuizPage() {
 
     // In preview mode, calculate score locally without writing to DB
     if (isPreview) {
-      let earnedPoints = 0;
-      let totalPoints = 0;
-      questions.forEach((q) => {
-        totalPoints += q.points || 1;
-        const userAnswer = answers[q.id];
-        const correctAnswer = q.correct;
-        if (q.question_type === 'multi') {
-          const correct = correctAnswer as number[];
-          const user = (userAnswer || []) as number[];
-          if (correct.length === user.length && correct.every((c) => user.includes(c))) {
-            earnedPoints += q.points || 1;
-          }
-        } else {
-          if (String(userAnswer) === String(correctAnswer)) {
-            earnedPoints += q.points || 1;
-          }
-        }
-      });
-      const localScore = totalPoints > 0 ? Math.round(earnedPoints / totalPoints * 100) : 0;
+      // Item 116: the same shared grader as a real attempt.
+      const localScore = scoreQuiz(questions, answers);
       const localPassed = localScore >= (quiz?.pass_score || 70);
       setResult({ score: localScore, passed: localPassed });
       setState('results');
@@ -345,25 +329,24 @@ export default function QuizPage() {
               const correctAnswer = q.correct;
               const options = getLocalizedOptions(q);
 
-              let isCorrect = false;
-              if (q.question_type === 'multi') {
-                const correct = correctAnswer as number[];
-                const user = (userAnswer || []) as number[];
-                isCorrect = correct.length === user.length && correct.every((c) => user.includes(c));
-              } else {
-                isCorrect = String(userAnswer) === String(correctAnswer);
-              }
+              // Item 116: three verdicts from the shared grader — correct, partly correct, incorrect.
+              const verdict = verdictOf(questionFraction(q.question_type, correctAnswer, userAnswer));
 
               return (
                 <div data-ev-id="ev_502208f832" key={q.id} className="bg-card border border-border rounded-lg p-6">
 									<div data-ev-id="ev_a91c401f38" className="flex items-start gap-3 mb-4">
-										{isCorrect ?
+										{verdict === 'correct' ?
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" /> :
-
+                    verdict === 'partial' ?
+                    <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" /> :
                     <XCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
                     }
 										<div data-ev-id="ev_ca5b6e2dfb">
 											<span data-ev-id="ev_d9384a8463" className="text-sm text-muted-foreground">{dict.quiz.question} {index + 1}</span>
+											{' '}
+											<Badge variant={verdict === 'correct' ? 'success' : verdict === 'partial' ? 'warning' : 'danger'} size="sm">
+												{verdict === 'correct' ? dict.quiz.correct : verdict === 'partial' ? dict.quiz.partlyCorrect : dict.quiz.incorrect}
+											</Badge>
 											<p data-ev-id="ev_ef08b952b5" className="font-medium text-foreground">{getLocalizedQuestion(q)}</p>
 										</div>
 									</div>

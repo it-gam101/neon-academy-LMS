@@ -430,6 +430,7 @@ export interface Dictionary {
 		backToCourse: string;
 		correct: string;
 		incorrect: string;
+		partlyCorrect: string;
 		yourAnswer: string;
 		correctAnswer: string;
 		timeUp: string;
@@ -1165,6 +1166,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			backToCourse: 'Back to Course',
 			correct: 'Correct',
 			incorrect: 'Incorrect',
+			partlyCorrect: 'Partly correct',
 			yourAnswer: 'Your answer',
 			correctAnswer: 'Correct answer',
 			timeUp: 'Time\'s Up!',
@@ -1883,6 +1885,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			backToCourse: 'חזרה לקורס',
 			correct: 'נכון',
 			incorrect: 'שגוי',
+			partlyCorrect: 'נכון חלקית',
 			yourAnswer: 'התשובה שלך',
 			correctAnswer: 'התשובה הנכונה',
 			timeUp: 'הזמן נגמר!',
