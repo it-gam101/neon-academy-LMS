@@ -12,12 +12,16 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { PreviewBanner } from '@/components/studio/PreviewBanner';
+import { CheckInteraction } from '@/components/courses/CheckInteraction';
+import { parseCheck } from '@/lib/checkParser';
 import { useState, useMemo, useEffect } from 'react';
 
 interface ContentBlock {
   type: 'heading' | 'text' | 'video' | 'image' | 'pdf';
   content: {en: string;he: string;} | string;
   url?: string;
+  /** Item 109: a rich enhancement kept from an imported package. Only `check` is rendered so far. */
+  interaction?: unknown;
 }
 
 // Sub-component to handle image error state
@@ -122,9 +126,9 @@ export default function ModulePage() {
         showToast('success', dict.common.completed);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message : dict.common.error;
+      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
+      dict.errors.connectionTimeout :
+      err instanceof Error ? err.message : dict.common.error;
       console.error('handleMarkComplete failed:', err);
       showToast('error', msg);
     } finally {
@@ -180,13 +184,21 @@ export default function ModulePage() {
           </div>);
 
       case 'text':
-      default:
-        return (
-          <div data-ev-id="ev_3b6003bbb3"
-          key={index}
-          className="text-muted-foreground leading-relaxed whitespace-pre-wrap my-4"
-          dangerouslySetInnerHTML={{ __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>').replace(/\n/g, '<br />') }} />);
-
+      default:{
+          // Item 109 step 2: a valid `check` renders INSTEAD of the block's prose, never beside it —
+          // the prose ends in the answer. A malformed one (or any other type) falls through to the prose.
+          const check = block.type === 'text' && block.interaction ? parseCheck(block.interaction, locale) : null;
+          if (check) {
+            // Keyed by module AND position. Blocks are keyed by index alone, so without the module id React
+            // would keep one check's answer when the learner moves to the next lesson (the item 89 class).
+            return <CheckInteraction key={`${currentModule.id}-${index}`} check={check} locale={locale} dict={dict} blockKey={`${currentModule.id}-${index}`} />;
+          }
+          return (
+            <div data-ev-id="ev_3b6003bbb3"
+            key={index}
+            className="text-muted-foreground leading-relaxed whitespace-pre-wrap my-4"
+            dangerouslySetInnerHTML={{ __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>').replace(/\n/g, '<br />') }} />);
+        }
 
     }
   };
@@ -223,9 +235,9 @@ export default function ModulePage() {
             <p data-ev-id="ev_6b60038736" className="text-muted-foreground max-w-xl mx-auto mb-4">
               {dict.studio.scormCannotPlayHereBody}
             </p>
-            <Link
-            to="/sandbox"
-            className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+            <Link data-ev-id="ev_048c1892cd"
+          to="/sandbox"
+          className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
               {dict.landing.trySandbox}
             </Link>
           </div> :
@@ -239,9 +251,9 @@ export default function ModulePage() {
 				<div data-ev-id="ev_ffc1aaac98" className="flex items-center justify-between gap-4">
 					{/* Previous */}
 					{prevModule ?
-        <Link
-          to={`/course/${courseId}/module/${prevModule.id}${previewSuffix}`}
-          className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
+        <Link data-ev-id="ev_b78ff3c17a"
+        to={`/course/${courseId}/module/${prevModule.id}${previewSuffix}`}
+        className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
 
 							<PrevChevron className="w-5 h-5" />
 							{dict.course.previousModule}
@@ -273,17 +285,17 @@ export default function ModulePage() {
 
 					{/* Next */}
 					{nextModule ?
-        <Link
-          to={`/course/${courseId}/module/${nextModule.id}${previewSuffix}`}
-          className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
+        <Link data-ev-id="ev_c772e92fd3"
+        to={`/course/${courseId}/module/${nextModule.id}${previewSuffix}`}
+        className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
 
 							{dict.course.nextModule}
 							<NextChevron className="w-5 h-5" />
 						</Link> :
 
-        <Link
-          to={`/course/${courseId}${previewSuffix}`}
-          className="flex items-center gap-2 px-4 py-2 text-primary hover:text-primary/90 transition-colors">
+        <Link data-ev-id="ev_0ede5150d5"
+        to={`/course/${courseId}${previewSuffix}`}
+        className="flex items-center gap-2 px-4 py-2 text-primary hover:text-primary/90 transition-colors">
 
 							{dict.course.backToCourse}
 							<NextChevron className="w-5 h-5" />

@@ -84,10 +84,11 @@ export type Vc4elModule = {
  * Item 109 step 1b: how many rich interactions a plan carries. Counted on `text` blocks
  * only — the contract ignores an `interaction` on any other block type. The import
  * dialogs use it to tell the author these are kept but not yet displayed.
+ * Item 109 step 2: a `check` IS displayed now, so it is not counted.
  */
 export function countInteractions(plan: { modules: Vc4elModule[] }): number {
 	return plan.modules.reduce(
-		(n, m) => n + (m.content_json?.blocks ?? []).filter((b) => b.type === 'text' && b.interaction).length,
+		(n, m) => n + (m.content_json?.blocks ?? []).filter((b) => b.type === 'text' && b.interaction && b.interaction.type !== 'check').length,
 		0
 	);
 }
@@ -416,7 +417,8 @@ function parseQuestion(q: unknown, qi: number, ctx: ParseCtx): Vc4elQuestion {
 	// `correct` is polymorphic: number for single/true_false, number[] for multi.
 	const c = src.correct;
 	if (out.question_type === 'multi') {
-		const picked = Array.isArray(c) ? c.filter((n): n is number => Number.isInteger(n)) : [];
+		// Contract invariant 4 (Spark bedbc3c): distinct indices — a repeated one is dropped, as Spark does.
+		const picked = Array.isArray(c) ? [...new Set(c.filter((n): n is number => Number.isInteger(n)))] : [];
 		out.correct = picked;
 		if (!picked.length) problems.push({ code: 'no_correct', detail: `question ${out.sort_order} has no correct answer.` });
 	} else {

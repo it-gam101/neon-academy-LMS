@@ -431,6 +431,10 @@ export interface Dictionary {
 		correct: string;
 		incorrect: string;
 		partlyCorrect: string;
+		checkEyebrow: string;
+		checkAnswer: string;
+		checkTryAgain: string;
+		checkCorrectAnswers: string;
 		yourAnswer: string;
 		correctAnswer: string;
 		timeUp: string;
@@ -1167,6 +1171,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			correct: 'Correct',
 			incorrect: 'Incorrect',
 			partlyCorrect: 'Partly correct',
+			checkEyebrow: 'Check yourself',
+			checkAnswer: 'Check',
+			checkTryAgain: 'Try again',
+			checkCorrectAnswers: 'Correct answers',
 			yourAnswer: 'Your answer',
 			correctAnswer: 'Correct answer',
 			timeUp: 'Time\'s Up!',
@@ -1886,6 +1894,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			correct: 'נכון',
 			incorrect: 'שגוי',
 			partlyCorrect: 'נכון חלקית',
+			checkEyebrow: 'בדקו את עצמכם',
+			checkAnswer: 'בדיקה',
+			checkTryAgain: 'נסו שוב',
+			checkCorrectAnswers: 'התשובות הנכונות',
 			yourAnswer: 'התשובה שלך',
 			correctAnswer: 'התשובה הנכונה',
 			timeUp: 'הזמן נגמר!',
