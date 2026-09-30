@@ -17,6 +17,7 @@ import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { PreviewBanner } from '@/components/studio/PreviewBanner';
 import { scoreQuiz, questionFraction, verdictOf } from '@/lib/grading';
+import { isModuleDone } from '@/lib/courseProgress';
 
 type QuizState = 'info' | 'playing' | 'results' | 'review';
 
@@ -38,10 +39,39 @@ export default function QuizPage() {
   const previewSuffix = isPreview ? '?preview=1' : '';
 
   const { quiz, questions, loading, error, attemptsUsed, attemptsAllowed, attemptsRemaining, canAttempt, hasPassed, submitQuiz, getLocalizedQuestion, getLocalizedOptions } = useQuiz(moduleId || '');
-  const { course, modules, markModuleProgress, getLocalizedTitle, getLocalizedCourseTitle } = useCourseModules(courseId || '');
+  const { course, modules, enrollment, markModuleProgress, getLocalizedTitle, getLocalizedCourseTitle } = useCourseModules(courseId || '');
 
   const currentModule = modules.find((m) => m.id === moduleId);
 
+  // Item 117: the course completes only when EVERY module is finished AND the quiz is passed. Navigation is
+  // free, so a learner can reach the quiz first — and "You passed" then reads as "done" when it is not.
+  // Say which parts are unfinished, with links. Inform, never block. Same rule as the completion rollup.
+  const unfinished = modules.filter((m) => m.id !== moduleId && !isModuleDone(m.progress));
+  const moduleHref = (m: (typeof modules)[number]) =>
+  m.module_type === 'scorm_package' ?
+  enrollment ? `/learn/${enrollment.id}/scorm/${m.id}` : `/course/${courseId}` :
+  m.module_type === 'quiz' ? `/course/${courseId}/quiz/${m.id}` :
+  `/course/${courseId}/module/${m.id}`;
+  const unfinishedNotice = (message: string) =>
+  isPreview || unfinished.length === 0 ? null :
+  <div data-ev-id="ev_quiz_unfinished" role="note" className="mb-6 rounded-lg border border-border bg-muted/30 p-4 text-start">
+      <p data-ev-id="ev_quiz_unfinished_msg" className="flex items-start gap-2 text-sm text-foreground">
+        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" />
+        <span data-ev-id="ev_quiz_unfinished_text">{message}</span>
+      </p>
+      <ul data-ev-id="ev_quiz_unfinished_list" className="mt-2 space-y-1 ps-6 text-sm">
+        {unfinished.map((m) =>
+      <li data-ev-id="ev_quiz_unfinished_item" key={m.id}>
+            <Link data-ev-id="ev_quiz_unfinished_link" to={moduleHref(m)} className="text-primary hover:underline">{getLocalizedTitle(m)}</Link>
+          </li>
+      )}
+      </ul>
+      {unfinished.some((m) => m.module_type === 'lesson') &&
+    <p data-ev-id="ev_quiz_unfinished_hint" className="mt-2 ps-6 text-xs text-muted-foreground">
+          {dict.quiz.unfinishedLessonHint.replace('{mark}', dict.course.markComplete)}
+        </p>
+    }
+    </div>;
   const [state, setState] = useState<QuizState>('info');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | number[]>>({});
@@ -225,6 +255,9 @@ export default function QuizPage() {
 							</span>
 						</div>
 
+						{/* Item 117: before the quiz — what is still unfinished, and that the quiz can be taken anyway. */}
+						{unfinishedNotice(dict.quiz.unfinishedIntro.replace('{count}', String(unfinished.length)))}
+
 						{hasPassed ?
             <div data-ev-id="ev_2e2f2dc471" className="p-4 bg-primary/10 border border-primary/30 rounded-lg mb-6">
 								<CheckCircle className="w-8 h-8 text-primary mx-auto mb-2" />
@@ -279,6 +312,9 @@ export default function QuizPage() {
 						<p data-ev-id="ev_ecd4d7552f" className="text-sm text-muted-foreground mb-8">
 							{dict.quiz.passingScore}: {quiz.pass_score}% • {dict.quiz.attemptsRemaining}: {attemptsRemaining}
 						</p>
+
+						{/* Item 117: a PASS with unfinished parts is not a finished course — the moment that matters. */}
+						{result.passed && unfinishedNotice(dict.quiz.unfinishedAfterPass)}
 
 						<div data-ev-id="ev_13acaec1e8" className="flex flex-col sm:flex-row gap-4 justify-center">
 							<button data-ev-id="ev_d0db9d9be6"

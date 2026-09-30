@@ -435,6 +435,9 @@ export interface Dictionary {
 		checkAnswer: string;
 		checkTryAgain: string;
 		checkCorrectAnswers: string;
+		unfinishedIntro: string;
+		unfinishedAfterPass: string;
+		unfinishedLessonHint: string;
 		yourAnswer: string;
 		correctAnswer: string;
 		timeUp: string;
@@ -1175,6 +1178,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			checkAnswer: 'Check',
 			checkTryAgain: 'Try again',
 			checkCorrectAnswers: 'Correct answers',
+			unfinishedIntro: 'Not finished yet in this course: {count}. The course is completed when every part is finished and this quiz is passed. You can take the quiz now and finish the rest afterwards.',
+			unfinishedAfterPass: 'The quiz is passed, but the course is not complete yet. Finish these to complete it:',
+			unfinishedLessonHint: 'A lesson counts as finished once you press "{mark}" at its end.',
 			yourAnswer: 'Your answer',
 			correctAnswer: 'Correct answer',
 			timeUp: 'Time\'s Up!',
@@ -1898,6 +1904,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			checkAnswer: 'בדיקה',
 			checkTryAgain: 'נסו שוב',
 			checkCorrectAnswers: 'התשובות הנכונות',
+			unfinishedIntro: 'טרם הושלמו בקורס: {count}. הקורס יושלם כאשר כל חלקיו יושלמו והמבחן הזה יעבור בהצלחה. אפשר לגשת למבחן עכשיו ולהשלים את השאר אחר כך.',
+			unfinishedAfterPass: 'המבחן עבר בהצלחה, אך הקורס עדיין לא הושלם. כדי להשלים אותו יש לסיים את:',
+			unfinishedLessonHint: 'שיעור נחשב כמושלם לאחר לחיצה על „{mark}“ בסופו.',
 			yourAnswer: 'התשובה שלך',
 			correctAnswer: 'התשובה הנכונה',
 			timeUp: 'הזמן נגמר!',
