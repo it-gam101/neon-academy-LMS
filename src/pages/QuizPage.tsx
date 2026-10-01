@@ -408,11 +408,18 @@ export default function QuizPage() {
                         }>
 
 													{opt}
-													{isCorrectAnswer &&
-                          <Badge variant="success" size="sm">{dict.quiz.correct}</Badge>
-                          }
-													{isUserAnswer && !isCorrectAnswer &&
-                          <Badge variant="danger" size="sm">{dict.quiz.yourAnswer}</Badge>
+													{/* Item 94: mark EVERY option the learner picked — neutral when it was right, red when not. Before,
+													    a correct pick showed no "Your answer", so on a choose-all question picked and missed
+													    correct options looked identical. */}
+													{(isCorrectAnswer || isUserAnswer) &&
+                          <span data-ev-id="ev_quiz_review_badges" className="ms-2 inline-flex gap-1 align-middle">
+															{isCorrectAnswer &&
+                            <Badge variant="success" size="sm">{dict.quiz.correct}</Badge>
+                            }
+															{isUserAnswer &&
+                            <Badge variant={isCorrectAnswer ? 'default' : 'danger'} size="sm">{dict.quiz.yourAnswer}</Badge>
+                            }
+														</span>
                           }
 												</div>);
 
