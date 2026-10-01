@@ -229,7 +229,10 @@ export function useCourseModules(courseId: string) {
 				return { error: dict.common.changeRefused };
 			}
 
-			setEnrollment(prev => prev ? { ...prev, status: 'completed', score: avgScore } : null);
+			// Item 118: show what the database STORED, not what was just computed. A course record keeps its
+			// first completion date and its best score (trigger keep_first_completion), so a weaker retake
+			// must not display a lower score, nor a moved date, until the next reload.
+			setEnrollment(rollupData[0]);
 		} else if (enrollment.status === 'not_started') {
 			const { data: startData, error: startError } = await supabase
 				.from('enrollments')
