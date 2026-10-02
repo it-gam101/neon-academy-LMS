@@ -84,11 +84,11 @@ export type Vc4elModule = {
  * Item 109 step 1b: how many rich interactions a plan carries. Counted on `text` blocks
  * only — the contract ignores an `interaction` on any other block type. The import
  * dialogs use it to tell the author these are kept but not yet displayed.
- * Item 109 step 2: a `check` IS displayed now, so it is not counted.
+ * Item 109 step 2: `check` and `cinematic-scroll` ARE displayed now, so they are not counted.
  */
 export function countInteractions(plan: { modules: Vc4elModule[] }): number {
 	return plan.modules.reduce(
-		(n, m) => n + (m.content_json?.blocks ?? []).filter((b) => b.type === 'text' && b.interaction && b.interaction.type !== 'check').length,
+		(n, m) => n + (m.content_json?.blocks ?? []).filter((b) => b.type === 'text' && b.interaction && b.interaction.type !== 'check' && b.interaction.type !== 'cinematic-scroll').length,
 		0
 	);
 }

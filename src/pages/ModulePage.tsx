@@ -14,13 +14,15 @@ import { withTimeout } from '@/utils/fetchWithTimeout';
 import { PreviewBanner } from '@/components/studio/PreviewBanner';
 import { CheckInteraction } from '@/components/courses/CheckInteraction';
 import { parseCheck } from '@/lib/checkParser';
+import { CinematicScroll } from '@/components/courses/CinematicScroll';
+import { parseCinematic } from '@/lib/cinematicParser';
 import { useState, useMemo, useEffect } from 'react';
 
 interface ContentBlock {
   type: 'heading' | 'text' | 'video' | 'image' | 'pdf';
   content: {en: string;he: string;} | string;
   url?: string;
-  /** Item 109: a rich enhancement kept from an imported package. Only `check` is rendered so far. */
+  /** Item 109: a rich enhancement kept from an imported package. Rendered so far: `check`, `cinematic-scroll`. */
   interaction?: unknown;
 }
 
@@ -192,6 +194,12 @@ export default function ModulePage() {
             // Keyed by module AND position. Blocks are keyed by index alone, so without the module id React
             // would keep one check's answer when the learner moves to the next lesson (the item 89 class).
             return <CheckInteraction key={`${currentModule.id}-${index}`} check={check} locale={locale} dict={dict} blockKey={`${currentModule.id}-${index}`} />;
+          }
+          // Item 109 step 2, renderer 2: a valid `cinematic-scroll` renders INSTEAD of the prose too — static
+          // panels, as Spark's player. Keyed by module AND position, like the check.
+          const tour = block.type === 'text' && block.interaction ? parseCinematic(block.interaction, locale) : null;
+          if (tour) {
+            return <CinematicScroll key={`${currentModule.id}-${index}`} tour={tour} locale={locale} />;
           }
           return (
             <div data-ev-id="ev_3b6003bbb3"
