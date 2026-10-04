@@ -65,6 +65,8 @@ export default function ModulePage() {
 
   const { course, modules, enrollment, loading, error, refetch, getLocalizedTitle, getLocalizedCourseTitle, markModuleProgress } = useCourseModules(courseId || '');
   const [marking, setMarking] = useState(false);
+  // Item 119: the practice questions answered on this visit, by module id + position (the check's blockKey).
+  const [answeredChecks, setAnsweredChecks] = useState<Set<string>>(() => new Set());
 
   const currentModule = modules.find((m) => m.id === moduleId);
   const currentIndex = modules.findIndex((m) => m.id === moduleId);
@@ -138,6 +140,18 @@ export default function ModulePage() {
     }
   };
 
+  // Item 119 (Isaac, 2026-10-04): answering the lesson's practice questions completes it — any answer, right
+  // or wrong; with several, the last one answered completes it. Same path as "Mark complete", which stays for
+  // lessons without a check. Counted: the checks the learner actually sees (valid in the learner's language).
+  const checkKeys = contentBlocks.flatMap((b, i) =>
+  b.type === 'text' && b.interaction && parseCheck(b.interaction, locale) ? [`${currentModule.id}-${i}`] : []
+  );
+  const handleCheckAnswered = (blockKey: string) => {
+    const answered = new Set(answeredChecks).add(blockKey);
+    setAnsweredChecks(answered);
+    if (!isCompleted && !marking && checkKeys.every((k) => answered.has(k))) void handleMarkComplete();
+  };
+
   const renderBlock = (block: ContentBlock, index: number) => {
     const content = typeof block.content === 'string' ?
     block.content :
@@ -193,7 +207,7 @@ export default function ModulePage() {
           if (check) {
             // Keyed by module AND position. Blocks are keyed by index alone, so without the module id React
             // would keep one check's answer when the learner moves to the next lesson (the item 89 class).
-            return <CheckInteraction key={`${currentModule.id}-${index}`} check={check} locale={locale} dict={dict} blockKey={`${currentModule.id}-${index}`} />;
+            return <CheckInteraction key={`${currentModule.id}-${index}`} check={check} locale={locale} dict={dict} blockKey={`${currentModule.id}-${index}`} onAnswered={handleCheckAnswered} />;
           }
           // Item 109 step 2, renderer 2: a valid `cinematic-scroll` renders INSTEAD of the prose too — static
           // panels, as Spark's player. Keyed by module AND position, like the check.
