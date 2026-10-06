@@ -18,13 +18,15 @@ import { CinematicScroll } from '@/components/courses/CinematicScroll';
 import { parseCinematic } from '@/lib/cinematicParser';
 import { HotspotInteraction } from '@/components/courses/HotspotInteraction';
 import { parseHotspot } from '@/lib/hotspotParser';
+import { BranchingInteraction } from '@/components/courses/BranchingInteraction';
+import { parseBranching } from '@/lib/branchingParser';
 import { useState, useMemo, useEffect } from 'react';
 
 interface ContentBlock {
   type: 'heading' | 'text' | 'video' | 'image' | 'pdf';
   content: {en: string;he: string;} | string;
   url?: string;
-  /** Item 109: a rich enhancement kept from an imported package. Rendered so far: `check`, `cinematic-scroll`, `hotspot`. */
+  /** Item 109: a rich enhancement kept from an imported package. Rendered so far: `check`, `cinematic-scroll`, `hotspot`, `branching`. */
   interaction?: unknown;
 }
 
@@ -67,7 +69,8 @@ export default function ModulePage() {
 
   const { course, modules, enrollment, loading, error, refetch, getLocalizedTitle, getLocalizedCourseTitle, markModuleProgress } = useCourseModules(courseId || '');
   const [marking, setMarking] = useState(false);
-  // Items 119 + 109e: the activities done on this visit (checks answered, hotspots worked), by module id + position.
+  // Items 119, 109e, 109f: the activities done on this visit (checks answered, hotspots and branchings worked),
+  // by module id + position.
   const [doneActivities, setDoneActivities] = useState<Set<string>>(() => new Set());
 
   const currentModule = modules.find((m) => m.id === moduleId);
@@ -142,12 +145,13 @@ export default function ModulePage() {
     }
   };
 
-  // Item 119 (Isaac, 2026-10-04), widened 2026-10-05: a lesson completes when EVERY activity in it is done — each
-  // practice question answered (any answer, right or wrong), each hotspot worked (every move found). No rule on
-  // where it sits; a picture story does not count. Same path as "Mark complete", which stays. Counted: the
-  // activities the learner actually sees (valid in the learner's language).
+  // Item 119 (Isaac, 2026-10-04), widened 2026-10-05 and 2026-10-06: a lesson completes when EVERY activity in it
+  // is done — each practice question answered (any answer, right or wrong), each hotspot worked (every move found),
+  // each branching worked (every choice tried and the finale opened). No rule on where it sits; a picture story
+  // does not count. Same path as "Mark complete", which stays. Counted: the activities the learner actually sees
+  // (valid in the learner's language).
   const activityKeys = contentBlocks.flatMap((b, i) =>
-  b.type === 'text' && b.interaction && (parseCheck(b.interaction, locale) || parseHotspot(b.interaction, locale)) ? [`${currentModule.id}-${i}`] : []
+  b.type === 'text' && b.interaction && (parseCheck(b.interaction, locale) || parseHotspot(b.interaction, locale) || parseBranching(b.interaction, locale)) ? [`${currentModule.id}-${i}`] : []
   );
   const handleActivityDone = (blockKey: string) => {
     const done = new Set(doneActivities).add(blockKey);
@@ -223,6 +227,12 @@ export default function ModulePage() {
           const hotspot = block.type === 'text' && block.interaction ? parseHotspot(block.interaction, locale) : null;
           if (hotspot) {
             return <HotspotInteraction key={`${currentModule.id}-${index}`} hotspot={hotspot} locale={locale} blockKey={`${currentModule.id}-${index}`} onWorked={handleActivityDone} />;
+          }
+          // Item 109 step 2, renderer 4: a valid `branching` renders INSTEAD of the prose too. Keyed by module AND
+          // position; it reports "worked" (every choice tried and the finale opened) to the completion rule above.
+          const branching = block.type === 'text' && block.interaction ? parseBranching(block.interaction, locale) : null;
+          if (branching) {
+            return <BranchingInteraction key={`${currentModule.id}-${index}`} branching={branching} locale={locale} blockKey={`${currentModule.id}-${index}`} onWorked={handleActivityDone} />;
           }
           return (
             <div data-ev-id="ev_3b6003bbb3"
