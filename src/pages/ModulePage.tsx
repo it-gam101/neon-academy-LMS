@@ -16,13 +16,15 @@ import { CheckInteraction } from '@/components/courses/CheckInteraction';
 import { parseCheck } from '@/lib/checkParser';
 import { CinematicScroll } from '@/components/courses/CinematicScroll';
 import { parseCinematic } from '@/lib/cinematicParser';
+import { HotspotInteraction } from '@/components/courses/HotspotInteraction';
+import { parseHotspot } from '@/lib/hotspotParser';
 import { useState, useMemo, useEffect } from 'react';
 
 interface ContentBlock {
   type: 'heading' | 'text' | 'video' | 'image' | 'pdf';
   content: {en: string;he: string;} | string;
   url?: string;
-  /** Item 109: a rich enhancement kept from an imported package. Rendered so far: `check`, `cinematic-scroll`. */
+  /** Item 109: a rich enhancement kept from an imported package. Rendered so far: `check`, `cinematic-scroll`, `hotspot`. */
   interaction?: unknown;
 }
 
@@ -65,8 +67,8 @@ export default function ModulePage() {
 
   const { course, modules, enrollment, loading, error, refetch, getLocalizedTitle, getLocalizedCourseTitle, markModuleProgress } = useCourseModules(courseId || '');
   const [marking, setMarking] = useState(false);
-  // Item 119: the practice questions answered on this visit, by module id + position (the check's blockKey).
-  const [answeredChecks, setAnsweredChecks] = useState<Set<string>>(() => new Set());
+  // Items 119 + 109e: the activities done on this visit (checks answered, hotspots worked), by module id + position.
+  const [doneActivities, setDoneActivities] = useState<Set<string>>(() => new Set());
 
   const currentModule = modules.find((m) => m.id === moduleId);
   const currentIndex = modules.findIndex((m) => m.id === moduleId);
@@ -140,16 +142,17 @@ export default function ModulePage() {
     }
   };
 
-  // Item 119 (Isaac, 2026-10-04): answering the lesson's practice questions completes it — any answer, right
-  // or wrong; with several, the last one answered completes it. Same path as "Mark complete", which stays for
-  // lessons without a check. Counted: the checks the learner actually sees (valid in the learner's language).
-  const checkKeys = contentBlocks.flatMap((b, i) =>
-  b.type === 'text' && b.interaction && parseCheck(b.interaction, locale) ? [`${currentModule.id}-${i}`] : []
+  // Item 119 (Isaac, 2026-10-04), widened 2026-10-05: a lesson completes when EVERY activity in it is done — each
+  // practice question answered (any answer, right or wrong), each hotspot worked (every move found). No rule on
+  // where it sits; a picture story does not count. Same path as "Mark complete", which stays. Counted: the
+  // activities the learner actually sees (valid in the learner's language).
+  const activityKeys = contentBlocks.flatMap((b, i) =>
+  b.type === 'text' && b.interaction && (parseCheck(b.interaction, locale) || parseHotspot(b.interaction, locale)) ? [`${currentModule.id}-${i}`] : []
   );
-  const handleCheckAnswered = (blockKey: string) => {
-    const answered = new Set(answeredChecks).add(blockKey);
-    setAnsweredChecks(answered);
-    if (!isCompleted && !marking && checkKeys.every((k) => answered.has(k))) void handleMarkComplete();
+  const handleActivityDone = (blockKey: string) => {
+    const done = new Set(doneActivities).add(blockKey);
+    setDoneActivities(done);
+    if (!isCompleted && !marking && activityKeys.every((k) => done.has(k))) void handleMarkComplete();
   };
 
   const renderBlock = (block: ContentBlock, index: number) => {
@@ -207,13 +210,19 @@ export default function ModulePage() {
           if (check) {
             // Keyed by module AND position. Blocks are keyed by index alone, so without the module id React
             // would keep one check's answer when the learner moves to the next lesson (the item 89 class).
-            return <CheckInteraction key={`${currentModule.id}-${index}`} check={check} locale={locale} dict={dict} blockKey={`${currentModule.id}-${index}`} onAnswered={handleCheckAnswered} />;
+            return <CheckInteraction key={`${currentModule.id}-${index}`} check={check} locale={locale} dict={dict} blockKey={`${currentModule.id}-${index}`} onAnswered={handleActivityDone} />;
           }
           // Item 109 step 2, renderer 2: a valid `cinematic-scroll` renders INSTEAD of the prose too — static
           // panels, as Spark's player. Keyed by module AND position, like the check.
           const tour = block.type === 'text' && block.interaction ? parseCinematic(block.interaction, locale) : null;
           if (tour) {
             return <CinematicScroll key={`${currentModule.id}-${index}`} tour={tour} locale={locale} />;
+          }
+          // Item 109 step 2, renderer 3: a valid `hotspot` renders INSTEAD of the prose too. Keyed by module AND
+          // position, like the check; it reports "worked" (every move found) to the completion rule above.
+          const hotspot = block.type === 'text' && block.interaction ? parseHotspot(block.interaction, locale) : null;
+          if (hotspot) {
+            return <HotspotInteraction key={`${currentModule.id}-${index}`} hotspot={hotspot} locale={locale} blockKey={`${currentModule.id}-${index}`} onWorked={handleActivityDone} />;
           }
           return (
             <div data-ev-id="ev_3b6003bbb3"

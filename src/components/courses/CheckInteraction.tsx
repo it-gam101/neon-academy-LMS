@@ -12,7 +12,7 @@ import { inlineBold } from '@/lib/inlineText';
  * enrollment change), locks nothing, and is judged by the same shared grader as a quiz, with its
  * three verdicts. Rendered INSTEAD of the block's prose, never beside it: the prose ends in the answer.
  * Item 119: "Check answer" also calls `onAnswered` (any answer, right or wrong). The check itself still
- * writes nothing; the lesson page completes the lesson once every check in it is answered.
+ * writes nothing; the lesson page completes the lesson once every activity in it is done (item 109e).
  *
  * The strings come from an imported file, so they are untrusted: rendered as React text only —
  * never innerHTML — with the contract's one formatting rule, **bold**, and newlines.
