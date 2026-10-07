@@ -377,6 +377,9 @@ export interface Dictionary {
 		startLesson: string;
 		continueLesson: string;
 		completedLesson: string;
+		/** Item 109g: the simulator's turn counter ("Turn 2 of 4") and its replay button. */
+		simulatorTurn: string;
+		simulatorRestart: string;
 		startQuiz: string;
 		retakeQuiz: string;
 		quizPassed: string;
@@ -1121,6 +1124,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			startLesson: 'Start Lesson',
 			continueLesson: 'Continue',
 			completedLesson: 'Completed',
+			simulatorTurn: 'Turn',
+			simulatorRestart: 'Start again',
 			startQuiz: 'Start Quiz',
 			retakeQuiz: 'Retake Quiz',
 			quizPassed: 'Passed',
@@ -1847,6 +1852,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			startLesson: 'התחל שיעור',
 			continueLesson: 'המשך',
 			completedLesson: 'הושלם',
+			simulatorTurn: 'שלב',
+			simulatorRestart: 'להתחיל מחדש',
 			startQuiz: 'התחל מבחן',
 			retakeQuiz: 'נסה שוב',
 			quizPassed: 'עבר',
