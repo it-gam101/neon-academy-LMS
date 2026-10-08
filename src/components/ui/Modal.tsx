@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, ty
 import { X } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
+import { ErrorText } from '@/components/ui/ErrorText';
 
 interface ModalProps {
   isOpen: boolean;
@@ -171,7 +172,7 @@ export function Modal({ isOpen, onClose, title, children, footer, error, size = 
 					<div data-ev-id="ev_modal_error"
 						role="alert"
 						className="mx-4 mb-4 px-3 py-2 rounded-lg border border-destructive/40 bg-destructive/10 text-sm text-destructive">
-						{error}
+						<ErrorText error={error} />
 					</div>
 				}
 

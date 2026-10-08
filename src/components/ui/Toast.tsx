@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle, AlertCircle, X, Info } from 'lucide-react';
+import { ErrorText } from '@/components/ui/ErrorText';
 
 interface ToastMessage {
   id: string;
@@ -55,7 +56,7 @@ export function ToastContainer() {
 					{toast.type === 'success' && <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />}
 					{toast.type === 'error' && <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />}
 					{toast.type === 'info' && <Info className="w-5 h-5 text-blue-500 flex-shrink-0" />}
-					<span data-ev-id="ev_317fa1967b" className="flex-1 text-sm text-foreground">{toast.message}</span>
+					<span data-ev-id="ev_317fa1967b" className="flex-1 text-sm text-foreground">{toast.type === 'error' ? <ErrorText error={toast.message} /> : toast.message}</span>
 					<button data-ev-id="ev_2298039ac4"
         onClick={() => removeToast(toast.id)}
         className="p-1 rounded hover:bg-muted transition-colors">

@@ -9,6 +9,7 @@ import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { AuthDivider } from '@/components/auth/AuthDivider';
+import { ErrorText } from '@/components/ui/ErrorText';
 
 export default function Login() {
   const { t } = useLocale();
@@ -60,7 +61,7 @@ export default function Login() {
 			<form data-ev-id="ev_7862c01c10" onSubmit={handleEmailLogin} className="flex flex-col gap-4">
 				{error &&
         <div data-ev-id="ev_3685d890d1" className="p-3 rounded-md bg-destructive-muted text-destructive text-sm">
-						{error}
+						<ErrorText error={error} />
 					</div>
         }
 				
@@ -97,9 +98,9 @@ export default function Login() {
 				</div>
 				
 				<div data-ev-id="ev_a514888b0b" className="flex justify-end">
-					<Link
-            to="/auth/reset-password"
-            className="text-sm text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
+					<Link data-ev-id="ev_971546ee54"
+          to="/auth/reset-password"
+          className="text-sm text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
 
 						{t.auth.forgotPassword}
 					</Link>
@@ -116,9 +117,9 @@ export default function Login() {
 			
 			<p data-ev-id="ev_70c978eeb5" className="text-center text-sm text-foreground-muted mt-4">
 				{t.auth.noAccount}{' '}
-				<Link
-          to="/auth/signup"
-          className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
+				<Link data-ev-id="ev_c716e97cfc"
+        to="/auth/signup"
+        className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
 
 					{t.auth.signup}
 				</Link>

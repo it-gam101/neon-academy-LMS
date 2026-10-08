@@ -5,6 +5,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useAuth } from '@/hooks/useAuth';
 import { scoreQuiz } from '@/lib/grading';
+import { errorMessage } from '@/lib/errorText';
 
 export type Quiz = Tables<'quizzes'>;
 export type QuizQuestion = Tables<'quiz_questions'>;
@@ -74,9 +75,7 @@ export function useQuiz(moduleId: string) {
 				setAttempts(attemptsData || []);
 			}
 		} catch (err) {
-			const msg = err instanceof Error && err.message === 'TIMEOUT'
-				? 'TIMEOUT'
-				: err instanceof Error ? err.message : 'Failed to load quiz';
+			const msg = errorMessage(err, 'Failed to load quiz');
 			setError(msg);
 		} finally {
 			setLoading(false);

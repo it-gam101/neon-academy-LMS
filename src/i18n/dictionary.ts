@@ -726,6 +726,14 @@ export interface Dictionary {
 		failedToLoad: string;
 		retry: string;
 		noAccess: string;
+		/** Dispatch 1a: what went wrong, said in words the reader can act on (lib/errorText.ts). */
+		network: string;
+		notFound: string;
+		invalidCredentials: string;
+		emailNotConfirmed: string;
+		alreadyRegistered: string;
+		tooManyAttempts: string;
+		samePassword: string;
 	};
 	
 	// Landing page
@@ -1456,6 +1464,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			failedToLoad: 'Failed to load data',
 			retry: 'Retry',
 			noAccess: 'You don\'t have access to this content',
+			network: 'Couldn\'t reach the server. Check your connection and try again.',
+			notFound: 'This item doesn\'t exist, or you don\'t have access to it.',
+			invalidCredentials: 'The email or password is incorrect.',
+			emailNotConfirmed: 'Please confirm your email address first — the link is in your inbox.',
+			alreadyRegistered: 'An account with this email already exists. Try signing in.',
+			tooManyAttempts: 'Too many attempts. Please wait a minute and try again.',
+			samePassword: 'The new password must be different from the current one.',
 		},
 		
 		landing: {
@@ -2184,6 +2199,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			failedToLoad: 'טעינת הנתונים נכשלה',
 			retry: 'נסה שוב',
 			noAccess: 'אין לך גישה לתוכן זה',
+			network: 'אין חיבור לשרת. בדקו את החיבור לאינטרנט ונסו שוב.',
+			notFound: 'הפריט לא קיים, או שאין לך גישה אליו.',
+			invalidCredentials: 'האימייל או הסיסמה שגויים.',
+			emailNotConfirmed: 'יש לאשר קודם את כתובת האימייל — הקישור נמצא בתיבת הדואר שלכם.',
+			alreadyRegistered: 'כבר קיים חשבון עם האימייל הזה. נסו להתחבר.',
+			tooManyAttempts: 'יותר מדי ניסיונות. המתינו דקה ונסו שוב.',
+			samePassword: 'הסיסמה החדשה חייבת להיות שונה מהנוכחית.',
 		},
 		
 		landing: {

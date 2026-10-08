@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AuthContext, type Profile } from '@/contexts/auth-context';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { ensureSession } from '@/lib/ensureSession';
+import { errorMessage } from '@/lib/errorText';
 import { useLocale } from '@/hooks/useLocale';
 
 const PROFILE_TIMEOUT_MS = 10000;
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				return;
 
 			} catch (err) {
-				const message = err instanceof Error ? err.message : 'Failed to load profile';
+				const message = errorMessage(err, 'Failed to load profile');
 				console.error('Profile load error:', message);
 				setProfileError(message);
 				// Same reason — see the error branch above.

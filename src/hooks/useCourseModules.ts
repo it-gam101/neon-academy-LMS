@@ -6,6 +6,7 @@ import { getDictionary } from '@/i18n/dictionary';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useAuth } from '@/hooks/useAuth';
 import { isModuleDone } from '@/lib/courseProgress';
+import { errorMessage } from '@/lib/errorText';
 
 export type Module = Tables<'modules'>;
 export type ModuleProgress = Tables<'module_progress'>;
@@ -144,7 +145,7 @@ export function useCourseModules(courseId: string) {
 
 			setModules(modulesWithProgress);
 		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Failed to load course';
+			const message = errorMessage(err, 'Failed to load course');
 			setError(message === 'TIMEOUT' ? 'Request timed out. Please try again.' : message);
 		} finally {
 			setLoading(false);

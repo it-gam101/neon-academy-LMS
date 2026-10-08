@@ -1,6 +1,7 @@
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
+import { describeError } from '@/lib/errorText';
 
 interface ErrorStateProps {
   error?: string | null;
@@ -12,10 +13,13 @@ export function ErrorState({ error, onRetry, title }: ErrorStateProps) {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
 
-  // Map TIMEOUT error to localized headline; show raw detail for diagnosis
-  const isTimeout = error === 'TIMEOUT' || error?.includes('timed out');
-  const headline = isTimeout ? dict.errors.connectionTimeout : dict.errors.failedToLoad;
-  const detail = !isTimeout && error && error !== headline ? error : null;
+  // Dispatch 1a: the shared classifier (lib/errorText) names the failure — timed out, offline, session expired,
+  // refused, not found. Anything else keeps "Failed to load data" with the original message below it. A missing or
+  // hidden item will not appear on a retry, so it gets no Retry button.
+  const described = describeError(error, dict, locale);
+  const headline = described.kind === 'other' ? dict.errors.failedToLoad : described.text;
+  const detail = described.kind === 'other' ? error && error !== headline ? error : null : described.detail;
+  const canRetry = !!onRetry && described.kind !== 'notFound';
 
   return (
     <div data-ev-id="ev_8dd32ada56" className="flex flex-col items-center justify-center py-12 text-center">
@@ -33,7 +37,7 @@ export function ErrorState({ error, onRetry, title }: ErrorStateProps) {
 				{detail}
 			</p>
 			}
-			{onRetry &&
+			{canRetry &&
       <button data-ev-id="ev_e5a7f166dd"
       onClick={onRetry}
       className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors focus-ring">

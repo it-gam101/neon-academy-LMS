@@ -4,6 +4,7 @@ import type { Tables } from '@/integrations/supabase/helpers';
 import { useLocale } from '@/hooks/useLocale';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useAuth } from '@/hooks/useAuth';
+import { errorMessage } from '@/lib/errorText';
 
 export type Course = Tables<'courses'>;
 export type Category = Tables<'course_categories'>;
@@ -91,7 +92,7 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 
 			setCourses(coursesWithDetails);
 		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Failed to load courses';
+			const message = errorMessage(err, 'Failed to load courses');
 			setError(message === 'TIMEOUT' ? 'Request timed out. Please try again.' : message);
 		} finally {
 			setLoading(false);

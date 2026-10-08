@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { useAuth } from '@/hooks/useAuth';
+import { errorMessage } from '@/lib/errorText';
 
 export type Profile = Tables<'profiles'>;
 export type UserRole = 'super_admin' | 'hr_manager' | 'team_manager' | 'instructor' | 'employee';
@@ -40,7 +41,7 @@ export function useProfile() {
 				if (profileError) throw profileError;
 				setProfile(data);
 			} catch (err) {
-				setError(err instanceof Error ? err.message : 'Failed to load profile');
+				setError(errorMessage(err, 'Failed to load profile'));
 			} finally {
 				setLoading(false);
 			}

@@ -5,6 +5,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useAuth } from '@/hooks/useAuth';
 import { isModuleDone, countModulesAddedSince } from '@/lib/courseProgress';
+import { errorMessage } from '@/lib/errorText';
 
 export type Enrollment = Tables<'enrollments'>;
 
@@ -62,7 +63,7 @@ export function useEnrollments(userId?: string) {
 			const visible = ((data as EnrollmentWithCourse[]) || []).filter((e) => e.course != null);
 			setEnrollments(visible);
 		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Failed to load enrollments';
+			const message = errorMessage(err, 'Failed to load enrollments');
 			setError(message === 'TIMEOUT' ? 'Request timed out. Please try again.' : message);
 		} finally {
 			setLoading(false);

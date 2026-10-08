@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthButton } from '@/components/auth/AuthButton';
+import { ErrorText } from '@/components/ui/ErrorText';
 
 type ResetState = 'request' | 'sent' | 'reset' | 'success' | 'error';
 
@@ -95,7 +96,7 @@ export default function ResetPassword() {
 				<form data-ev-id="ev_735c56dbb3" onSubmit={handleRequestReset} className="flex flex-col gap-4">
 					{error &&
           <div data-ev-id="ev_a5370ba851" className="p-3 rounded-md bg-destructive-muted text-destructive text-sm">
-							{error}
+							<ErrorText error={error} />
 						</div>
           }
 					
@@ -116,9 +117,9 @@ export default function ResetPassword() {
 				</form>
 				
 				<p data-ev-id="ev_7cebbc84c3" className="text-center text-sm text-foreground-muted mt-4">
-					<Link
-            to="/auth/login"
-            className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
+					<Link data-ev-id="ev_be6da45e1c"
+          to="/auth/login"
+          className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
 
 						{t.auth.backToLogin}
 					</Link>
@@ -138,9 +139,9 @@ export default function ResetPassword() {
 					</p>
 				</div>
 				<p data-ev-id="ev_1d3685b526" className="text-center text-sm text-foreground-muted mt-4">
-					<Link
-            to="/auth/login"
-            className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
+					<Link data-ev-id="ev_6e697ada84"
+          to="/auth/login"
+          className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
 
 						{t.auth.backToLogin}
 					</Link>
@@ -156,7 +157,7 @@ export default function ResetPassword() {
 				<form data-ev-id="ev_8945a3c38a" onSubmit={handleResetPassword} className="flex flex-col gap-4">
 					{error &&
           <div data-ev-id="ev_4f2162cd84" className="p-3 rounded-md bg-destructive-muted text-destructive text-sm">
-							{error}
+							<ErrorText error={error} />
 						</div>
           }
 					
@@ -224,10 +225,10 @@ export default function ResetPassword() {
 				</p>
 			</div>
 			<p data-ev-id="ev_ed87a0ba91" className="text-center text-sm text-foreground-muted mt-4">
-				<Link
-          to="/auth/reset-password"
-          onClick={() => setState('request')}
-          className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
+				<Link data-ev-id="ev_31522db7a8"
+        to="/auth/reset-password"
+        onClick={() => setState('request')}
+        className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
 
 					{t.auth.sendResetLink}
 				</Link>

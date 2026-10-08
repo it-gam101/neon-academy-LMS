@@ -22,6 +22,7 @@ import { courseProblems, type CourseProblem, type ProblemCode, type QuizDataLike
 import { syncCourseType } from '@/lib/courseType';
 import { parseVc4elSource, countInteractions, type Vc4elPlan } from '@/lib/vc4elSource';
 import { importSidecarContent } from '@/lib/importSidecar';
+import { errorMessage } from '@/lib/errorText';
 
 type Course = Tables<'courses'>;
 
@@ -42,6 +43,10 @@ export default function StudioEditor() {
   const [modules, setModules] = useState<Module[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  // Dispatch 1a: why the course did not load (a timeout, a refusal…), so the page can say so and offer Retry —
+  // before, every failure read "Not Found".
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishBlockers, setPublishBlockers] = useState<CourseProblem[] | null>(null);
@@ -210,6 +215,7 @@ export default function StudioEditor() {
 
     const fetchData = async () => {
       setLoading(true);
+      setLoadError(null);
 
       try {
         // Fetch course
@@ -266,14 +272,14 @@ export default function StudioEditor() {
         if (categoriesData) setCategories(categoriesData);
       } catch (err) {
         console.error('StudioEditor fetchData failed:', err);
-        // Keep existing failure handling - data remains empty/unchanged
+        setLoadError(err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [courseId, loadQuizzes]);
+  }, [courseId, loadQuizzes, reloadKey]);
 
   // Refreshed after every render so the unmount cleanup below reads the CURRENT values.
   // No dependency array on purpose.
@@ -1056,11 +1062,13 @@ export default function StudioEditor() {
 
   }
 
-  if (!course) {
+  if (!course || loadError) {
     return (
       <div data-ev-id="ev_d702f214f4" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackButton to="/studio" label={dict.studio.backToStudio} />
-        <ErrorState error={dict.common.notFound} />
+        <ErrorState
+          error={loadError ? errorMessage(loadError, dict.common.error) : dict.common.notFound}
+          onRetry={loadError ? () => setReloadKey((k) => k + 1) : undefined} />
       </div>);
 
   }

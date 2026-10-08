@@ -9,6 +9,7 @@ import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { AuthDivider } from '@/components/auth/AuthDivider';
+import { ErrorText } from '@/components/ui/ErrorText';
 
 export default function Signup() {
   const { t } = useLocale();
@@ -72,7 +73,7 @@ export default function Signup() {
 			<form data-ev-id="ev_810f898ffd" onSubmit={handleEmailSignup} className="flex flex-col gap-4">
 				{error &&
         <div data-ev-id="ev_94c84caeeb" className="p-3 rounded-md bg-destructive-muted text-destructive text-sm">
-						{error}
+						<ErrorText error={error} />
 					</div>
         }
 				
@@ -130,9 +131,9 @@ export default function Signup() {
 			
 			<p data-ev-id="ev_9903bd4736" className="text-center text-sm text-foreground-muted mt-4">
 				{t.auth.haveAccount}{' '}
-				<Link
-          to="/auth/login"
-          className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
+				<Link data-ev-id="ev_3506045ddd"
+        to="/auth/login"
+        className="text-primary hover:text-primary-hover transition-colors focus-ring rounded px-1">
 
 					{t.auth.login}
 				</Link>

@@ -103,7 +103,7 @@ export default function Profile() {
         showToast('error', (error as {message?: string;})?.message || t.common.error);
       } else if (!data || data.length === 0) {
         // RLS-blocked UPDATE returns success with ZERO rows
-        showToast('error', t.common.error);
+        showToast('error', t.common.changeRefused);
       } else {
         showToast('success', t.profile.profileUpdated);
         await refreshProfile();
