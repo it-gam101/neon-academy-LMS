@@ -3,7 +3,8 @@ import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
-import { getDictionary } from '@/i18n/dictionary';
+import { ErrorText } from '@/components/ui/ErrorText';
+import { errorMessage } from '@/lib/errorText';
 
 export default function SettingsPage() {
   const { t, locale, setLocale } = useLocale();
@@ -29,7 +30,6 @@ export default function SettingsPage() {
 
     if (!supabase) return;
 
-    const dict = getDictionary(locale);
     setSaving(true);
     try {
       const { error } = await withTimeout(
@@ -47,10 +47,7 @@ export default function SettingsPage() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message
-        : (err as { message?: string })?.message || t.common.error;
+      const msg = errorMessage(err, t.common.error);
       console.error('handleChangePassword failed:', err);
       setPasswordError(msg);
     } finally {
@@ -123,7 +120,7 @@ export default function SettingsPage() {
 					</div>
 					<p data-ev-id="ev_7074d2a99c" className="text-sm text-muted-foreground">{t.auth.passwordMinLength}</p>
 					{passwordError &&
-          <p data-ev-id="ev_e25eae8886" className="text-sm text-danger">{passwordError}</p>
+          <p data-ev-id="ev_e25eae8886" className="text-sm text-danger"><ErrorText error={passwordError} /></p>
           }
 					<button data-ev-id="ev_6a77eaa7ec"
           type="submit"

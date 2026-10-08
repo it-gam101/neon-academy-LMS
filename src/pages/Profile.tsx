@@ -12,6 +12,8 @@ import { functionErrorMessage } from '@/lib/functionError';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { resizeImageToBlob } from '@/lib/resizeImage';
 import { ensureSession } from '@/lib/ensureSession';
+import { ErrorText } from '@/components/ui/ErrorText';
+import { errorMessage } from '@/lib/errorText';
 
 export default function Profile() {
   const { locale, t } = useLocale();
@@ -137,9 +139,7 @@ export default function Profile() {
         }
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? t.errors.connectionTimeout
-        : err instanceof Error ? err.message : t.common.error;
+      const msg = errorMessage(err, t.common.error);
       console.error('handleSave failed:', err);
       showToast('error', msg);
     } finally {
@@ -395,7 +395,7 @@ export default function Profile() {
             {/* Upload error */}
             {uploadError &&
             <p data-ev-id="ev_upload_error" className="text-sm text-destructive mb-2">
-                {uploadError}
+                <ErrorText error={uploadError} />
               </p>
             }
             

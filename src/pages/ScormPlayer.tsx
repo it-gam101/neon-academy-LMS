@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { ensureSession } from '@/lib/ensureSession';
+import { ErrorText } from '@/components/ui/ErrorText';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Badge } from '@/components/ui/Badge';
 import type { Tables } from '@/integrations/supabase/helpers';
@@ -377,7 +378,7 @@ export default function ScormPlayer() {
 				<div data-ev-id="ev_b58297d3e4" className="flex flex-col items-center gap-4 text-center p-8">
 					<AlertCircle className="w-12 h-12 text-destructive" />
 					<h2 data-ev-id="ev_7ffedb30fe" className="text-xl font-semibold text-foreground">{dict.common.errorOccurred}</h2>
-					<p data-ev-id="ev_215ec20890" className="text-muted-foreground">{error}</p>
+					<p data-ev-id="ev_215ec20890" className="text-muted-foreground"><ErrorText error={error} /></p>
 					<div data-ev-id="ev_594b565c44" className="flex gap-4 mt-4">
 						<button data-ev-id="ev_e6e681e100"
             onClick={() => window.location.reload()}

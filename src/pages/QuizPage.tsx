@@ -18,6 +18,7 @@ import { withTimeout } from '@/utils/fetchWithTimeout';
 import { PreviewBanner } from '@/components/studio/PreviewBanner';
 import { scoreQuiz, questionFraction, verdictOf } from '@/lib/grading';
 import { isModuleDone } from '@/lib/courseProgress';
+import { errorMessage } from '@/lib/errorText';
 
 type QuizState = 'info' | 'playing' | 'results' | 'review';
 
@@ -150,10 +151,7 @@ export default function QuizPage() {
         }
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
-      dict.errors.connectionTimeout :
-      err instanceof Error ? err.message :
-      (err as {message?: string;})?.message || dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('quiz submit failed:', err);
       showToast('error', msg);
     } finally {

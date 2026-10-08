@@ -10,6 +10,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { BackButton } from '@/components/ui/BackButton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { showToast } from '@/components/ui/Toast';
+import { errorMessage } from '@/lib/errorText';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { PreviewBanner } from '@/components/studio/PreviewBanner';
 import { CheckInteraction } from '@/components/courses/CheckInteraction';
@@ -137,9 +138,7 @@ export default function ModulePage() {
         showToast('success', dict.common.completed);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
-      dict.errors.connectionTimeout :
-      err instanceof Error ? err.message : dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('handleMarkComplete failed:', err);
       showToast('error', msg);
     } finally {
