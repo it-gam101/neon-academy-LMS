@@ -44,7 +44,7 @@ export function CourseCard({ course, onEnroll, enrolling, progressPercent }: Cou
         className="w-full h-full object-cover" /> :
 
 
-        <div data-ev-id="ev_f2e5c465ce" className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+        <div data-ev-id="ev_f2e5c465ce" className="w-full h-full flex items-center justify-center bg-muted">
 						<BookOpen className="w-12 h-12 text-muted-foreground/50" />
 					</div>
         }
@@ -91,9 +91,9 @@ export function CourseCard({ course, onEnroll, enrolling, progressPercent }: Cou
 				{/* Actions */}
 				<div data-ev-id="ev_7198daf63e" className="flex items-center justify-between">
 					{isEnrolled ?
-          <Link
-            to={`/course/${course.id}`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+          <Link data-ev-id="ev_e986c6c7ef"
+          to={`/course/${course.id}`}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 
 							{progressPercent === 100 ? dict.catalogue.viewCourse : dict.catalogue.continueCourse}
 							<Chevron className="w-4 h-4" />

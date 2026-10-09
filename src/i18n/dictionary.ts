@@ -522,6 +522,9 @@ export interface Dictionary {
 		descriptionHe: string;
 		category: string;
 		thumbnailUrl: string;
+		/** Dispatch 3: upload the course image, or paste a link to one. */
+		uploadCourseImage: string;
+		orPasteImageLink: string;
 		estimatedMinutes: string;
 		isMandatory: string;
 		dueDays: string;
@@ -1271,7 +1274,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			descriptionEn: 'Description (English)',
 			descriptionHe: 'Description (Hebrew)',
 			category: 'Category',
-			thumbnailUrl: 'Thumbnail URL',
+			thumbnailUrl: 'Course image',
+			uploadCourseImage: 'Upload an image',
+			orPasteImageLink: 'or paste a link',
 			estimatedMinutes: 'Estimated minutes',
 			isMandatory: 'Mandatory course',
 			dueDays: 'Due days after enrollment',
@@ -2006,7 +2011,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			descriptionEn: 'תיאור (אנגלית)',
 			descriptionHe: 'תיאור (עברית)',
 			category: 'קטגוריה',
-			thumbnailUrl: 'כתובת תמונה ממוזערת',
+			thumbnailUrl: 'תמונת הקורס',
+			uploadCourseImage: 'העלאת תמונה',
+			orPasteImageLink: 'או הדביקו קישור',
 			estimatedMinutes: 'דקות משוערות',
 			isMandatory: 'קורס חובה',
 			dueDays: 'ימים להשלמה מרגע ההרשמה',

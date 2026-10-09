@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, Settings, Package, Archive, AlertTriangle, Pencil, ChevronUp, ChevronDown, Edit, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Eye, Send, Plus, Trash2, BookOpen, FileQuestion, Settings, Package, Archive, AlertTriangle, Pencil, ChevronUp, ChevronDown, Edit, Loader2, Upload } from 'lucide-react';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
@@ -23,6 +23,10 @@ import { syncCourseType } from '@/lib/courseType';
 import { parseVc4elSource, countInteractions, type Vc4elPlan } from '@/lib/vc4elSource';
 import { importSidecarContent } from '@/lib/importSidecar';
 import { errorMessage } from '@/lib/errorText';
+import { ErrorText } from '@/components/ui/ErrorText';
+import { ensureSession } from '@/lib/ensureSession';
+import { functionErrorMessage } from '@/lib/functionError';
+import { resizeImageToBlob } from '@/lib/resizeImage';
 
 type Course = Tables<'courses'>;
 
@@ -49,6 +53,10 @@ export default function StudioEditor() {
   const [reloadKey, setReloadKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [addingModule, setAddingModule] = useState(false);
+  // Dispatch 3: uploading the course image.
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishBlockers, setPublishBlockers] = useState<CourseProblem[] | null>(null);
   const [publishCheckFailed, setPublishCheckFailed] = useState(false);
@@ -586,6 +594,57 @@ export default function StudioEditor() {
       }
     } finally {
       setAddingModule(false);
+    }
+  };
+
+  // Dispatch 3: upload the course image through the same path as a lesson image (media-presign → R2 → media-finalize),
+  // resized to at most 1280 px so catalogue cards stay light. The URL lands in the form; Save Draft stores it.
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset the input so the same file can be chosen again after a failure.
+    if (thumbnailInputRef.current) thumbnailInputRef.current.value = '';
+    if (!file || !supabase || uploadingThumbnail) return;
+    setThumbnailError(null);
+    setUploadingThumbnail(true);
+    try {
+      // Without a live session supabase-js sends the ANON KEY and the Edge Function answers
+      // "Invalid or expired token". Say the true thing instead. BACKLOG item 104.
+      if (!(await ensureSession())) {
+        setThumbnailError(dict.errors.sessionExpired);
+        return;
+      }
+      const blob = await resizeImageToBlob(file, 1280);
+      const filename = file.name.replace(/\.[^.]+$/, '') + (blob.type === 'image/webp' ? '.webp' : '.jpg');
+      const { data: presign, error: presignError } = await withTimeout(
+        supabase.functions.invoke('media-presign', { body: { filename, mimeType: blob.type, size: blob.size } }),
+        30000
+      );
+      if (presignError || !presign?.uploadUrl) {
+        console.error('Course image presign failed:', presignError || presign);
+        setThumbnailError(presignError ? await functionErrorMessage(presignError, dict.studioBlocks.uploadFailed) : presign?.error || dict.studioBlocks.uploadFailed);
+        return;
+      }
+      const put = await withTimeout(fetch(presign.uploadUrl, { method: 'PUT', body: blob, headers: { 'Content-Type': blob.type } }), 60000);
+      if (!put.ok) {
+        console.error('Course image upload to R2 failed:', put.status, put.statusText);
+        setThumbnailError(dict.studioBlocks.uploadFailed);
+        return;
+      }
+      const { data: finalized, error: finalizeError } = await withTimeout(
+        supabase.functions.invoke('media-finalize', { body: { key: presign.key, filename: presign.filename || filename, mimeType: blob.type, size: blob.size } }),
+        30000
+      );
+      if (finalizeError || !finalized?.url) {
+        console.error('Course image finalize failed:', finalizeError || finalized);
+        setThumbnailError(finalizeError ? await functionErrorMessage(finalizeError, dict.studioBlocks.uploadFailed) : finalized?.error || dict.studioBlocks.uploadFailed);
+        return;
+      }
+      setThumbnailUrl(finalized.url);
+    } catch (err) {
+      console.error('handleThumbnailUpload failed:', err);
+      setThumbnailError(await functionErrorMessage(err, dict.studioBlocks.uploadFailed));
+    } finally {
+      setUploadingThumbnail(false);
     }
   };
 
@@ -1167,10 +1226,34 @@ export default function StudioEditor() {
 							<label data-ev-id="ev_f3b7f4bb61" className="block text-sm font-medium text-foreground mb-1">
 								{dict.studio.thumbnailUrl}
 							</label>
+							{/* Dispatch 3: upload the course image, or paste a link below. */}
+							<div data-ev-id="ev_73e5ba5186" className="mb-2 flex items-center gap-3">
+								{thumbnailUrl &&
+                <img data-ev-id="ev_e3623cef27" src={thumbnailUrl} alt="" className="h-16 w-28 rounded-md border border-border object-cover" />
+                }
+								<input data-ev-id="ev_ded99b5abb"
+                ref={thumbnailInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={handleThumbnailUpload} />
+								<button data-ev-id="ev_a9ea511b18"
+                type="button"
+                onClick={() => thumbnailInputRef.current?.click()}
+                disabled={uploadingThumbnail}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+									<Upload className="w-4 h-4" />
+									{uploadingThumbnail ? dict.studioBlocks.uploading : dict.studio.uploadCourseImage}
+								</button>
+							</div>
+							{thumbnailError &&
+              <p data-ev-id="ev_8fa69182b1" className="mb-2 text-sm text-destructive"><ErrorText error={thumbnailError} /></p>
+              }
 							<input data-ev-id="ev_d8340bac7c"
               type="url"
               value={thumbnailUrl}
               onChange={(e) => setThumbnailUrl(e.target.value)}
+              placeholder={dict.studio.orPasteImageLink}
               className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               dir="ltr" />
 
@@ -1356,7 +1439,7 @@ export default function StudioEditor() {
 						</button>
 
 						{/* Readiness badge, reading the same quiz data as the publish modal. 
-                        The modal re-reads at publish time and stays the authoritative gate. */}
+                               The modal re-reads at publish time and stays the authoritative gate. */}
 						{course.status !== 'published' && quizzes !== null && (() => {
               const headerBlockers = courseProblems({
                 modules: modules.map((m) => ({
@@ -1831,7 +1914,7 @@ export default function StudioEditor() {
         error={libraryImportError}>
 
 				{/* Item 105: step two — this package carries editable content, so offer the
-				    same choice the upload path gives. Only reachable when a sidecar parsed. */}
+             same choice the upload path gives. Only reachable when a sidecar parsed. */}
 				{pendingSidecar && pendingPackage ?
         <div data-ev-id="ev_library_import_choice" className="flex flex-col gap-4">
 						<p data-ev-id="ev_lic_pkg" className="text-sm text-muted-foreground">
@@ -1896,7 +1979,7 @@ export default function StudioEditor() {
 						</div>
 					</div> :
 
-				<div data-ev-id="ev_scorm_chooser" className="flex flex-col gap-4">
+        <div data-ev-id="ev_scorm_chooser" className="flex flex-col gap-4">
 					{/* Upload new option */}
 					<button data-ev-id="ev_upload_new_scorm"
           type="button"

@@ -6,6 +6,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
 import { useEnrollments } from '@/hooks/useEnrollments';
 import { useCourses } from '@/hooks/useCourses';
+import { CourseCard } from '@/components/courses/CourseCard';
+import { showToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -79,13 +81,27 @@ export default function Index() {
   const heroHeadingRef = useRef<HTMLHeadingElement>(null);
 
   // Only fetch data when authenticated
-  const { inProgress, loading: enrollmentsLoading, calculateProgress, getLocalizedTitle: getEnrollmentTitle } = useEnrollments(
+  const { inProgress, loading: enrollmentsLoading, calculateProgress, getLocalizedTitle: getEnrollmentTitle, refetch: refetchEnrollments } = useEnrollments(
     isAuthenticated ? profile?.id : undefined
   );
-  const { courses, loading: coursesLoading, getLocalizedTitle: getCourseTitle } = useCourses({ onlyPublished: true });
+  const { courses, loading: coursesLoading, enrollInCourse } = useCourses({ onlyPublished: true });
 
   const [newUserCount, setNewUserCount] = useState<number | null>(null);
   const [newUsers, setNewUsers] = useState<{id: string;full_name: string | null;email: string;department: string | null;}[]>([]);
+
+  // Dispatch 3: enrolling from the "New in the Catalogue" cards, as the Catalogue does; "Continue learning" refreshes.
+  const [enrollingId, setEnrollingId] = useState<string | null>(null);
+  const handleEnroll = async (courseId: string) => {
+    setEnrollingId(courseId);
+    const { error } = await enrollInCourse(courseId);
+    if (error) {
+      showToast('error', error);
+    } else {
+      showToast('success', t.catalogue.enrolled);
+      void refetchEnrollments();
+    }
+    setEnrollingId(null);
+  };
 
   // null means "unknown", not "employee"
   const userRole = profile?.role ?? null;
@@ -488,38 +504,11 @@ export default function Index() {
             </div>
             <div data-ev-id="ev_f39d70afec" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {newCourses.map((course) =>
-            <Link data-ev-id="ev_1e13ffbb51"
-            key={course.id}
-            to={`/course/${course.id}`}
-            className="group block bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all hover:shadow-md">
-
-                  {/* Thumbnail */}
-                  <div data-ev-id="ev_70b5435e56" className="aspect-video bg-muted relative overflow-hidden">
-                    {course.thumbnail_url ?
-                <img data-ev-id="ev_114934c338"
-                src={course.thumbnail_url}
-                alt=""
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> :
-
-
-                <div data-ev-id="ev_c9b40bc61b" className="w-full h-full flex items-center justify-center">
-                        <BookOpen className="w-12 h-12 text-muted-foreground/40" />
-                      </div>
-                }
-                  </div>
-                  {/* Content */}
-                  <div data-ev-id="ev_383310068b" className="p-4">
-                    <h3 data-ev-id="ev_ee99450c2d" className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                      {getCourseTitle(course)}
-                    </h3>
-                    {course.estimated_minutes &&
-                <p data-ev-id="ev_6ceba4d3d3" className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {course.estimated_minutes} {t.common.minutes}
-                      </p>
-                }
-                  </div>
-                </Link>
+            <CourseCard
+              key={course.id}
+              course={course}
+              onEnroll={handleEnroll}
+              enrolling={enrollingId === course.id} />
             )}
             </div>
           </div> :
