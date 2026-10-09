@@ -18,6 +18,8 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 import { formatDateTime } from '@/utils/formatDate';
 import type { Tables } from '@/integrations/supabase/helpers';
+import { ErrorText } from '@/components/ui/ErrorText';
+import { errorMessage } from '@/lib/errorText';
 
 type Profile = Tables<'profiles'>;
 type Category = Tables<'course_categories'>;
@@ -105,10 +107,7 @@ export default function Admin() {
       if (settingsError) throw settingsError;
       if (settingsData) setOrgSettings(settingsData);
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message
-        : (err as { message?: string })?.message || dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('Admin fetchData failed:', err);
       setLoadError(msg);
     } finally {
@@ -324,9 +323,7 @@ export default function Admin() {
         setOrgSettingsSaved(true);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message : dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('handleSaveOrgSettings failed:', err);
       showToast('error', msg);
     } finally {
@@ -600,7 +597,7 @@ export default function Admin() {
 
 											{logoUploadError &&
                     <p data-ev-id="ev_logo_upload_error" role="alert" className="mt-1 text-sm text-destructive">
-												{logoUploadError}
+												<ErrorText error={logoUploadError} />
 											</p>
                     }
 										</div>

@@ -48,6 +48,7 @@ export default function StudioEditor() {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [addingModule, setAddingModule] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishBlockers, setPublishBlockers] = useState<CourseProblem[] | null>(null);
   const [publishCheckFailed, setPublishCheckFailed] = useState(false);
@@ -398,9 +399,7 @@ export default function StudioEditor() {
         showToast('success', dict.studio.courseSaved);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
-      dict.errors.connectionTimeout :
-      err instanceof Error ? err.message : dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('handleSave failed:', err);
       showToast('error', msg);
     } finally {
@@ -549,38 +548,44 @@ export default function StudioEditor() {
   };
 
   const handleAddModule = async (type: 'lesson' | 'quiz') => {
-    if (!supabase || !courseId) return;
+    // Dispatch 1c: one module per click — a double-click used to insert two at the same position.
+    if (!supabase || !courseId || addingModule) return;
+    setAddingModule(true);
+    try {
+      // `modules.length + 1` collides with an existing row as soon as anything is
+      // deleted. Derive the next number from the data instead.
+      const sortOrder = modules.reduce((max, m) => Math.max(max, m.sort_order), 0) + 1;
+      const { data, error } = await supabase.
+      from('modules').
+      insert({
+        course_id: courseId,
+        title_en: type === 'quiz' ? 'New Quiz' : 'New Lesson',
+        title_he: type === 'quiz' ? 'מבחן חדש' : 'שיעור חדש',
+        module_type: type,
+        sort_order: sortOrder,
+        content_json: type === 'lesson' ? { blocks: [] } : null
+      }).
+      select().
+      single();
 
-    // `modules.length + 1` collides with an existing row as soon as anything is
-    // deleted. Derive the next number from the data instead.
-    const sortOrder = modules.reduce((max, m) => Math.max(max, m.sort_order), 0) + 1;
-    const { data, error } = await supabase.
-    from('modules').
-    insert({
-      course_id: courseId,
-      title_en: type === 'quiz' ? 'New Quiz' : 'New Lesson',
-      title_he: type === 'quiz' ? 'מבחן חדש' : 'שיעור חדש',
-      module_type: type,
-      sort_order: sortOrder,
-      content_json: type === 'lesson' ? { blocks: [] } : null
-    }).
-    select().
-    single();
+      if (error) {
+        showToast('error', error.message);
+      } else if (data) {
+        setModules((prev) => [...prev, data]);
+        await syncCourseType(courseId);
 
-    if (error) {
-      showToast('error', error.message);
-    } else if (data) {
-      setModules((prev) => [...prev, data]);
-      await syncCourseType(courseId);
-
-      // Create quiz record if it's a quiz module
-      if (type === 'quiz') {
-        await supabase.from('quizzes').insert({
-          module_id: data.id,
-          pass_score: 70,
-          attempts_allowed: 3
-        });
+        // Create quiz record if it's a quiz module. Dispatch 1c: a refused insert is said, not swallowed.
+        if (type === 'quiz') {
+          const { error: quizError } = await supabase.from('quizzes').insert({
+            module_id: data.id,
+            pass_score: 70,
+            attempts_allowed: 3
+          });
+          if (quizError) showToast('error', quizError.message);
+        }
       }
+    } finally {
+      setAddingModule(false);
     }
   };
 
@@ -673,10 +678,7 @@ export default function StudioEditor() {
         setAvailablePackages(data ?? []);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
-      dict.errors.connectionTimeout :
-      err instanceof Error ? err.message :
-      (err as {message?: string;})?.message || dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('handleOpenScormChooser failed:', err);
       showToast('error', msg);
       setAvailablePackages([]);
@@ -866,9 +868,7 @@ export default function StudioEditor() {
         void handleCloseQuizSettings();
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
-      dict.errors.connectionTimeout :
-      err instanceof Error ? err.message : dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('handleSaveQuizSettings failed:', err);
       setQuizSettingsError(msg);
     } finally {
@@ -922,10 +922,7 @@ export default function StudioEditor() {
         setShowModuleTitleModal(false);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
-      dict.errors.connectionTimeout :
-      err instanceof Error ? err.message :
-      (err as {message?: string;})?.message || dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('handleSaveModuleTitle failed:', err);
       showToast('error', msg);
     } finally {
@@ -978,10 +975,7 @@ export default function StudioEditor() {
 
       setModules(reordered.map((m, i) => ({ ...m, sort_order: i + 1 })));
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
-      dict.errors.connectionTimeout :
-      err instanceof Error ? err.message :
-      (err as {message?: string;})?.message || dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('handleMoveModule failed:', err);
       showToast('error', msg);
     } finally {
@@ -1020,9 +1014,7 @@ export default function StudioEditor() {
         showToast('success', dict.studio.courseArchived);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT' ?
-      dict.errors.connectionTimeout :
-      err instanceof Error ? err.message : dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('handleArchive failed:', err);
       showToast('error', msg);
     } finally {
@@ -1233,14 +1225,16 @@ export default function StudioEditor() {
 						<div data-ev-id="ev_e29c860240" className="flex items-center gap-2">
 							<button data-ev-id="ev_3d7cf3be7a"
               onClick={() => handleAddModule('lesson')}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+              disabled={addingModule}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 								<BookOpen className="w-4 h-4" />
 								{dict.studio.addLesson}
 							</button>
 							<button data-ev-id="ev_5a93129782"
               onClick={() => handleAddModule('quiz')}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+              disabled={addingModule}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 								<FileQuestion className="w-4 h-4" />
 								{dict.studio.addQuiz}

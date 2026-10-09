@@ -15,6 +15,8 @@ import { functionErrorMessage } from '@/lib/functionError';
 import type { Json } from '@/integrations/supabase/types';
 import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl, isNonEmbeddableHost } from '@/lib/contentSafety';
 import { lessonProblems, blockProblems, type ProblemCode } from '@/lib/completeness';
+import { ErrorText } from '@/components/ui/ErrorText';
+import { errorMessage } from '@/lib/errorText';
 
 interface ContentBlock {
   id: string;
@@ -645,9 +647,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
         onSaved?.();
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message : dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('explicit save failed:', err);
       showToast('error', msg);
     } finally {
@@ -922,7 +922,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 										</div>
 										{uploadError?.index === index &&
                         <p data-ev-id="ev_5ea3d70d18" className="mb-2 text-sm text-destructive">
-												{dict.studioBlocks.uploadFailed}: {uploadError.message}
+												{dict.studioBlocks.uploadFailed}: <ErrorText error={uploadError.message} />
 											</p>
                         }
 										<label data-ev-id="ev_media_url_label" className="block text-xs font-medium text-muted-foreground mb-1">
@@ -1070,7 +1070,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
         }
 				{saveStatus === 'error' && saveError &&
         <span data-ev-id="ev_save_status_error" className="text-sm text-destructive">
-						{saveError}
+						<ErrorText error={saveError} />
 					</span>
         }
 

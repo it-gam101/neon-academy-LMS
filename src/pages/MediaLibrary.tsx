@@ -13,6 +13,9 @@ import { ScormUploadModal } from '@/components/studio/ScormUploadModal';
 import { functionErrorMessage } from '@/lib/functionError';
 import { ensureSession } from '@/lib/ensureSession';
 import { withTimeout } from '@/utils/fetchWithTimeout';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { ErrorText } from '@/components/ui/ErrorText';
+import { errorMessage } from '@/lib/errorText';
 
 interface MediaAsset {
   id: string;
@@ -94,6 +97,10 @@ export default function MediaLibrary() {
   const [deletePackageTarget, setDeletePackageTarget] = useState<ScormPackage | null>(null);
   const [deletingPackage, setDeletingPackage] = useState(false);
   const [deletePackageError, setDeletePackageError] = useState<string | null>(null);
+  // Dispatch 1c: why the files or the packages did not load — shown with Retry instead of an empty list.
+  const [assetsError, setAssetsError] = useState<string | null>(null);
+  const [assetsReload, setAssetsReload] = useState(0);
+  const [packagesError, setPackagesError] = useState<string | null>(null);
   // Item 103: course-free SCORM upload from the library.
   const [showPackageUpload, setShowPackageUpload] = useState(false);
 
@@ -107,7 +114,7 @@ export default function MediaLibrary() {
   const canViewPackages = isSuperAdmin || isHrManager || profile?.role === 'instructor';
   const canDeletePackages = isSuperAdmin || isHrManager;
 
-  // Fetch assets
+  // Fetch assets. Dispatch 1c: a failed load is shown with Retry — it used to leave "No files yet" on the screen.
   useEffect(() => {
     const fetchAssets = async () => {
       if (!supabase) {
@@ -115,6 +122,7 @@ export default function MediaLibrary() {
         return;
       }
 
+      setAssetsError(null);
       const { data, error } = await supabase.
       from('media_assets').
       select('*').
@@ -122,7 +130,7 @@ export default function MediaLibrary() {
 
       if (error) {
         console.error('Failed to load media assets:', error);
-        showToast('error', (error as {message?: string;})?.message || dict.common.error);
+        setAssetsError(errorMessage(error, 'Failed to load media assets'));
       } else {
         setAssets(data as MediaAsset[] || []);
       }
@@ -131,7 +139,7 @@ export default function MediaLibrary() {
     };
 
     fetchAssets();
-  }, [dict.common.error]);
+  }, [assetsReload]);
 
   // Fetch owner names for super_admin
   useEffect(() => {
@@ -166,6 +174,7 @@ export default function MediaLibrary() {
     if (!supabase || !canViewPackages) return;
 
     setPackagesLoading(true);
+    setPackagesError(null);
     try {
       const { data: pkgData, error: pkgErr } = await supabase.
       from('scorm_packages').
@@ -174,6 +183,7 @@ export default function MediaLibrary() {
 
       if (pkgErr) {
         console.error('Failed to load SCORM packages:', pkgErr);
+        setPackagesError(errorMessage(pkgErr, 'Failed to load SCORM packages'));
       } else {
         setPackages(pkgData as ScormPackage[] || []);
       }
@@ -434,7 +444,10 @@ export default function MediaLibrary() {
 			</div>
 
 			{/* Content */}
-			{assets.length === 0 ?
+			{assetsError ?
+        <ErrorState error={assetsError} onRetry={() => {setLoading(true);setAssetsReload((k) => k + 1);}} /> :
+
+        assets.length === 0 ?
         <EmptyState
           icon={Image}
           title={dict.media.empty}
@@ -506,6 +519,8 @@ export default function MediaLibrary() {
 					</div>
 					{packagesLoading ?
         <LoadingSkeleton variant="list" count={4} /> :
+        packagesError ?
+        <ErrorState error={packagesError} onRetry={fetchPackages} /> :
         packages.length === 0 ?
         <EmptyState
           icon={Package}
@@ -590,7 +605,7 @@ export default function MediaLibrary() {
 
 				<p data-ev-id="ev_delete_msg" className="text-foreground">{dict.media.deleteMessage}</p>
 				{deleteError &&
-        <p data-ev-id="ev_delete_error" className="text-sm text-destructive mt-3">{deleteError}</p>
+        <p data-ev-id="ev_delete_error" className="text-sm text-destructive mt-3"><ErrorText error={deleteError} /></p>
         }
 			</Modal>
 
@@ -619,7 +634,7 @@ export default function MediaLibrary() {
 
 				<p data-ev-id="ev_delete_pkg_msg" className="text-foreground">{dict.media.deletePackageMessage}</p>
 				{deletePackageError &&
-        <p data-ev-id="ev_delete_pkg_error" className="text-sm text-destructive mt-3">{deletePackageError}</p>
+        <p data-ev-id="ev_delete_pkg_error" className="text-sm text-destructive mt-3"><ErrorText error={deletePackageError} /></p>
         }
 			</Modal>
 

@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import type { Tables, TablesInsert } from '@/integrations/supabase/helpers';
+import { ErrorText } from '@/components/ui/ErrorText';
+import { errorMessage } from '@/lib/errorText';
 
 type QuizQuestion = Tables<'quiz_questions'>;
 
@@ -320,9 +322,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
         }
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'TIMEOUT'
-        ? dict.errors.connectionTimeout
-        : err instanceof Error ? err.message : dict.common.error;
+      const msg = errorMessage(err, dict.common.error);
       console.error('handleSaveQuestion failed:', err);
       setQuestionError(msg);
     } finally {
@@ -362,7 +362,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 				<div data-ev-id="ev_qqe_error"
 					role="alert"
 					className="px-3 py-2 rounded-lg border border-destructive/40 bg-destructive/10 text-sm text-destructive">
-					{questionError}
+					<ErrorText error={questionError} />
 				</div>
 			}
 

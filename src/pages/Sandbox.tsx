@@ -7,6 +7,7 @@ import { getDictionary } from '@/i18n/dictionary';
 import { Badge } from '@/components/ui/Badge';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { supabase } from '@/integrations/supabase/client';
+import { ErrorText } from '@/components/ui/ErrorText';
 
 // Hardcoded sandbox configuration — used for anonymous visitors
 const DEFAULT_SANDBOX_ORIGIN = 'https://pub-e8446b5e9ca042bdb42ad44abe9aa269.r2.dev';
@@ -308,7 +309,7 @@ export default function Sandbox() {
                 }
                   {packagesError &&
                 <span data-ev-id="ev_sandbox_packages_error" className="text-xs text-destructive max-w-[220px]">
-                      {packagesError}
+                      <ErrorText error={packagesError} />
                     </span>
                 }
                 </div>

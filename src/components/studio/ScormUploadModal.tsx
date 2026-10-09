@@ -10,6 +10,7 @@ import type { Tables } from '@/integrations/supabase/helpers';
 import { syncCourseType } from '@/lib/courseType';
 import { parseVc4elSource, countInteractions, type Vc4elResult } from '@/lib/vc4elSource';
 import { importSidecarContent } from '@/lib/importSidecar';
+import { ErrorText } from '@/components/ui/ErrorText';
 
 
 type Module = Tables<'modules'>;
@@ -696,7 +697,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 					{error &&
           <div data-ev-id="ev_80c2c475ba" className="flex items-start gap-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
 							<AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-							<p data-ev-id="ev_c48ca5a5a6" className="text-sm text-destructive">{error}</p>
+							<p data-ev-id="ev_c48ca5a5a6" className="text-sm text-destructive"><ErrorText error={error} /></p>
 						</div>
           }
 				</div>

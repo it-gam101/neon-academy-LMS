@@ -29,9 +29,9 @@ export function errorMessage(err: unknown, fallback: string): string {
 }
 
 // Matched against the message, in this order: Supabase's own wording (PostgREST, Auth, functions-js) and the app's own
-// markers ('TIMEOUT' from withTimeout, 'Not authenticated' from the hooks).
+// markers ('TIMEOUT' from withTimeout, 'TimeoutError' from the client's time limit, 'Not authenticated' from the hooks).
 const KINDS: [Exclude<ErrorKind, 'other'>, RegExp][] = [
-	['timeout', /^TIMEOUT$|timed out/i],
+	['timeout', /^TIMEOUT$|timed out|TimeoutError/i],
 	['network', /failed to fetch|networkerror|network request failed|load failed|failed to send a request/i],
 	['session', /jwt expired|invalid jwt|invalid or expired token|auth session missing|not authenticated/i],
 	['refused', /row-level security|permission denied/i],

@@ -10,6 +10,7 @@ import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
+import { errorMessage } from '@/lib/errorText';
 
 interface KPIs {
   completionRate: number;
@@ -114,10 +115,7 @@ export default function HRAnalytics() {
           });
         }
       } catch (err) {
-        const msg = err instanceof Error && err.message === 'TIMEOUT'
-          ? dict.errors.connectionTimeout
-          : err instanceof Error ? err.message
-          : (err as { message?: string })?.message || dict.common.error;
+        const msg = errorMessage(err, dict.common.error);
         console.error('fetchKPIs failed:', err);
         showToast('error', msg);
       } finally {
