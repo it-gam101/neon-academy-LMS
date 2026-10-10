@@ -51,13 +51,16 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
     };
   }, [isOpen]);
 
-  // Focus management
+  // Focus management. Dispatch 5a: focus goes back to the menu button only after the menu was actually open —
+  // it used to be moved there on every page load as well.
+  const wasOpenRef = useRef(false);
   useEffect(() => {
     if (isOpen) {
       drawerRef.current?.focus();
-    } else {
+    } else if (wasOpenRef.current) {
       buttonRef.current?.focus();
     }
+    wasOpenRef.current = isOpen;
   }, [isOpen]);
 
   // Escape key handler
@@ -114,11 +117,17 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
             tabIndex={-1}
             className={
             `fixed top-0 bottom-0 end-0 z-50 w-[280px] bg-background border-s border-border ` +
-            `transform transition-transform duration-300 ease-out md:hidden ` +
-            `${isOpen ? translateOpen : translateClosed}`
+            // Dispatch 5a: closed = invisible, so a closed drawer is out of the Tab order and the screen-reader tree and
+            // cannot sweep across the screen on a language switch. Opening shows it AT ONCE (visibility 0s, so focus can
+            // move into it); closing hides it only after the 300 ms slide-out (visibility 0s, delayed 300 ms).
+            `transform md:hidden ` + (
+            isOpen ?
+            `${translateOpen} visible [transition:translate_300ms_ease-out,visibility_0s]` :
+            `${translateClosed} invisible [transition:translate_300ms_ease-out,visibility_0s_300ms]`)
             }
             role="dialog"
-            aria-modal="true"
+            aria-modal={isOpen ? true : undefined}
+            aria-hidden={isOpen ? undefined : true}
             aria-label={t.nav.menuTitle}>
 
             {/* Header */}
