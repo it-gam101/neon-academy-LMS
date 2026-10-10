@@ -75,7 +75,7 @@ export default function Catalogue() {
 						<select data-ev-id="ev_4421d7c569"
             value={selectedCategory || ''}
             onChange={(e) => setSelectedCategory(e.target.value || null)}
-            className="ps-10 pe-8 py-2 bg-card border border-border rounded-lg text-foreground appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-[200px]"
+            className="ps-10 pe-8 py-2 bg-card border border-border rounded-lg text-foreground appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-[200px] w-full sm:w-auto sm:max-w-xs"
             aria-label={dict.tooltips.filterByCategory}>
 
 							<option data-ev-id="ev_8f40505df7" value="">{dict.catalogue.allCategories}</option>

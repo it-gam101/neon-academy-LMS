@@ -23,14 +23,14 @@ export function Tabs({ tabs, defaultTab, onChange, children }: TabsProps) {
 
   return (
     <div data-ev-id="ev_93e562cb95">
-			<div data-ev-id="ev_24ff68d166" className="flex gap-1 border-b border-border mb-6" role="tablist">
+			<div data-ev-id="ev_24ff68d166" className="flex gap-1 border-b border-border mb-6 overflow-x-auto" role="tablist">
 				{tabs.map((tab) =>
         <button data-ev-id="ev_b46d52aa05"
         key={tab.id}
         role="tab"
         aria-selected={activeTab === tab.id}
         onClick={() => handleTabChange(tab.id)}
-        className={`px-4 py-3 text-sm font-medium transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-t-lg ${
+        className={`shrink-0 whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-t-lg ${
         activeTab === tab.id ?
         'text-primary' :
         'text-muted-foreground hover:text-foreground'}`

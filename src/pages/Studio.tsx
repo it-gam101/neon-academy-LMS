@@ -105,12 +105,12 @@ export default function Studio() {
     <div data-ev-id="ev_e953f14ce8">
 			<div data-ev-id="ev_3f2dd53e8b" className="max-w-6xl mx-auto">
 				{/* Header */}
-				<div data-ev-id="ev_8ab9aacb53" className="flex items-center justify-between mb-8">
+				<div data-ev-id="ev_8ab9aacb53" className="flex flex-wrap items-center justify-between gap-4 mb-8">
 					<div data-ev-id="ev_5b70f2a250">
 						<h1 data-ev-id="ev_e8a8de4b97" className="text-3xl font-bold text-foreground mb-2">{dict.studio.title}</h1>
 						<p data-ev-id="ev_d2516c3383" className="text-muted-foreground">{dict.studio.description}</p>
 					</div>
-					<div data-ev-id="ev_7729f9197b" className="flex items-center gap-3">
+					<div data-ev-id="ev_7729f9197b" className="flex flex-wrap items-center gap-3">
 						{isOrgWide &&
             <div data-ev-id="ev_0ad9b52c05" className="flex items-center bg-muted rounded-lg p-1">
 								<button data-ev-id="ev_1773e1bd08"

@@ -297,7 +297,7 @@ export default function ModulePage() {
 				</div>
 
 				{/* Actions */}
-				<div data-ev-id="ev_ffc1aaac98" className="flex items-center justify-between gap-4">
+				<div data-ev-id="ev_ffc1aaac98" className="flex flex-wrap items-center justify-between gap-4">
 					{/* Previous */}
 					{prevModule ?
         <Link data-ev-id="ev_b78ff3c17a"

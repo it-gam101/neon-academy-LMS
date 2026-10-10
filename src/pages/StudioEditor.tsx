@@ -1303,9 +1303,9 @@ export default function StudioEditor() {
 
 				{/* Modules */}
 				<div data-ev-id="ev_95963cace7" className="bg-card border border-border rounded-lg p-6 mb-8">
-					<div data-ev-id="ev_239993b0b4" className="flex items-center justify-between mb-4">
+					<div data-ev-id="ev_239993b0b4" className="flex flex-wrap items-center justify-between gap-3 mb-4">
 						<h2 data-ev-id="ev_e230417b1d" className="text-lg font-semibold text-foreground">{dict.studio.moduleManager}</h2>
-						<div data-ev-id="ev_e29c860240" className="flex items-center gap-2">
+						<div data-ev-id="ev_e29c860240" className="flex flex-wrap items-center gap-2">
 							<button data-ev-id="ev_3d7cf3be7a"
               onClick={() => handleAddModule('lesson')}
               disabled={addingModule}
