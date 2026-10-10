@@ -380,6 +380,9 @@ export interface Dictionary {
 		/** Item 109g: the simulator's turn counter ("Turn 2 of 4") and its replay button. */
 		simulatorTurn: string;
 		simulatorRestart: string;
+		/** Dispatch 2: a learner who is not enrolled reads freely, but acting starts with enrolling. */
+		enrollToTrack: string;
+		enrollToTakeQuiz: string;
 		startQuiz: string;
 		retakeQuiz: string;
 		quizPassed: string;
@@ -1137,6 +1140,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			completedLesson: 'Completed',
 			simulatorTurn: 'Turn',
 			simulatorRestart: 'Start again',
+			enrollToTrack: 'Enroll to track your progress',
+			enrollToTakeQuiz: 'Enroll in this course to take the quiz',
 			startQuiz: 'Start Quiz',
 			retakeQuiz: 'Retake Quiz',
 			quizPassed: 'Passed',
@@ -1874,6 +1879,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			completedLesson: 'הושלם',
 			simulatorTurn: 'שלב',
 			simulatorRestart: 'להתחיל מחדש',
+			enrollToTrack: 'הירשמו כדי לשמור את ההתקדמות',
+			enrollToTakeQuiz: 'הירשמו לקורס כדי לגשת למבחן',
 			startQuiz: 'התחל מבחן',
 			retakeQuiz: 'נסה שוב',
 			quizPassed: 'עבר',

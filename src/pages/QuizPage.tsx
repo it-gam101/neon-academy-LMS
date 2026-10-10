@@ -40,7 +40,9 @@ export default function QuizPage() {
   const previewSuffix = isPreview ? '?preview=1' : '';
 
   const { quiz, questions, loading, error, attemptsUsed, attemptsAllowed, attemptsRemaining, canAttempt, hasPassed, submitQuiz, getLocalizedQuestion, getLocalizedOptions } = useQuiz(moduleId || '');
-  const { course, modules, enrollment, markModuleProgress, getLocalizedTitle, getLocalizedCourseTitle } = useCourseModules(courseId || '');
+  const { course, modules, enrollment, loading: courseLoading, markModuleProgress, getLocalizedTitle, getLocalizedCourseTitle } = useCourseModules(courseId || '');
+  // Dispatch 2: a learner who is not enrolled is offered "Enroll" instead of Start Quiz (the database refuses the attempt too).
+  const mustEnroll = !isPreview && !courseLoading && !enrollment;
 
   const currentModule = modules.find((m) => m.id === moduleId);
 
@@ -99,6 +101,7 @@ export default function QuizPage() {
   }, [state, timeRemaining]);
 
   const startQuiz = () => {
+    if (mustEnroll) return;
     setCurrentQuestion(0);
     setAnswers({});
     setResult(null);
@@ -268,13 +271,20 @@ export default function QuizPage() {
 							</div> :
             null}
 
-						<button data-ev-id="ev_d7596ef15d"
+						{mustEnroll ?
+            <Link data-ev-id="ev_b2c0f5742e"
+            to={`/course/${courseId}`}
+            className="inline-block px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+								{dict.course.enrollToTakeQuiz}
+							</Link> :
+            <button data-ev-id="ev_d7596ef15d"
             onClick={startQuiz}
             disabled={!canAttempt && !isPreview}
             className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 
 							{hasPassed ? dict.quiz.retryQuiz : dict.course.startQuiz}
 						</button>
+            }
 					</div>
 				</div>
 			</div>
@@ -407,8 +417,8 @@ export default function QuizPage() {
 
 													{opt}
 													{/* Item 94: mark EVERY option the learner picked — neutral when it was right, red when not. Before,
-													    a correct pick showed no "Your answer", so on a choose-all question picked and missed
-													    correct options looked identical. */}
+                               a correct pick showed no "Your answer", so on a choose-all question picked and missed
+                               correct options looked identical. */}
 													{(isCorrectAnswer || isUserAnswer) &&
                           <span data-ev-id="ev_quiz_review_badges" className="ms-2 inline-flex gap-1 align-middle">
 															{isCorrectAnswer &&

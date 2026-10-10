@@ -157,7 +157,8 @@ export default function ModulePage() {
   const handleActivityDone = (blockKey: string) => {
     const done = new Set(doneActivities).add(blockKey);
     setDoneActivities(done);
-    if (!isCompleted && !marking && activityKeys.every((k) => done.has(k))) void handleMarkComplete();
+    // Dispatch 2: only an enrolled learner's activities complete the lesson; a preview reader just reads.
+    if (enrollment && !isCompleted && !marking && activityKeys.every((k) => done.has(k))) void handleMarkComplete();
   };
 
   const renderBlock = (block: ContentBlock, index: number) => {
@@ -316,6 +317,12 @@ export default function ModulePage() {
               <CheckCircle className="w-5 h-5" />
               {dict.studio.previewNoProgress}
             </span> :
+        !enrollment ?
+        <Link data-ev-id="ev_f12fd15e73"
+        to={`/course/${courseId}`}
+        className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+              {dict.course.enrollToTrack}
+            </Link> :
         !isCompleted ?
         <button data-ev-id="ev_bdabb08cd9"
         onClick={handleMarkComplete}
