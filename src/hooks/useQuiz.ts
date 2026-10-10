@@ -133,9 +133,15 @@ export function useQuiz(moduleId: string) {
 			.single();
 
 		if (insertError) {
-			// Check for max attempts error
-			if (insertError.message.includes('attempt')) {
+			// Dispatch 2b: only the attempts-limit trigger means "no attempts left" — check_quiz_attempts_limit raises
+			// 'Maximum number of attempts (%) reached for this quiz'. Every error on this table names quiz_attempts, so
+			// matching the word "attempt" turned a refusal into "no attempts left" (QA 2026-10-10, test 2-0).
+			if (insertError.message.includes('Maximum number of attempts')) {
 				return { error: 'max_attempts_reached' };
+			}
+			// Dispatch 2's policy: no enrollment in this quiz's course, so the insert is refused (42501).
+			if (insertError.code === '42501') {
+				return { error: 'not_enrolled' };
 			}
 			return { error: insertError.message };
 		}

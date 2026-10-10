@@ -137,6 +137,10 @@ export default function QuizPage() {
       if (error === 'max_attempts_reached') {
         showToast('error', dict.quiz.maxAttemptsMessage);
         setState('info');
+      } else if (error === 'not_enrolled') {
+        // Dispatch 2b: the database refused the attempt — the learner is not (or no longer) enrolled in this course.
+        showToast('error', dict.course.enrollToTakeQuiz);
+        setState('info');
       } else if (error) {
         showToast('error', error);
       } else {
