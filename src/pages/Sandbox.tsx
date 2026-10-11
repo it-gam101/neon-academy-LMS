@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLatest } from '@/hooks/useLatest';
 import { Link } from 'react-router';
 import { AlertCircle, Loader2, RefreshCw, Package } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
@@ -59,6 +60,7 @@ export default function Sandbox() {
   const { locale } = useLocale();
   const { profile, isAuthenticated } = useAuth();
   const dict = getDictionary(locale);
+  const dictRef = useLatest(dict);
 
   const [bridgeReady, setBridgeReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +119,8 @@ export default function Sandbox() {
     if (!canPickPackages || !supabase) return;
 
     const fetchPackages = async () => {
+      // Dispatch 6: read the dictionary through the ref, so a language switch does not re-run this load.
+      const dict = dictRef.current;
       setPackagesLoading(true);
       setPackagesError(null);
       try {
@@ -142,7 +146,7 @@ export default function Sandbox() {
     };
 
     fetchPackages();
-  }, [canPickPackages, dict.sandbox.packageLoadError]);
+  }, [canPickPackages, dictRef]);
 
   // Send scorm:init to the bridge (guarded)
   const sendInit = useCallback(() => {

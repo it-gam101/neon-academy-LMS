@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLatest } from '@/hooks/useLatest';
 import { useParams, useNavigate, Link } from 'react-router';
 import { AlertCircle, CheckCircle, Loader2, ChevronLeft, ChevronRight, RefreshCw, Package, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +52,7 @@ export default function ScormPlayer() {
   const navigate = useNavigate();
   const { locale } = useLocale();
   const dict = getDictionary(locale);
+  const dictRef = useLatest(dict);
   const { profile, session } = useAuth();
   const Chevron = locale === 'he' ? ChevronLeft : ChevronRight;
 
@@ -77,6 +79,8 @@ export default function ScormPlayer() {
   // Load data on mount
   useEffect(() => {
     const loadData = async () => {
+      // Dispatch 6: read the dictionary through the ref, so a language switch does not re-run this load.
+      const dict = dictRef.current;
       if (!supabase || !enrollmentId || !moduleId) {
         setError(dict.common.errorOccurred);
         setLoading(false);
@@ -178,7 +182,7 @@ export default function ScormPlayer() {
     };
 
     loadData();
-  }, [enrollmentId, moduleId, dict]);
+  }, [enrollmentId, moduleId, dictRef]);
 
   // One scorm-commit in flight per player, in the order the package asked for.
   //

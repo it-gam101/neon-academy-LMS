@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useLatest } from '@/hooks/useLatest';
 import { Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, ChevronLeft, AlertTriangle, Type, AlignLeft, Video, Check as CheckIcon, Image, FileText, Upload, Loader2, ChevronsUpDown, ChevronsDownUp, GripVertical } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -152,6 +153,7 @@ function convertToEmbedUrl(url: string): {converted: string;wasConverted: boolea
 export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, onSaved, onDirtyChange, focusBlockId }: LessonBlockEditorProps) {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
+  const dictRef = useLatest(dict);
 
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,6 +202,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
   // Fetch existing content
   useEffect(() => {
     const fetchContent = async () => {
+      // Dispatch 6: read the dictionary through the ref, so a language switch does not re-run this load.
+      const dict = dictRef.current;
       if (!supabase || !moduleId) {
         setLoading(false);
         return;
@@ -235,7 +239,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
     };
 
     fetchContent();
-  }, [moduleId, dict.common.error]);
+  }, [moduleId, dictRef]);
 
   // Compute dirty state and notify parent
   const isDirty = JSON.stringify(blocks) !== savedSnapshotRef.current;
@@ -284,6 +288,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 
   // Persistence function used by both explicit Save and autosave
   const persistBlocks = useCallback(async (blocksToSave: ContentBlock[], opts: {silent: boolean;}) => {
+    const dict = dictRef.current;
     if (!supabase || !moduleId) return { success: false, error: 'Not ready' };
 
     // Strip HTML from content on save
@@ -315,10 +320,11 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
       onPersistedRef.current?.(sanitizedBlocks);
       return { success: true, error: null };
     }
-  }, [moduleId, dict.studioBlocks.saveFailed, dict.common.error]);
+  }, [moduleId, dictRef]);
 
   // Autosave effect (debounced 1500ms)
   useEffect(() => {
+    const dict = dictRef.current;
     // Don't autosave while loading initial content
     if (loading) return;
     // Don't autosave if nothing changed
@@ -370,7 +376,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
         }, 1500);
       }
     }, 1500);
-  }, [blocks, loading, persistBlocks, dict.common.error]);
+  }, [blocks, loading, persistBlocks, dictRef]);
 
   // Cleanup on unmount: flush pending autosave
   useEffect(() => {

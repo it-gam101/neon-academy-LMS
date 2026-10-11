@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLatest } from '@/hooks/useLatest';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { withTimeout } from '@/utils/fetchWithTimeout';
@@ -38,11 +39,14 @@ export function useTeam(options?: UseTeamOptions) {
 
 	const { locale } = useLocale();
 	const dict = getDictionary(locale);
+	const dictRef = useLatest(dict);
 	const { user } = useAuth();
 
 	const viewerRole = options?.viewerRole;
 
 	const fetchTeam = useCallback(async () => {
+		// Dispatch 6: read the dictionary through the ref, so a language switch does not re-run this load.
+		const dict = dictRef.current;
 		if (!supabase) {
 			setLoading(false);
 			return;
@@ -160,7 +164,7 @@ export function useTeam(options?: UseTeamOptions) {
 			setLoading(false);
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id not user: avoids refetch on token refresh
-	}, [viewerRole, dict.errors?.failedToLoad, user?.id]);
+	}, [viewerRole, dictRef, user?.id]);
 
 	useEffect(() => {
 		fetchTeam();

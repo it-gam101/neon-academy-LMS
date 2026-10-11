@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLatest } from '@/hooks/useLatest';
 import { BarChart3, Users, AlertTriangle, TrendingUp, Download, Save } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
@@ -16,7 +17,7 @@ interface KPIs {
   completionRate: number;
   overdueCount: number;
   activeLearners: number;
-  topCourses: {id: string;title: string;enrollments: number;}[];
+  topCourses: {id: string;title_en: string;title_he: string;enrollments: number;}[];
 }
 
 interface ReportRow {
@@ -39,6 +40,7 @@ interface ReportData {
 export default function HRAnalytics() {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
+  const dictRef = useLatest(dict);
   const { user } = useAuth();
 
   const [kpis, setKpis] = useState<KPIs | null>(null);
@@ -52,6 +54,8 @@ export default function HRAnalytics() {
     if (!supabase) return;
 
     const fetchKPIs = async () => {
+      // Dispatch 6: read the dictionary through the ref, so a language switch does not re-run this load.
+      const dict = dictRef.current;
       setLoading(true);
 
       try {
@@ -93,19 +97,19 @@ export default function HRAnalytics() {
           );
 
           // Top courses by enrollment
-          const courseEnrollments: Record<string, {title: string;count: number;}> = {};
+          // Dispatch 6: keep both titles; the language is chosen when the card is drawn, so a switch needs no reload.
+          const courseEnrollments: Record<string, {title_en: string;title_he: string;count: number;}> = {};
           enrollments.forEach((e) => {
             if (e.course) {
-              const title = locale === 'he' ? e.course.title_he : e.course.title_en;
               if (!courseEnrollments[e.course.id]) {
-                courseEnrollments[e.course.id] = { title, count: 0 };
+                courseEnrollments[e.course.id] = { title_en: e.course.title_en, title_he: e.course.title_he, count: 0 };
               }
               courseEnrollments[e.course.id].count++;
             }
           });
 
           const topCourses = Object.entries(courseEnrollments).
-          map(([id, { title, count }]) => ({ id, title, enrollments: count })).
+          map(([id, { title_en, title_he, count }]) => ({ id, title_en, title_he, enrollments: count })).
           sort((a, b) => b.enrollments - a.enrollments).
           slice(0, 5);
 
@@ -126,7 +130,7 @@ export default function HRAnalytics() {
     };
 
     fetchKPIs();
-  }, [locale, dict]);
+  }, [dictRef]);
 
   const generateReport = async (type: 'completion' | 'compliance' | 'engagement') => {
     if (!supabase) return;
@@ -400,7 +404,7 @@ export default function HRAnalytics() {
 											<div data-ev-id="ev_43b66e7b98" className="space-y-1">
 												{kpis?.topCourses.slice(0, 3).map((course, i) =>
                         <div data-ev-id="ev_f60cbb7067" key={course.id} className="flex items-center justify-between text-sm">
-														<span data-ev-id="ev_2c56f42817" className="truncate text-muted-foreground">{i + 1}. {course.title}</span>
+														<span data-ev-id="ev_2c56f42817" className="truncate text-muted-foreground">{i + 1}. {locale === 'he' ? course.title_he : course.title_en}</span>
 														<Badge variant="purple">{course.enrollments}</Badge>
 													</div>
                         )}

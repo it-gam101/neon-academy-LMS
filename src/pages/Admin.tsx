@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLatest } from '@/hooks/useLatest';
 import { Users, FolderTree, FileText, Building, Plus, Search, Edit, Trash2, Save, Upload } from 'lucide-react';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useLocale } from '@/hooks/useLocale';
@@ -39,6 +40,7 @@ function formatAuditMeta(meta: unknown): string | null {
 export default function Admin() {
   const { locale } = useLocale();
   const dict = getDictionary(locale);
+  const dictRef = useLatest(dict);
 
   const [users, setUsers] = useState<Profile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -60,6 +62,8 @@ export default function Admin() {
   const [savingCategory, setSavingCategory] = useState(false);
 
   const fetchData = useCallback(async () => {
+    // Dispatch 6: read the dictionary through the ref, so a language switch does not re-run this load.
+    const dict = dictRef.current;
     if (!supabase) return;
     setLoading(true);
     setLoadError(null);
@@ -117,7 +121,7 @@ export default function Admin() {
     } finally {
       setLoading(false);
     }
-  }, [dict]);
+  }, [dictRef]);
 
   useEffect(() => {
     fetchData();
