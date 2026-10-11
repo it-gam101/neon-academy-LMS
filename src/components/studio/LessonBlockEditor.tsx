@@ -16,6 +16,7 @@ import type { Json } from '@/integrations/supabase/types';
 import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl, isNonEmbeddableHost, cleanUrl } from '@/lib/contentSafety';
 import { lessonProblems, blockProblems, type ProblemCode } from '@/lib/completeness';
 import { ErrorText } from '@/components/ui/ErrorText';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { errorMessage } from '@/lib/errorText';
 
 interface ContentBlock {
@@ -764,7 +765,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
                   }>
 
 								{/* Block header */}
-								<div data-ev-id="ev_c438205030" className={`flex items-center justify-between${isCollapsed ? '' : ' mb-3'}`}>
+								<div data-ev-id="ev_c438205030" className={`flex items-center justify-between gap-2${isCollapsed ? '' : ' mb-3'}`}>
 									<div data-ev-id="ev_a7d61a501f" className="flex items-center gap-2 min-w-0 flex-1">
 										{/* Drag handle */}
 										<button data-ev-id="ev_drag_handle"
@@ -776,13 +777,17 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 
 											<GripVertical className="w-4 h-4" />
 										</button>
+										<Tooltip content={isCollapsed ? dict.studioBlocks.expandBlock : dict.studioBlocks.collapseBlock}>
 										<button data-ev-id="ev_collapse_toggle"
                         type="button"
+                        aria-label={isCollapsed ? dict.studioBlocks.expandBlock : dict.studioBlocks.collapseBlock}
+                        aria-expanded={!isCollapsed}
                         onClick={() => toggleCollapse(block.id)}
                         className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
 
 											{isCollapsed ? <CollapsedChevron className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
 										</button>
+										</Tooltip>
 										{block.type === 'heading' && <Type className="w-4 h-4 text-primary flex-shrink-0" />}
 										{block.type === 'text' && <AlignLeft className="w-4 h-4 text-primary flex-shrink-0" />}
 										{block.type === 'video' && <Video className="w-4 h-4 text-primary flex-shrink-0" />}
@@ -790,6 +795,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 										{block.type === 'pdf' && <FileText className="w-4 h-4 text-primary flex-shrink-0" />}
 										<button data-ev-id="ev_type_label_toggle"
                         type="button"
+                        aria-expanded={!isCollapsed}
                         onClick={() => toggleCollapse(block.id)}
                         className="text-sm font-medium text-foreground hover:text-primary transition-colors flex-shrink-0">
 
@@ -806,41 +812,47 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
                         }
 										{/* Problem indicators — visible when collapsed */}
 										{blockCodes.map((code) => (
-                        <span key={code} data-ev-id="ev_block_problem" className="text-xs text-amber-500 px-2 py-0.5 bg-amber-500/10 rounded flex-shrink-0">
+                        <span key={code} data-ev-id="ev_block_problem" className="text-xs text-amber-500 px-2 py-0.5 bg-amber-500/10 rounded min-w-0 truncate">
 												{problemLabel(code)}
 											</span>
                         ))}
 									</div>
-									<div data-ev-id="ev_8e46275211" className="flex items-center gap-1">
+									<div data-ev-id="ev_8e46275211" className="flex shrink-0 items-center gap-1">
+										<Tooltip content={dict.studioBlocks.moveUp}>
 										<button data-ev-id="ev_fd204f6ed8"
                         onClick={() => handleMoveBlock(index, 'up')}
                         disabled={index === 0}
                         className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                        title={dict.studioBlocks.moveUp}>
+                        aria-label={dict.studioBlocks.moveUp}>
 
 											<ChevronUp className="w-4 h-4" />
 										</button>
+										</Tooltip>
+										<Tooltip content={dict.studioBlocks.moveDown}>
 										<button data-ev-id="ev_0e918061b8"
                         onClick={() => handleMoveBlock(index, 'down')}
                         disabled={index === blocks.length - 1}
                         className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                        title={dict.studioBlocks.moveDown}>
+                        aria-label={dict.studioBlocks.moveDown}>
 
 											<ChevronDown className="w-4 h-4" />
 										</button>
+										</Tooltip>
+										<Tooltip content={dict.studioBlocks.deleteBlock}>
 										<button data-ev-id="ev_0d1f5896a2"
                         onClick={() => handleDeleteBlock(block.id, index)}
                         className={`p-1.5 transition-colors ${
                         deleteConfirm === block.id ?
-                        'text-destructive bg-destructive/10 rounded' :
+                        'text-destructive-foreground bg-destructive rounded' :
                         'text-muted-foreground hover:text-destructive'}`
                         }
-                        title={dict.studioBlocks.deleteBlock}>
+                        aria-label={dict.studioBlocks.deleteBlock}>
 
 											<Trash2 className="w-4 h-4" />
 										</button>
+										</Tooltip>
 										{deleteConfirm === block.id &&
-                        <span data-ev-id="ev_2437f5c5fb" className="text-xs text-destructive ms-1">{dict.studioBlocks.confirmDeleteBlock}</span>
+                        <span data-ev-id="ev_2437f5c5fb" className="text-xs text-destructive ms-1 whitespace-nowrap">{dict.studioBlocks.confirmDeleteBlock}</span>
                         }
 									</div>
 								</div>

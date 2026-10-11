@@ -212,6 +212,9 @@ export interface Dictionary {
 		orUseUrl: string;
 		collapseAll: string;
 		expandAll: string;
+		/** Dispatch 4c: the name of ONE block's collapse arrow (the toolbar has collapseAll/expandAll). */
+		collapseBlock: string;
+		expandBlock: string;
 		emptyBlock: string;
 		noFileYet: string;
 		dragHandle: string;
@@ -982,6 +985,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			orUseUrl: 'or paste a link',
 			collapseAll: 'Collapse all',
 			expandAll: 'Expand all',
+			collapseBlock: 'Collapse block',
+			expandBlock: 'Expand block',
 			emptyBlock: 'Empty',
 			noFileYet: 'No file selected',
 			dragHandle: 'Drag to reorder',
@@ -1724,6 +1729,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			orUseUrl: 'או הדביקו קישור',
 			collapseAll: 'כווץ הכול',
 			expandAll: 'הרחב הכול',
+			collapseBlock: 'כווץ בלוק',
+			expandBlock: 'הרחב בלוק',
 			emptyBlock: 'ריק',
 			noFileYet: 'לא נבחר קובץ',
 			dragHandle: 'גררו לשינוי הסדר',

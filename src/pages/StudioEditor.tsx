@@ -24,6 +24,7 @@ import { parseVc4elSource, countInteractions, type Vc4elPlan } from '@/lib/vc4el
 import { importSidecarContent } from '@/lib/importSidecar';
 import { errorMessage } from '@/lib/errorText';
 import { ErrorText } from '@/components/ui/ErrorText';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { ensureSession } from '@/lib/ensureSession';
 import { functionErrorMessage } from '@/lib/functionError';
 import { resizeImageToBlob } from '@/lib/resizeImage';
@@ -1365,22 +1366,26 @@ export default function StudioEditor() {
 
 									{/* Reorder buttons */}
 									<div data-ev-id="ev_073cad7fe4" className="flex flex-col">
+										<Tooltip content={dict.studioBlocks.moveUp}>
 										<button data-ev-id="ev_be56e8ddc6"
                 onClick={() => handleMoveModule(index, 'up')}
                 disabled={index === 0 || reordering}
                 className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                title={dict.studioBlocks.moveUp}>
+                aria-label={dict.studioBlocks.moveUp}>
 
 											<ChevronUp className="w-4 h-4" />
 										</button>
+										</Tooltip>
+										<Tooltip content={dict.studioBlocks.moveDown}>
 										<button data-ev-id="ev_81a2065527"
                 onClick={() => handleMoveModule(index, 'down')}
                 disabled={index === modules.length - 1 || reordering}
                 className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                title={dict.studioBlocks.moveDown}>
+                aria-label={dict.studioBlocks.moveDown}>
 
 											<ChevronDown className="w-4 h-4" />
 										</button>
+										</Tooltip>
 									</div>
 									<div data-ev-id="ev_8dca9d6384" className="w-8 h-8 rounded bg-muted flex items-center justify-center">
 										{mod.module_type === 'quiz' ?
@@ -1413,34 +1418,42 @@ export default function StudioEditor() {
                 )}
 									</div>
 									{mod.module_type === 'quiz' &&
+              <Tooltip content={dict.studio.quizSettings}>
               <button data-ev-id="ev_quiz_settings_btn"
               onClick={() => handleOpenQuizSettings(mod.id)}
               className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-              title={dict.studio.quizSettings}>
+              aria-label={dict.studio.quizSettings}>
                 <Settings className="w-4 h-4" />
               </button>
+              </Tooltip>
               }
 									{mod.module_type === 'lesson' &&
+              <Tooltip content={dict.studioBlocks.editContent}>
               <button data-ev-id="ev_lesson_edit_btn"
               onClick={() => handleOpenLessonEditor(mod.id)}
               className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-              title={dict.studioBlocks.editContent}>
+              aria-label={dict.studioBlocks.editContent}>
                 <Pencil className="w-4 h-4" />
               </button>
+              </Tooltip>
               }
+									<Tooltip content={dict.studio.editModuleTitle}>
 									<button data-ev-id="ev_7f1e5297ce"
               onClick={() => handleOpenModuleTitleEdit(mod)}
               className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-              title={dict.studio.editModuleTitle}>
+              aria-label={dict.studio.editModuleTitle}>
                 <Edit className="w-4 h-4" />
               </button>
+									</Tooltip>
+									<Tooltip content={dict.studio.deleteModule}>
 									<button data-ev-id="ev_e2850d52d2"
               onClick={() => handleOpenModuleDeleteConfirm(mod.id)}
               className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-              title={dict.studio.deleteModule}>
+              aria-label={dict.studio.deleteModule}>
 
 										<Trash2 className="w-4 h-4" />
 									</button>
+									</Tooltip>
 								</div>
             )}
 						</div>

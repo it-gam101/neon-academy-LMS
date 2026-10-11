@@ -7,6 +7,7 @@ import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import type { Tables, TablesInsert } from '@/integrations/supabase/helpers';
 import { ErrorText } from '@/components/ui/ErrorText';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { errorMessage } from '@/lib/errorText';
 
 type QuizQuestion = Tables<'quiz_questions'>;
@@ -393,22 +394,28 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
           onClick={() => handleToggleExpand(index)}>
 
 								<div data-ev-id="ev_8f34f935cc" className="flex items-center gap-1">
+									<Tooltip content={dict.studioBlocks.moveUp}>
 									<button data-ev-id="ev_52ba5dbdd2"
               type="button"
+              aria-label={dict.studioBlocks.moveUp}
               onClick={(e) => {e.stopPropagation();handleMoveQuestion(index, 'up');}}
               disabled={index === 0}
               className="p-1 text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed">
 
 										<ChevronUp className="w-4 h-4" />
 									</button>
+									</Tooltip>
+									<Tooltip content={dict.studioBlocks.moveDown}>
 									<button data-ev-id="ev_98148781cf"
               type="button"
+              aria-label={dict.studioBlocks.moveDown}
               onClick={(e) => {e.stopPropagation();handleMoveQuestion(index, 'down');}}
               disabled={index === questions.length - 1}
               className="p-1 text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed">
 
 										<ChevronDown className="w-4 h-4" />
 									</button>
+									</Tooltip>
 								</div>
 
 								<div data-ev-id="ev_c208197684" className="flex-1 min-w-0">
@@ -522,6 +529,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
                   return (
                     <div data-ev-id="ev_03b3e6ce30" key={optIndex} className="flex items-center gap-2">
 														{/* Correct answer indicator */}
+														<Tooltip content={q.question_type === 'multi' ? dict.studio.correctAnswers : dict.studio.correctAnswer}>
 														<button data-ev-id="ev_6f5726c751"
                       type="button"
                       onClick={() => handleCorrectChange(index, optIndex)}
@@ -530,10 +538,12 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
                       'bg-primary border-primary text-primary-foreground' :
                       'border-border hover:border-primary/50'}`
                       }
-                      title={q.question_type === 'multi' ? dict.studio.correctAnswers : dict.studio.correctAnswer}>
+                      aria-label={q.question_type === 'multi' ? dict.studio.correctAnswers : dict.studio.correctAnswer}
+                      aria-pressed={isCorrect}>
 
 															{isCorrect && <Check className="w-3 h-3" />}
 														</button>
+														</Tooltip>
 
 														{/* Option inputs */}
 														<div data-ev-id="ev_d31f614b71" className="flex-1 grid grid-cols-2 gap-2">
@@ -559,13 +569,16 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 
 														{/* Remove option button */}
 														{q.question_type !== 'true_false' && q.options.length > 2 &&
+                      <Tooltip content={dict.common.remove}>
                       <button data-ev-id="ev_2ad285530f"
                       type="button"
+                      aria-label={dict.common.remove}
                       onClick={() => handleRemoveOption(index, optIndex)}
                       className="flex-shrink-0 p-1.5 text-foreground/70 hover:text-destructive transition-colors">
 
 																<X className="w-4 h-4" />
 															</button>
+                      </Tooltip>
                       }
 													</div>);
 
