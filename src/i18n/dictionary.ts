@@ -196,6 +196,10 @@ export interface Dictionary {
 		mediaUrl: string;
 		openPdf: string;
 		invalidUrl: string;
+		/** Dispatch 4a: "Block 2: the address must start with https://" — which block, and what is wrong with it. */
+		blockNumber: string;
+		invalidVideoUrl: string;
+		invalidMediaUrl: string;
 		discardChangesTitle: string;
 		discardChangesMessage: string;
 		discardConfirm: string;
@@ -963,6 +967,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			mediaUrl: 'File URL',
 			openPdf: 'Open PDF in a new tab',
 			invalidUrl: 'This URL is not allowed. Videos must be a youtube.com/embed link; files must be an https address.',
+			blockNumber: 'Block {n}',
+			invalidVideoUrl: 'use a YouTube embed link (https://www.youtube.com/embed/…)',
+			invalidMediaUrl: 'the address must start with https://',
 			discardChangesTitle: 'Discard changes?',
 			discardChangesMessage: 'Your unsaved changes to this lesson will be lost.',
 			discardConfirm: 'Discard',
@@ -1702,6 +1709,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			mediaUrl: 'כתובת הקובץ',
 			openPdf: 'פתיחת ה-PDF בלשונית חדשה',
 			invalidUrl: 'כתובת זו אינה מותרת. סרטונים חייבים להיות קישור youtube.com/embed; קבצים חייבים להיות בכתובת https.',
+			blockNumber: 'בלוק {n}',
+			invalidVideoUrl: 'יש להשתמש בקישור הטמעה של YouTube (https://www.youtube.com/embed/…)',
+			invalidMediaUrl: 'הכתובת חייבת להתחיל ב־https',
 			discardChangesTitle: 'לבטל את השינויים?',
 			discardChangesMessage: 'השינויים שלא נשמרו בשיעור זה יאבדו.',
 			discardConfirm: 'בטל שינויים',

@@ -27,6 +27,7 @@ import { ErrorText } from '@/components/ui/ErrorText';
 import { ensureSession } from '@/lib/ensureSession';
 import { functionErrorMessage } from '@/lib/functionError';
 import { resizeImageToBlob } from '@/lib/resizeImage';
+import { cleanUrl } from '@/lib/contentSafety';
 
 type Course = Tables<'courses'>;
 
@@ -1125,6 +1126,19 @@ export default function StudioEditor() {
   }
 
   const courseTitle = locale === 'he' ? course.title_he : course.title_en;
+  // Dispatch 4a: what must be fixed before publishing — computed once, shown on the badge AND on each module's row.
+  // The publish modal re-reads at publish time and stays the authoritative gate.
+  const readinessProblems = course.status !== 'published' && quizzes !== null ? courseProblems({
+    modules: modules.map((m) => ({
+      id: m.id,
+      title_en: m.title_en,
+      title_he: m.title_he,
+      module_type: m.module_type,
+      content_json: m.content_json
+    })),
+    quizzes,
+    locale
+  }) : [];
 
   return (
     <div data-ev-id="ev_76d7ff4176" className="min-h-screen bg-background">
@@ -1252,7 +1266,7 @@ export default function StudioEditor() {
 							<input data-ev-id="ev_d8340bac7c"
               type="url"
               value={thumbnailUrl}
-              onChange={(e) => setThumbnailUrl(e.target.value)}
+              onChange={(e) => setThumbnailUrl(cleanUrl(e.target.value))}
               placeholder={dict.studio.orPasteImageLink}
               className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               dir="ltr" />
@@ -1382,6 +1396,15 @@ export default function StudioEditor() {
 										<p data-ev-id="ev_d6adc26529" className="font-medium text-foreground">
 											{locale === 'he' ? mod.title_he : mod.title_en}
 										</p>
+										{readinessProblems.filter((p) => p.moduleId === mod.id).map((p, i) =>
+                <button data-ev-id="ev_fed62a1582"
+                key={i}
+                type="button"
+                onClick={() => handleFixBlocker(p)}
+                className="mt-1 block text-start text-xs text-amber-500 hover:underline">
+											{getBlockerLabel(p.code)}
+										</button>
+                )}
 									</div>
 									{mod.module_type === 'quiz' &&
               <button data-ev-id="ev_quiz_settings_btn"
@@ -1439,28 +1462,20 @@ export default function StudioEditor() {
 						</button>
 
 						{/* Readiness badge, reading the same quiz data as the publish modal. 
-                               The modal re-reads at publish time and stays the authoritative gate. */}
-						{course.status !== 'published' && quizzes !== null && (() => {
-              const headerBlockers = courseProblems({
-                modules: modules.map((m) => ({
-                  id: m.id,
-                  title_en: m.title_en,
-                  title_he: m.title_he,
-                  module_type: m.module_type,
-                  content_json: m.content_json
-                })),
-                quizzes,
-                locale
-              });
-              const hasBlockers = headerBlockers.length > 0;
-              return (
-                <span data-ev-id="ev_publish_badge" className={`text-xs px-2 py-1 rounded-full ${
-                hasBlockers ? 'bg-amber-500/10 text-amber-500' : 'bg-green-500/10 text-green-500'}`
-                }>
-                {hasBlockers ? `${dict.studio.blockersCount} ${headerBlockers.length}` : dict.studio.readyToPublish}
-              </span>);
-
-            })()}
+                                      The modal re-reads at publish time and stays the authoritative gate. */}
+						{course.status !== 'published' && quizzes !== null && (
+            readinessProblems.length > 0 ?
+            <button
+              data-ev-id="ev_publish_badge"
+              type="button"
+              onClick={handleOpenPublishModal}
+              className="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-colors">
+                {`${dict.studio.blockersCount} ${readinessProblems.length}`}
+              </button> :
+            <span data-ev-id="ev_publish_badge" className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-500">
+                {dict.studio.readyToPublish}
+              </span>)
+            }
 						{course.status !== 'published' &&
             <button data-ev-id="ev_6e5e3cdd52"
             onClick={handleOpenPublishModal}
@@ -1914,7 +1929,7 @@ export default function StudioEditor() {
         error={libraryImportError}>
 
 				{/* Item 105: step two — this package carries editable content, so offer the
-             same choice the upload path gives. Only reachable when a sidecar parsed. */}
+                  same choice the upload path gives. Only reachable when a sidecar parsed. */}
 				{pendingSidecar && pendingPackage ?
         <div data-ev-id="ev_library_import_choice" className="flex flex-col gap-4">
 						<p data-ev-id="ev_lic_pkg" className="text-sm text-muted-foreground">

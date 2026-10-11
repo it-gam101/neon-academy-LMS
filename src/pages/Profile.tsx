@@ -14,6 +14,7 @@ import { resizeImageToBlob } from '@/lib/resizeImage';
 import { ensureSession } from '@/lib/ensureSession';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { errorMessage } from '@/lib/errorText';
+import { cleanUrl } from '@/lib/contentSafety';
 
 export default function Profile() {
   const { locale, t } = useLocale();
@@ -411,7 +412,7 @@ export default function Profile() {
               type="url"
               value={avatarUrl}
               onChange={(e) => {
-                setAvatarUrl(e.target.value);
+                setAvatarUrl(cleanUrl(e.target.value));
                 setJustUploaded(false);
                 setPreviewFailed(false);
               }}

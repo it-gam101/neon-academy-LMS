@@ -13,7 +13,7 @@ import { withTimeout } from '@/utils/fetchWithTimeout';
 import { Modal } from '@/components/ui/Modal';
 import { functionErrorMessage } from '@/lib/functionError';
 import type { Json } from '@/integrations/supabase/types';
-import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl, isNonEmbeddableHost } from '@/lib/contentSafety';
+import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl, isNonEmbeddableHost, cleanUrl } from '@/lib/contentSafety';
 import { lessonProblems, blockProblems, type ProblemCode } from '@/lib/completeness';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { errorMessage } from '@/lib/errorText';
@@ -159,6 +159,10 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [convertedUrls, setConvertedUrls] = useState<Set<number>>(new Set());
   const [urlError, setUrlError] = useState<string | null>(null);
+  // Dispatch 4a: the address message belongs to the blocks as they were at Save; any edit or deletion clears it.
+  useEffect(() => {
+    setUrlError(null);
+  }, [blocks]);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<{index: number;message: string;} | null>(null);
   const [libraryOpen, setLibraryOpen] = useState<{index: number;kind: 'image' | 'pdf';} | null>(null);
@@ -615,14 +619,16 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
     if (!supabase || !moduleId) return;
     setUrlError(null);
 
-    // Validate URLs before saving (explicit Save blocks on invalid URLs)
-    for (const block of blocks) {
+    // Validate URLs before saving (explicit Save blocks on invalid URLs). Dispatch 4a: the message names the block and its
+    // rule — "Block 2: the address must start with https://".
+    for (const [i, block] of blocks.entries()) {
+      const where = dict.studioBlocks.blockNumber.replace('{n}', String(i + 1));
       if (block.type === 'video' && block.url && !isAllowedVideoUrl(block.url)) {
-        setUrlError(dict.studioBlocks.invalidUrl);
+        setUrlError(`${where}: ${dict.studioBlocks.invalidVideoUrl}`);
         return;
       }
       if ((block.type === 'image' || block.type === 'pdf') && block.url && !isAllowedMediaUrl(block.url)) {
-        setUrlError(dict.studioBlocks.invalidUrl);
+        setUrlError(`${where}: ${dict.studioBlocks.invalidMediaUrl}`);
         return;
       }
     }
@@ -851,8 +857,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 										<input data-ev-id="ev_ca1bcc5589"
                         type="url"
                         value={block.url || ''}
-                        onChange={(e) => handleVideoUrlChange(index, e.target.value)}
-                        onBlur={(e) => handleVideoUrlChange(index, e.target.value)}
+                        onChange={(e) => handleVideoUrlChange(index, cleanUrl(e.target.value))}
+                        onBlur={(e) => handleVideoUrlChange(index, cleanUrl(e.target.value))}
                         className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         dir="ltr"
                         placeholder="https://www.youtube.com/embed/..." />
@@ -931,7 +937,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 										<input data-ev-id="ev_media_url_input"
                         type="url"
                         value={block.url || ''}
-                        onChange={(e) => handleUpdateBlock(index, { url: e.target.value })}
+                        onChange={(e) => handleUpdateBlock(index, { url: cleanUrl(e.target.value) })}
                         className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         dir="ltr"
                         placeholder="https://..." />

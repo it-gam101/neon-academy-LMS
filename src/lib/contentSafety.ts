@@ -12,6 +12,16 @@ export function stripHtmlToText(input: string): string {
   return doc.body.textContent ?? '';
 }
 
+/**
+ * Dispatch 4a: a pasted address often carries invisible characters — a leading space, or a right-to-left mark from a
+ * Hebrew page — which made a valid https address fail the checks below (QA 2026-10-09). An address never contains raw
+ * whitespace, so all of it is removed, with every invisible format character (Unicode category Cf: zero-width
+ * spaces, direction marks, the byte-order mark).
+ */
+export function cleanUrl(url: string): string {
+  return url.replace(/[\s\p{Cf}]/gu, '');
+}
+
 export const ALLOWED_VIDEO_HOST = 'www.youtube.com';
 
 /**
@@ -20,7 +30,7 @@ export const ALLOWED_VIDEO_HOST = 'www.youtube.com';
 export function isAllowedVideoUrl(url: string): boolean {
   if (!url) return true; // Empty URL is allowed (optional)
   const pattern = /^https:\/\/www\.youtube\.com\/embed\/[a-zA-Z0-9_-]{11}(\?.*)?$/;
-  return pattern.test(url);
+  return pattern.test(cleanUrl(url));
 }
 
 /**
@@ -28,7 +38,7 @@ export function isAllowedVideoUrl(url: string): boolean {
  */
 export function isAllowedMediaUrl(url: string): boolean {
   if (!url) return true; // Empty URL is allowed (optional)
-  return url.startsWith('https://');
+  return cleanUrl(url).startsWith('https://');
 }
 
 const NON_EMBEDDABLE_HOSTS = ['sharepoint.com', 'onedrive.live.com', '1drv.ms', 'drive.google.com', 'docs.google.com', 'dropbox.com'];

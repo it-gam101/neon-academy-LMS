@@ -20,6 +20,7 @@ import { formatDateTime } from '@/utils/formatDate';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { errorMessage } from '@/lib/errorText';
+import { cleanUrl } from '@/lib/contentSafety';
 
 type Profile = Tables<'profiles'>;
 type Category = Tables<'course_categories'>;
@@ -574,7 +575,7 @@ export default function Admin() {
 											<input data-ev-id="ev_6157171da8"
                     type="url"
                     value={orgSettings.logo_url || ''}
-                    onChange={(e) => {setOrgSettingsSaved(false);setOrgSettings({ ...orgSettings, logo_url: e.target.value || null });}}
+                    onChange={(e) => {setOrgSettingsSaved(false);setOrgSettings({ ...orgSettings, logo_url: cleanUrl(e.target.value) || null });}}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     dir="ltr" />
 
