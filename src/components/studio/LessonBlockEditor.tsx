@@ -252,10 +252,10 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
     onCountChangeRef.current?.(blocks.length);
   }, [blocks.length]);
 
-  // Auto-reset delete confirmation after 3 seconds
+  // Auto-reset delete confirmation after 5 seconds (Isaac, 2026-10-11: 3 s vanished before it could be read)
   useEffect(() => {
     if (deleteConfirm === null) return;
-    const t = setTimeout(() => setDeleteConfirm(null), 3000);
+    const t = setTimeout(() => setDeleteConfirm(null), 5000);
     return () => clearTimeout(t);
   }, [deleteConfirm]);
 
