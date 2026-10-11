@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLatest } from '@/hooks/useLatest';
+import { resizeImageToBlob } from '@/lib/resizeImage';
 import { Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, ChevronLeft, AlertTriangle, Type, AlignLeft, Video, Check as CheckIcon, Image, FileText, Upload, Loader2, ChevronsUpDown, ChevronsDownUp, GripVertical } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -489,12 +490,27 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
         return;
       }
 
+      // Dispatch 8: a photo is reduced to 1600 px and stored as WebP before upload — it used to go up at full size (up to
+      // 10 MB, downloaded by every learner who opens the lesson). GIF (may be animated), SVG (vector) and PDF go up
+      // unchanged, and so does a photo whose reduced copy would not be smaller or would lose its format (PNG never becomes
+      // JPEG, which would drop transparency).
+      let upload: Blob = file;
+      let uploadName = file.name;
+      if (/^image\/(jpeg|png|webp)$/.test(file.type)) {
+        const resized = await resizeImageToBlob(file, 1600);
+        if (resized.size < file.size && (resized.type === 'image/webp' || resized.type === file.type)) {
+          const ext = resized.type === 'image/webp' ? '.webp' : resized.type === 'image/png' ? '.png' : '.jpg';
+          upload = resized;
+          uploadName = file.name.replace(/\.[^.]+$/, '') + ext;
+        }
+      }
+
       // Call media-presign
       const { data: presignData, error: presignError } = await supabase.functions.invoke('media-presign', {
         body: {
-          filename: file.name,
-          mimeType: file.type,
-          size: file.size
+          filename: uploadName,
+          mimeType: upload.type,
+          size: upload.size
         }
       });
 
@@ -509,9 +525,9 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
       // PUT the file to R2
       const uploadResponse = await fetch(presignData.uploadUrl, {
         method: 'PUT',
-        body: file,
+        body: upload,
         headers: {
-          'Content-Type': file.type
+          'Content-Type': upload.type
         }
       });
 
@@ -526,9 +542,9 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
       const { data: finalizeData, error: finalizeError } = await supabase.functions.invoke('media-finalize', {
         body: {
           key: presignData.key,
-          filename: presignData.filename || file.name,
-          mimeType: file.type,
-          size: file.size
+          filename: presignData.filename || uploadName,
+          mimeType: upload.type,
+          size: upload.size
         }
       });
 

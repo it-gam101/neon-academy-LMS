@@ -534,6 +534,10 @@ export interface Dictionary {
 		thumbnailUrl: string;
 		/** Dispatch 3: upload the course image, or paste a link to one. */
 		uploadCourseImage: string;
+		/** Dispatch 8: what makes a good course image, and the non-blocking reminder before publishing. */
+		courseImageHint: string;
+		recommendCourseImage: string;
+		addCourseImage: string;
 		orPasteImageLink: string;
 		estimatedMinutes: string;
 		isMandatory: string;
@@ -1293,6 +1297,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			category: 'Category',
 			thumbnailUrl: 'Course image',
 			uploadCourseImage: 'Upload an image',
+			courseImageHint: 'Any photo works: it is reduced to 1280 px and saved as a compressed WebP. Wide images look best (about 16:9); cards crop the edges, so keep the subject in the middle.',
+			recommendCourseImage: 'Recommended: add a course image. Courses with an image stand out in the Catalogue and on learners\' home page.',
+			addCourseImage: 'Add image',
 			orPasteImageLink: 'or paste a link',
 			estimatedMinutes: 'Estimated minutes',
 			isMandatory: 'Mandatory course',
@@ -2037,6 +2044,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			category: 'קטגוריה',
 			thumbnailUrl: 'תמונת הקורס',
 			uploadCourseImage: 'העלאת תמונה',
+			courseImageHint: 'כל תמונה מתאימה: היא מוקטנת ל־1280 פיקסלים ונשמרת כקובץ WebP דחוס. תמונות רחבות נראות הכי טוב (כ־16:9); הכרטיסים חותכים את השוליים, לכן כדאי למקם את הנושא במרכז.',
+			recommendCourseImage: 'מומלץ להוסיף תמונה לקורס. קורסים עם תמונה בולטים בקטלוג ובדף הבית של הלומדים.',
+			addCourseImage: 'הוספת תמונה',
 			orPasteImageLink: 'או הדביקו קישור',
 			estimatedMinutes: 'דקות משוערות',
 			isMandatory: 'קורס חובה',

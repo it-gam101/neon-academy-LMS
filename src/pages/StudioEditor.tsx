@@ -59,6 +59,16 @@ export default function StudioEditor() {
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [thumbnailError, setThumbnailError] = useState<string | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const thumbnailButtonRef = useRef<HTMLButtonElement>(null);
+  // Dispatch 8: "Add image" in the publish dialog closes it and brings the author to the course image's upload button
+  // (the image is recommended, never required).
+  const handleAddImageFromPublish = () => {
+    setShowPublishModal(false);
+    setTimeout(() => {
+      thumbnailButtonRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      thumbnailButtonRef.current?.focus();
+    }, 150);
+  };
   const [showPublishModal, setShowPublishModal] = useState(false);
   // Dispatch 4b: one publish per click.
   const [publishing, setPublishing] = useState(false);
@@ -1259,6 +1269,7 @@ export default function StudioEditor() {
                 className="hidden"
                 onChange={handleThumbnailUpload} />
 								<button data-ev-id="ev_a9ea511b18"
+                ref={thumbnailButtonRef}
                 type="button"
                 onClick={() => thumbnailInputRef.current?.click()}
                 disabled={uploadingThumbnail}
@@ -1267,6 +1278,7 @@ export default function StudioEditor() {
 									{uploadingThumbnail ? dict.studioBlocks.uploading : dict.studio.uploadCourseImage}
 								</button>
 							</div>
+							<p data-ev-id="ev_course_image_hint" className="mb-2 text-xs text-muted-foreground">{dict.studio.courseImageHint}</p>
 							{thumbnailError &&
               <p data-ev-id="ev_8fa69182b1" className="mb-2 text-sm text-destructive"><ErrorText error={thumbnailError} /></p>
               }
@@ -1368,20 +1380,20 @@ export default function StudioEditor() {
 									<div data-ev-id="ev_073cad7fe4" className="flex flex-col">
 										<Tooltip content={dict.studioBlocks.moveUp}>
 										<button data-ev-id="ev_be56e8ddc6"
-                onClick={() => handleMoveModule(index, 'up')}
-                disabled={index === 0 || reordering}
-                className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                aria-label={dict.studioBlocks.moveUp}>
+                  onClick={() => handleMoveModule(index, 'up')}
+                  disabled={index === 0 || reordering}
+                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label={dict.studioBlocks.moveUp}>
 
 											<ChevronUp className="w-4 h-4" />
 										</button>
 										</Tooltip>
 										<Tooltip content={dict.studioBlocks.moveDown}>
 										<button data-ev-id="ev_81a2065527"
-                onClick={() => handleMoveModule(index, 'down')}
-                disabled={index === modules.length - 1 || reordering}
-                className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                aria-label={dict.studioBlocks.moveDown}>
+                  onClick={() => handleMoveModule(index, 'down')}
+                  disabled={index === modules.length - 1 || reordering}
+                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label={dict.studioBlocks.moveDown}>
 
 											<ChevronDown className="w-4 h-4" />
 										</button>
@@ -1420,9 +1432,9 @@ export default function StudioEditor() {
 									{mod.module_type === 'quiz' &&
               <Tooltip content={dict.studio.quizSettings}>
               <button data-ev-id="ev_quiz_settings_btn"
-              onClick={() => handleOpenQuizSettings(mod.id)}
-              className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-              aria-label={dict.studio.quizSettings}>
+                onClick={() => handleOpenQuizSettings(mod.id)}
+                className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                aria-label={dict.studio.quizSettings}>
                 <Settings className="w-4 h-4" />
               </button>
               </Tooltip>
@@ -1430,26 +1442,26 @@ export default function StudioEditor() {
 									{mod.module_type === 'lesson' &&
               <Tooltip content={dict.studioBlocks.editContent}>
               <button data-ev-id="ev_lesson_edit_btn"
-              onClick={() => handleOpenLessonEditor(mod.id)}
-              className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-              aria-label={dict.studioBlocks.editContent}>
+                onClick={() => handleOpenLessonEditor(mod.id)}
+                className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                aria-label={dict.studioBlocks.editContent}>
                 <Pencil className="w-4 h-4" />
               </button>
               </Tooltip>
               }
 									<Tooltip content={dict.studio.editModuleTitle}>
 									<button data-ev-id="ev_7f1e5297ce"
-              onClick={() => handleOpenModuleTitleEdit(mod)}
-              className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-              aria-label={dict.studio.editModuleTitle}>
+                onClick={() => handleOpenModuleTitleEdit(mod)}
+                className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                aria-label={dict.studio.editModuleTitle}>
                 <Edit className="w-4 h-4" />
               </button>
 									</Tooltip>
 									<Tooltip content={dict.studio.deleteModule}>
 									<button data-ev-id="ev_e2850d52d2"
-              onClick={() => handleOpenModuleDeleteConfirm(mod.id)}
-              className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-              aria-label={dict.studio.deleteModule}>
+                onClick={() => handleOpenModuleDeleteConfirm(mod.id)}
+                className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                aria-label={dict.studio.deleteModule}>
 
 										<Trash2 className="w-4 h-4" />
 									</button>
@@ -1481,7 +1493,7 @@ export default function StudioEditor() {
 						</button>
 
 						{/* Readiness badge, reading the same quiz data as the publish modal. 
-                                      The modal re-reads at publish time and stays the authoritative gate. */}
+                                             The modal re-reads at publish time and stays the authoritative gate. */}
 						{course.status !== 'published' && quizzes !== null && (
             readinessProblems.length > 0 ?
             <button
@@ -1658,6 +1670,18 @@ export default function StudioEditor() {
 				{/* Ready to publish */}
 				{!checkingPublish && !publishCheckFailed && publishBlockers !== null && publishBlockers.length === 0 &&
         <p data-ev-id="ev_6cb6a55427" className="text-muted-foreground">{dict.studio.confirmPublishMessage}</p>
+        }
+        {/* Dispatch 8: a course image is recommended, never required — Publish stays available. */}
+        {!checkingPublish && !publishCheckFailed && !thumbnailUrl &&
+        <div data-ev-id="ev_publish_recommend_image" className="mt-3 flex items-center justify-between gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <span data-ev-id="ev_1b09e2db51" className="text-sm text-foreground">{dict.studio.recommendCourseImage}</span>
+            <button data-ev-id="ev_7f2ccecbcf"
+          type="button"
+          onClick={handleAddImageFromPublish}
+          className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex-shrink-0">
+              {dict.studio.addCourseImage}
+            </button>
+          </div>
         }
 			</Modal>
 
@@ -1948,7 +1972,7 @@ export default function StudioEditor() {
         error={libraryImportError}>
 
 				{/* Item 105: step two — this package carries editable content, so offer the
-                  same choice the upload path gives. Only reachable when a sidecar parsed. */}
+                       same choice the upload path gives. Only reachable when a sidecar parsed. */}
 				{pendingSidecar && pendingPackage ?
         <div data-ev-id="ev_library_import_choice" className="flex flex-col gap-4">
 						<p data-ev-id="ev_lic_pkg" className="text-sm text-muted-foreground">
