@@ -55,6 +55,9 @@ export default function Admin() {
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   const [editUserError, setEditUserError] = useState<string | null>(null);
   const [editCategoryError, setEditCategoryError] = useState<string | null>(null);
+  // Dispatch 4b: one save per click — a double-click on Save ran the write twice (two new categories).
+  const [savingUser, setSavingUser] = useState(false);
+  const [savingCategory, setSavingCategory] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!supabase) return;
@@ -121,73 +124,96 @@ export default function Admin() {
   }, [fetchData]);
 
   const handleSaveUser = async () => {
-    if (!supabase || !editingUser) return;
+    if (!supabase || !editingUser || savingUser) return;
     setEditUserError(null);
+    setSavingUser(true);
+    try {
+      const { data, error } = await withTimeout(
+        supabase.
+        from('profiles').
+        update({
+          role: editingUser.role,
+          manager_id: editingUser.manager_id,
+          department: editingUser.department,
+          is_active: editingUser.is_active
+        }).
+        eq('id', editingUser.id).
+        select(),
+        10000
+      );
 
-    const { data, error } = await supabase.
-    from('profiles').
-    update({
-      role: editingUser.role,
-      manager_id: editingUser.manager_id,
-      department: editingUser.department,
-      is_active: editingUser.is_active
-    }).
-    eq('id', editingUser.id).
-    select();
-
-    if (error) {
-      setEditUserError(error.message);
-    } else if (!data || data.length === 0) {
-      setEditUserError(dict.common.changeRefused);
-    } else {
-      showToast('success', dict.admin.userUpdated);
-      setUsers((prev) => prev.map((u) => u.id === editingUser.id ? editingUser : u));
-      setEditingUser(null);
+      if (error) {
+        setEditUserError(error.message);
+      } else if (!data || data.length === 0) {
+        setEditUserError(dict.common.changeRefused);
+      } else {
+        showToast('success', dict.admin.userUpdated);
+        setUsers((prev) => prev.map((u) => u.id === editingUser.id ? editingUser : u));
+        setEditingUser(null);
+      }
+    } catch (err) {
+      console.error('handleSaveUser failed:', err);
+      setEditUserError(errorMessage(err, dict.common.error));
+    } finally {
+      setSavingUser(false);
     }
   };
 
   const handleSaveCategory = async () => {
-    if (!supabase || !editingCategory) return;
+    if (!supabase || !editingCategory || savingCategory) return;
     setEditCategoryError(null);
+    setSavingCategory(true);
+    try {
+      if (isNewCategory) {
+        const { data, error } = await withTimeout(
+          supabase.
+          from('course_categories').
+          insert({
+            name_en: editingCategory.name_en,
+            name_he: editingCategory.name_he,
+            sort_order: editingCategory.sort_order
+          }).
+          select().
+          single(),
+          10000
+        );
 
-    if (isNewCategory) {
-      const { data, error } = await supabase.
-      from('course_categories').
-      insert({
-        name_en: editingCategory.name_en,
-        name_he: editingCategory.name_he,
-        sort_order: editingCategory.sort_order
-      }).
-      select().
-      single();
-
-      if (error) {
-        setEditCategoryError(error.message);
+        if (error) {
+          setEditCategoryError(error.message);
+        } else {
+          showToast('success', dict.admin.categorySaved);
+          setCategories((prev) => [...prev, data]);
+          setEditingCategory(null);
+        }
       } else {
-        showToast('success', dict.admin.categorySaved);
-        setCategories((prev) => [...prev, data]);
-        setEditingCategory(null);
-      }
-    } else {
-      const { data, error } = await supabase.
-      from('course_categories').
-      update({
-        name_en: editingCategory.name_en,
-        name_he: editingCategory.name_he,
-        sort_order: editingCategory.sort_order
-      }).
-      eq('id', editingCategory.id).
-      select();
+        const { data, error } = await withTimeout(
+          supabase.
+          from('course_categories').
+          update({
+            name_en: editingCategory.name_en,
+            name_he: editingCategory.name_he,
+            sort_order: editingCategory.sort_order
+          }).
+          eq('id', editingCategory.id).
+          select(),
+          10000
+        );
 
-      if (error) {
-        setEditCategoryError(error.message);
-      } else if (!data || data.length === 0) {
-        setEditCategoryError(dict.common.changeRefused);
-      } else {
-        showToast('success', dict.admin.categorySaved);
-        setCategories((prev) => prev.map((c) => c.id === editingCategory.id ? editingCategory : c));
-        setEditingCategory(null);
+        if (error) {
+          setEditCategoryError(error.message);
+        } else if (!data || data.length === 0) {
+          setEditCategoryError(dict.common.changeRefused);
+        } else {
+          showToast('success', dict.admin.categorySaved);
+          setCategories((prev) => prev.map((c) => c.id === editingCategory.id ? editingCategory : c));
+          setEditingCategory(null);
+        }
       }
+    } catch (err) {
+      console.error('handleSaveCategory failed:', err);
+      setEditCategoryError(errorMessage(err, dict.common.error));
+    } finally {
+      setSavingCategory(false);
     }
   };
 
@@ -655,7 +681,8 @@ export default function Admin() {
 						</button>
 						<button data-ev-id="ev_99b3db65c3"
           onClick={handleSaveUser}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+          disabled={savingUser}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 							{dict.common.save}
 						</button>
@@ -745,7 +772,8 @@ export default function Admin() {
 						</button>
 						<button data-ev-id="ev_d5cb9f1647"
           onClick={handleSaveCategory}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+          disabled={savingCategory}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 							{dict.common.save}
 						</button>

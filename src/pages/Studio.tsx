@@ -26,6 +26,8 @@ export default function Studio() {
   const isOrgWide = profile?.role === 'super_admin' || profile?.role === 'hr_manager';
   const [scope, setScope] = useState<'mine' | 'all'>('mine');
   const [ownerNames, setOwnerNames] = useState<Map<string, string>>(new Map());
+  // Dispatch 4b: one course per click — a double-click created two "New Course" drafts.
+  const [creatingCourse, setCreatingCourse] = useState(false);
 
   const { courses, categories, loading, error, refetch, getLocalizedTitle, getLocalizedCategoryName } = useCourses({
     onlyOwn: !isOrgWide || scope === 'mine'
@@ -60,23 +62,27 @@ export default function Studio() {
   const handleCreateCourse = async () => {
     if (!supabase) return;
 
-    if (!user) return;
+    if (!user || creatingCourse) return;
+    setCreatingCourse(true);
+    try {
+      const { data, error } = await supabase.
+      from('courses').
+      insert({
+        title_en: 'New Course',
+        title_he: 'קורס חדש',
+        status: 'draft',
+        created_by: user.id
+      }).
+      select().
+      single();
 
-    const { data, error } = await supabase.
-    from('courses').
-    insert({
-      title_en: 'New Course',
-      title_he: 'קורס חדש',
-      status: 'draft',
-      created_by: user.id
-    }).
-    select().
-    single();
-
-    if (error) {
-      showToast('error', error.message);
-    } else {
-      navigate(`/studio/${data.id}`);
+      if (error) {
+        showToast('error', error.message);
+      } else {
+        navigate(`/studio/${data.id}`);
+      }
+    } finally {
+      setCreatingCourse(false);
     }
   };
 
@@ -149,7 +155,8 @@ export default function Studio() {
 						</Link>
 						<button data-ev-id="ev_20d39d9b23"
             onClick={handleCreateCourse}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+            disabled={creatingCourse}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 							<Plus className="w-4 h-4" />
 							{dict.studio.createCourse}
 						</button>

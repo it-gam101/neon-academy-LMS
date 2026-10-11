@@ -59,6 +59,8 @@ export default function StudioEditor() {
   const [thumbnailError, setThumbnailError] = useState<string | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  // Dispatch 4b: one publish per click.
+  const [publishing, setPublishing] = useState(false);
   const [publishBlockers, setPublishBlockers] = useState<CourseProblem[] | null>(null);
   const [publishCheckFailed, setPublishCheckFailed] = useState(false);
   const [checkingPublish, setCheckingPublish] = useState(false);
@@ -519,41 +521,45 @@ export default function StudioEditor() {
   };
 
   const handlePublish = async () => {
-    if (!supabase || !courseId) return;
+    if (!supabase || !courseId || publishing) return;
+    setPublishing(true);
+    try {
+      // Publish saves the form too. Writing only the status silently discarded
+      // every field the author typed but had not pressed Save Draft on.
+      const { data, error } = await supabase.
+      from('courses').
+      update({
+        title_en: titleEn,
+        title_he: titleHe,
+        description_en: descriptionEn || null,
+        description_he: descriptionHe || null,
+        category_id: categoryId || null,
+        thumbnail_url: thumbnailUrl || null,
+        estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
+        is_mandatory: isMandatory,
+        due_days: dueDays ? parseInt(dueDays) : null,
+        status: 'published',
+        updated_at: new Date().toISOString()
+      }).
+      eq('id', courseId).
+      select();
 
-    // Publish saves the form too. Writing only the status silently discarded
-    // every field the author typed but had not pressed Save Draft on.
-    const { data, error } = await supabase.
-    from('courses').
-    update({
-      title_en: titleEn,
-      title_he: titleHe,
-      description_en: descriptionEn || null,
-      description_he: descriptionHe || null,
-      category_id: categoryId || null,
-      thumbnail_url: thumbnailUrl || null,
-      estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
-      is_mandatory: isMandatory,
-      due_days: dueDays ? parseInt(dueDays) : null,
-      status: 'published',
-      updated_at: new Date().toISOString()
-    }).
-    eq('id', courseId).
-    select();
-
-    if (error) {
-      console.error('Publish error:', error);
-      showToast('error', (error as {message?: string;})?.message || dict.common.error);
-    } else if (!data || data.length === 0) {
-      // RLS-blocked update returns success with zero rows
-      showToast('error', dict.studio.deleteFailed);
-    } else {
-      showToast('success', dict.studio.publishSuccess);
-      // Publish writes every field, so take the whole saved row. Merging only `status`
-      // left the rest reading as unsaved and triggered a redundant flush on leaving.
-      setCourse(data[0]);
+      if (error) {
+        console.error('Publish error:', error);
+        showToast('error', (error as {message?: string;})?.message || dict.common.error);
+      } else if (!data || data.length === 0) {
+        // RLS-blocked update returns success with zero rows. Dispatch 4b: say so — this used to read "Failed to delete course".
+        showToast('error', dict.common.changeRefused);
+      } else {
+        showToast('success', dict.studio.publishSuccess);
+        // Publish writes every field, so take the whole saved row. Merging only `status`
+        // left the rest reading as unsaved and triggered a redundant flush on leaving.
+        setCourse(data[0]);
+      }
+      setShowPublishModal(false);
+    } finally {
+      setPublishing(false);
     }
-    setShowPublishModal(false);
   };
 
   const handleAddModule = async (type: 'lesson' | 'quiz') => {
@@ -1582,7 +1588,7 @@ export default function StudioEditor() {
 						</button>
 						<button data-ev-id="ev_1a3c9684f5"
           onClick={handlePublish}
-          disabled={checkingPublish || publishCheckFailed || publishBlockers !== null && publishBlockers.length > 0}
+          disabled={publishing || checkingPublish || publishCheckFailed || publishBlockers !== null && publishBlockers.length > 0}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 							{dict.common.publish}

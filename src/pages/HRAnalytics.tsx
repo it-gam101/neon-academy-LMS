@@ -45,6 +45,8 @@ export default function HRAnalytics() {
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
+  // Dispatch 4b: one snapshot per click — a double-click saved two.
+  const [savingSnapshot, setSavingSnapshot] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -284,20 +286,30 @@ export default function HRAnalytics() {
   const saveSnapshot = async () => {
     if (!supabase || !reportData) return;
 
-    if (!user) return;
+    if (!user || savingSnapshot) return;
+    setSavingSnapshot(true);
+    try {
+      const { error } = await withTimeout(
+        supabase.from('report_snapshots').insert({
+          report_type: reportData.type,
+          params: {},
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data: reportData.rows as any,
+          generated_by: user.id
+        }),
+        10000
+      );
 
-    const { error } = await supabase.from('report_snapshots').insert({
-      report_type: reportData.type,
-      params: {},
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: reportData.rows as any,
-      generated_by: user.id
-    });
-
-    if (error) {
-      showToast('error', error.message);
-    } else {
-      showToast('success', dict.hrAnalytics.snapshotSaved);
+      if (error) {
+        showToast('error', error.message);
+      } else {
+        showToast('success', dict.hrAnalytics.snapshotSaved);
+      }
+    } catch (err) {
+      console.error('saveSnapshot failed:', err);
+      showToast('error', errorMessage(err, dict.common.error));
+    } finally {
+      setSavingSnapshot(false);
     }
   };
 
@@ -451,7 +463,8 @@ export default function HRAnalytics() {
 												</button>
 												<button data-ev-id="ev_6c6b7f1713"
                       onClick={saveSnapshot}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors">
+                      disabled={savingSnapshot}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 													<Save className="w-4 h-4" />
 													{dict.common.saveSnapshot}

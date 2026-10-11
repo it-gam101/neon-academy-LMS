@@ -42,6 +42,8 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  // Dispatch 4b: one deletion per click.
+  const [removingQuestion, setRemovingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState<string | null>(null);
 
   // Store callback in ref to avoid re-triggering fetch on parent re-renders
@@ -218,34 +220,41 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
   };
 
   const handleDeleteQuestion = async (index: number) => {
+    // Dispatch 4b: a double-click on Delete ran this twice — the second, finding nothing left, reported "change refused"
+    // after the deletion had succeeded.
+    if (removingQuestion) return;
     const q = questions[index];
     setQuestionError(null);
+    setRemovingQuestion(true);
+    try {
+      if (q.id && supabase) {
+        const { data, error } = await supabase.
+        from('quiz_questions').
+        delete().
+        eq('id', q.id).
+        select();
 
-    if (q.id && supabase) {
-      const { data, error } = await supabase.
-      from('quiz_questions').
-      delete().
-      eq('id', q.id).
-      select();
+        if (error) {
+          setQuestionError(error.message);
+          return;
+        }
+        if (!data || data.length === 0) {
+          setQuestionError(dict.common.changeRefused);
+          return;
+        }
+      }
 
-      if (error) {
-        setQuestionError(error.message);
-        return;
-      }
-      if (!data || data.length === 0) {
-        setQuestionError(dict.common.changeRefused);
-        return;
-      }
+      const updated = questions.filter((_, i) => i !== index);
+      updated.forEach((q, i) => {
+        q.sort_order = i;
+      });
+      setQuestions(updated);
+      onCountChangeRef.current?.(updated.length);
+      setDeleteConfirm(null);
+      showToast('success', locale === 'he' ? 'השאלה נמחקה' : 'Question deleted');
+    } finally {
+      setRemovingQuestion(false);
     }
-
-    const updated = questions.filter((_, i) => i !== index);
-    updated.forEach((q, i) => {
-      q.sort_order = i;
-    });
-    setQuestions(updated);
-    onCountChangeRef.current?.(updated.length);
-    setDeleteConfirm(null);
-    showToast('success', locale === 'he' ? 'השאלה נמחקה' : 'Question deleted');
   };
 
   const handleSaveQuestion = async (index: number) => {
@@ -574,7 +583,8 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 												<button data-ev-id="ev_f0cea5294f"
                 type="button"
                 onClick={() => handleDeleteQuestion(index)}
-                className="px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors">
+                disabled={removingQuestion}
+                className="px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 													{dict.common.delete}
 												</button>
