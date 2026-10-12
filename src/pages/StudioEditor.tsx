@@ -132,6 +132,10 @@ export default function StudioEditor() {
   const [moduleTitleEn, setModuleTitleEn] = useState('');
   const [moduleTitleHe, setModuleTitleHe] = useState('');
   const [savingModuleTitle, setSavingModuleTitle] = useState(false);
+  // Dispatch 4e (item 51): a failure renders INSIDE the open dialog. A toast fired under an open dialog paints beneath
+  // its backdrop (rule 9b), so the author saw the dialog simply stay open.
+  const [moduleTitleError, setModuleTitleError] = useState<string | null>(null);
+  const [deleteCourseError, setDeleteCourseError] = useState<string | null>(null);
 
   // Stable callback for question count updates
   const handleQuestionCountChange = useCallback((count: number) => {
@@ -736,6 +740,7 @@ export default function StudioEditor() {
   const handleOpenScormChooser = async () => {
     if (!supabase) return;
     setLoadingPackages(true);
+    setLibraryImportError(null);
     setShowScormChooser(true);
 
     try {
@@ -750,6 +755,7 @@ export default function StudioEditor() {
 
       if (error) {
         console.error('Failed to load packages:', error);
+        setLibraryImportError((error as {message?: string;})?.message || dict.common.error);
         setAvailablePackages([]);
       } else {
         setAvailablePackages(data ?? []);
@@ -757,7 +763,7 @@ export default function StudioEditor() {
     } catch (err) {
       const msg = errorMessage(err, dict.common.error);
       console.error('handleOpenScormChooser failed:', err);
-      showToast('error', msg);
+      setLibraryImportError(msg);
       setAvailablePackages([]);
     } finally {
       setLoadingPackages(false);
@@ -874,10 +880,10 @@ export default function StudioEditor() {
 
     if (error) {
       console.error('Failed to add SCORM module:', error);
-      showToast('error', error?.message || dict.common.error);
+      setLibraryImportError(error?.message || dict.common.error);
     } else if (!data) {
       // RLS blocked - insert returned no rows
-      showToast('error', dict.common.error);
+      setLibraryImportError(dict.common.changeRefused);
     } else {
       setModules((prev) => [...prev, data]);
       await syncCourseType(courseId);
@@ -898,7 +904,7 @@ export default function StudioEditor() {
     single();
 
     if (error || !data) {
-      showToast('error', error?.message || 'Quiz not found');
+      showToast('error', error?.message || dict.errors.notFound);
       return;
     }
 
@@ -962,6 +968,7 @@ export default function StudioEditor() {
     setEditingModule(mod);
     setModuleTitleEn(mod.title_en);
     setModuleTitleHe(mod.title_he);
+    setModuleTitleError(null);
     setShowModuleTitleModal(true);
   };
 
@@ -972,6 +979,7 @@ export default function StudioEditor() {
     if (!trimmedEn || !trimmedHe) return;
 
     setSavingModuleTitle(true);
+    setModuleTitleError(null);
     try {
       const { data, error } = await withTimeout(
         supabase.
@@ -985,9 +993,9 @@ export default function StudioEditor() {
       if (error) {
         const msg = (error as {message?: string;})?.message || JSON.stringify(error);
         console.error('Module title save error:', error);
-        showToast('error', msg);
+        setModuleTitleError(msg);
       } else if (!data || data.length === 0) {
-        showToast('error', dict.studio.deleteFailed);
+        setModuleTitleError(dict.common.changeRefused);
       } else {
         // Update local module list
         setModules((prev) =>
@@ -1001,7 +1009,7 @@ export default function StudioEditor() {
     } catch (err) {
       const msg = errorMessage(err, dict.common.error);
       console.error('handleSaveModuleTitle failed:', err);
-      showToast('error', msg);
+      setModuleTitleError(msg);
     } finally {
       setSavingModuleTitle(false);
     }
@@ -1085,7 +1093,7 @@ export default function StudioEditor() {
         console.error('Archive error:', error);
         showToast('error', msg);
       } else if (!data || data.length === 0) {
-        showToast('error', dict.studio.deleteFailed);
+        showToast('error', dict.common.changeRefused);
       } else {
         setCourse((prev) => prev ? { ...prev, status: 'archived' } : null);
         showToast('success', dict.studio.courseArchived);
@@ -1102,6 +1110,7 @@ export default function StudioEditor() {
   const handleDelete = async () => {
     if (!supabase || !courseId) return;
     setDeleting(true);
+    setDeleteCourseError(null);
 
     const { data, error } = await supabase.
     from('courses').
@@ -1112,10 +1121,10 @@ export default function StudioEditor() {
     if (error) {
       const msg = (error as {message?: string;})?.message || JSON.stringify(error);
       console.error('Delete error:', error);
-      showToast('error', msg);
+      setDeleteCourseError(msg);
       setDeleting(false);
     } else if (!data || data.length === 0) {
-      showToast('error', dict.studio.deleteFailed);
+      setDeleteCourseError(dict.studio.deleteFailed);
       setDeleting(false);
     } else {
       showToast('success', dict.studio.courseDeleted);
@@ -1807,6 +1816,7 @@ export default function StudioEditor() {
         isOpen={showModuleTitleModal}
         onClose={() => setShowModuleTitleModal(false)}
         title={dict.studio.editModuleTitle}
+        error={moduleTitleError}
         footer={
         <>
 						<button data-ev-id="ev_61283b7509"
@@ -1882,8 +1892,10 @@ export default function StudioEditor() {
         onClose={() => {
           setShowDeleteModal(false);
           setDeleteConfirmText('');
+          setDeleteCourseError(null);
         }}
         title={dict.studio.confirmDeleteCourse}
+        error={deleteCourseError}
         footer={
         <>
 						<button
@@ -1891,6 +1903,7 @@ export default function StudioEditor() {
             onClick={() => {
               setShowDeleteModal(false);
               setDeleteConfirmText('');
+              setDeleteCourseError(null);
             }}
             className="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
 
@@ -2062,7 +2075,7 @@ export default function StudioEditor() {
 					{loadingPackages ?
           <p data-ev-id="ev_loading_packages" className="text-center text-muted-foreground py-4">{dict.common.loading}</p> :
           availablePackages.length === 0 ?
-          <p data-ev-id="ev_no_packages" className="text-center text-muted-foreground py-4">{dict.studioUpload.noPackages}</p> :
+          !libraryImportError && <p data-ev-id="ev_no_packages" className="text-center text-muted-foreground py-4">{dict.studioUpload.noPackages}</p> :
           <div data-ev-id="ev_packages_list" className="flex flex-col gap-2 max-h-64 overflow-y-auto">
 							{availablePackages.map((pkg) =>
             <button data-ev-id="ev_pkg_item"

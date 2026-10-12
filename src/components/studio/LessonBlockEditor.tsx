@@ -18,6 +18,7 @@ import type { Json } from '@/integrations/supabase/types';
 import { stripHtmlToText, isAllowedVideoUrl, isAllowedMediaUrl, isNonEmbeddableHost, cleanUrl } from '@/lib/contentSafety';
 import { lessonProblems, blockProblems, type ProblemCode } from '@/lib/completeness';
 import { ErrorText } from '@/components/ui/ErrorText';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { errorMessage } from '@/lib/errorText';
 
@@ -173,6 +174,11 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
   const [libraryAssets, setLibraryAssets] = useState<Array<{id: string;url: string;filename: string;kind: 'image' | 'pdf';}>>([]);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Dispatch 4e: a failed load is SHOWN — never an empty lesson (an edit would autosave over the real content) and never
+  // an empty library.
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [libraryError, setLibraryError] = useState<string | null>(null);
   const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
 
   // Refs for block elements (for scrollIntoView)
@@ -218,7 +224,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 
       if (error) {
         console.error('Failed to load content:', error);
-        showToast('error', (error as {message?: string;})?.message || dict.common.error);
+        setLoadError((error as {message?: string;})?.message || dict.common.error);
       } else if (data?.content_json) {
         const json = data.content_json as {blocks?: Array<{type: string;content: unknown;url?: string;interaction?: Record<string, unknown>;}>;};
         const rawBlocks = json.blocks || [];
@@ -240,7 +246,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
     };
 
     fetchContent();
-  }, [moduleId, dictRef]);
+  }, [moduleId, dictRef, loadAttempt]);
 
   // Compute dirty state and notify parent
   const isDirty = JSON.stringify(blocks) !== savedSnapshotRef.current;
@@ -265,6 +271,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
     if (!libraryOpen || !supabase) return;
 
     const fetchLibraryAssets = async () => {
+      setLibraryError(null);
       const { data, error } = await supabase.
       from('media_assets').
       select('id, url, filename, kind').
@@ -273,6 +280,7 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 
       if (error) {
         console.error('Failed to load library assets:', error);
+        setLibraryError((error as {message?: string;})?.message || JSON.stringify(error));
         setLibraryAssets([]);
       } else {
         setLibraryAssets((data || []) as Array<{id: string;url: string;filename: string;kind: 'image' | 'pdf';}>);
@@ -668,7 +676,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
       const result = await withTimeout(persistBlocks(blocks, { silent: false }), 10000);
 
       if (!result.success) {
-        showToast('error', result.error || dict.common.error);
+        setSaveStatus('error');
+        setSaveError(result.error || dict.common.error);
       } else {
         showToast('success', dict.studioBlocks.blocksSaved);
         setSaveStatus('idle');
@@ -678,7 +687,8 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
     } catch (err) {
       const msg = errorMessage(err, dict.common.error);
       console.error('explicit save failed:', err);
-      showToast('error', msg);
+      setSaveStatus('error');
+      setSaveError(msg);
     } finally {
       setSaving(false);
     }
@@ -707,6 +717,12 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
       case 'bad_url':return dict.studioBlocks.warnBadUrl;
     }
   };
+
+  // Dispatch 4e: a lesson that failed to load is never shown as empty — the first block added to an empty copy would
+  // autosave over the real content. The error and a Retry take its place.
+  if (loadError) {
+    return <ErrorState error={loadError} onRetry={() => {setLoadError(null);setLoading(true);setLoadAttempt((n) => n + 1);}} />;
+  }
 
   if (loading) {
     return (
@@ -1127,10 +1143,11 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 			<Modal
         isOpen={!!libraryOpen}
         onClose={() => setLibraryOpen(null)}
-        title={dict.media.chooseFromLibrary}>
+        title={dict.media.chooseFromLibrary}
+        error={libraryError}>
 
 				{libraryAssets.length === 0 ?
-        <p data-ev-id="ev_a7a0f23d45" className="text-center text-muted-foreground py-8">{dict.media.empty}</p> :
+        !libraryError && <p data-ev-id="ev_a7a0f23d45" className="text-center text-muted-foreground py-8">{dict.media.empty}</p> :
 
         <div data-ev-id="ev_39ee1f2664" className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto">
 						{libraryAssets.map((asset) =>

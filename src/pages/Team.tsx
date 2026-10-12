@@ -39,6 +39,9 @@ export default function Team() {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [assigning, setAssigning] = useState(false);
+  // Dispatch 4e (item 51): a failed assignment is reported INSIDE the open dialog — a toast paints beneath its backdrop,
+  // and it named no cause.
+  const [assignError, setAssignError] = useState<string | null>(null);
   const [managerFilter, setManagerFilter] = useState<string>('');
 
   // For super_admin/hr_manager, show all users; team_manager sees direct reports only
@@ -57,6 +60,7 @@ export default function Team() {
   const handleAssign = async () => {
     if (!selectedCourse || assigningTo.length === 0) return;
     setAssigning(true);
+    setAssignError(null);
 
     const { data, error } = await assignCourse(
       assigningTo,
@@ -65,7 +69,7 @@ export default function Team() {
     );
 
     if (error) {
-      showToast('error', dict.team.assignmentError);
+      setAssignError(error);
     } else {
       // `data` holds only the rows actually inserted; anyone who already had the
       // course was skipped rather than failing the whole batch.
@@ -96,6 +100,7 @@ export default function Team() {
     if (memberIds) {
       setAssigningTo(memberIds);
     }
+    setAssignError(null);
     setShowAssignModal(true);
   };
 
@@ -432,6 +437,7 @@ export default function Team() {
       {/* Assign course modal — always mounted so it works from both views */}
       <Modal
         isOpen={showAssignModal}
+        error={assignError}
         onClose={() => {
           setShowAssignModal(false);
           setAssigningTo([]);

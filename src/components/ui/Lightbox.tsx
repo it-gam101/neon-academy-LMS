@@ -18,6 +18,10 @@ export function LightboxImage({ src, alt, caption, width, height, className }: L
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Dispatch 4e: the backdrop closes the lightbox only on a click that both starts and ends on it (rule 9b). It was
+  // inverted: a real click on the backdrop did nothing, while a drag from the image onto the backdrop closed it.
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const mouseDownTargetRef = useRef<EventTarget | null>(null);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -59,7 +63,7 @@ export function LightboxImage({ src, alt, caption, width, height, className }: L
   }, [isOpen, handleClose]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === backdropRef.current && mouseDownTargetRef.current === backdropRef.current) {
       handleClose();
     }
   };
@@ -102,10 +106,11 @@ export function LightboxImage({ src, alt, caption, width, height, className }: L
       aria-modal="true"
       aria-label={alt}
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
+      onMouseDown={(e) => {mouseDownTargetRef.current = e.target;}}
       onClick={handleBackdropClick}>
 
           {/* Backdrop */}
-          <div data-ev-id="ev_fd1ef58302" className="absolute inset-0 bg-background/95" />
+          <div data-ev-id="ev_fd1ef58302" ref={backdropRef} className="absolute inset-0 bg-background/95" />
           
           {/* Close button - logical positioning for RTL */}
           <button data-ev-id="ev_cd216b755c"
