@@ -476,6 +476,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 					</div>
 					<button data-ev-id="ev_154283dd65"
           onClick={onClose}
+          aria-label={dict.common.close}
           className="p-1 text-muted-foreground hover:text-foreground transition-colors"
           disabled={state === 'uploading' || state === 'registering'}>
 

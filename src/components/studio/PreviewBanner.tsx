@@ -36,9 +36,9 @@ export function PreviewBanner({ courseId, children }: PreviewBannerProps) {
             <span data-ev-id="ev_b8282e4a66" className="text-amber-900 text-sm font-medium">
               {dict.studio.previewBanner}
             </span>
-            <Link
-              to={`/studio/${courseId}`}
-              className="flex items-center gap-1 text-sm text-amber-800 hover:text-amber-950 underline">
+            <Link data-ev-id="ev_6b7b2210aa"
+            to={`/studio/${courseId}`}
+            className="flex items-center gap-1 text-sm text-amber-800 hover:text-amber-950 underline">
 
               <BackArrow className="w-4 h-4" />
               {dict.studio.previewBackToEdit}
@@ -86,7 +86,7 @@ export function PreviewBanner({ courseId, children }: PreviewBannerProps) {
 
             <iframe data-ev-id="ev_d3dd1729fd"
           src={iframeSrc}
-          title="Mobile preview"
+          title={dict.studio.previewMobile}
           className="w-[390px] h-[844px] bg-background rounded-[2rem] border-0" />
 
           </div>

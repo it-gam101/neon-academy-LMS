@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle, AlertCircle, X, Info } from 'lucide-react';
 import { ErrorText } from '@/components/ui/ErrorText';
+import { useLocale } from '@/hooks/useLocale';
 
 interface ToastMessage {
   id: string;
@@ -22,6 +23,7 @@ export function showToast(type: ToastMessage['type'], message: string) {
 
 export function ToastContainer() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const { t } = useLocale();
 
   useEffect(() => {
     const listener = (toast: ToastMessage) => {
@@ -59,6 +61,7 @@ export function ToastContainer() {
 					<span data-ev-id="ev_317fa1967b" className="flex-1 text-sm text-foreground">{toast.type === 'error' ? <ErrorText error={toast.message} /> : toast.message}</span>
 					<button data-ev-id="ev_2298039ac4"
         onClick={() => removeToast(toast.id)}
+        aria-label={t.common.close}
         className="p-1 rounded hover:bg-muted transition-colors">
 
 						<X className="w-4 h-4 text-muted-foreground" />

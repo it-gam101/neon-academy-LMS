@@ -39,6 +39,8 @@ export interface Dictionary {
 		password: string;
 		fullName: string;
 		forgotPassword: string;
+		/** Dispatch 4d: the name of the eye button on password fields (it also reports pressed = shown). */
+		showPassword: string;
 		resetPassword: string;
 		newPassword: string;
 		confirmPassword: string;
@@ -822,6 +824,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			password: 'Password',
 			fullName: 'Full Name',
 			forgotPassword: 'Forgot password?',
+			showPassword: 'Show password',
 			resetPassword: 'Reset Password',
 			newPassword: 'New Password',
 			confirmPassword: 'Confirm Password',
@@ -1569,6 +1572,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			password: 'סיסמה',
 			fullName: 'שם מלא',
 			forgotPassword: 'שכחת סיסמה?',
+			showPassword: 'הצגת סיסמה',
 			resetPassword: 'איפוס סיסמה',
 			newPassword: 'סיסמה חדשה',
 			confirmPassword: 'אימות סיסמה',

@@ -22,6 +22,7 @@ import type { Tables } from '@/integrations/supabase/helpers';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { errorMessage } from '@/lib/errorText';
 import { cleanUrl } from '@/lib/contentSafety';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 type Profile = Tables<'profiles'>;
 type Category = Tables<'course_categories'>;
@@ -464,13 +465,15 @@ export default function Admin() {
 															</Badge>
 														</td>
 														<td data-ev-id="ev_475761869c" className="px-4 py-3 text-end">
+															<Tooltip content={dict.admin.editUser}>
 															<button data-ev-id="ev_841070f0b7"
                             onClick={() => {setEditUserError(null);setEditingUser(user);}}
                             className="p-2 hover:bg-muted rounded-lg transition-colors"
-                            title={dict.common.edit}>
+                            aria-label={dict.admin.editUser}>
 
 																<Edit className="w-4 h-4 text-muted-foreground" />
 															</button>
+															</Tooltip>
 														</td>
 													</tr>
                         )}
@@ -516,22 +519,28 @@ export default function Admin() {
 													</p>
 												</div>
 												<div data-ev-id="ev_c8cad43745" className="flex items-center gap-2">
+<Tooltip content={dict.admin.editCategory}>
 													<button data-ev-id="ev_2e758041d3"
                         onClick={() => {
                           setEditCategoryError(null);
                           setIsNewCategory(false);
                           setEditingCategory(cat);
                         }}
+                        aria-label={dict.admin.editCategory}
                         className="p-2 hover:bg-muted rounded-lg transition-colors">
 
 														<Edit className="w-4 h-4 text-muted-foreground" />
 													</button>
+													</Tooltip>
+<Tooltip content={dict.common.delete}>
 													<button data-ev-id="ev_6a3fa2a30e"
                         onClick={() => setDeletingCategoryId(cat.id)}
+                        aria-label={dict.common.delete}
                         className="p-2 hover:bg-muted rounded-lg transition-colors">
 
 														<Trash2 className="w-4 h-4 text-destructive" />
 													</button>
+													</Tooltip>
 												</div>
 											</div>
                     )}

@@ -16,6 +16,7 @@ import { withTimeout } from '@/utils/fetchWithTimeout';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { errorMessage } from '@/lib/errorText';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface MediaAsset {
   id: string;
@@ -478,7 +479,7 @@ export default function MediaLibrary() {
 								<button data-ev-id="ev_dd21be1b92"
               onClick={() => openDeleteDialog(asset)}
               className="absolute top-2 end-2 p-1.5 bg-destructive text-destructive-foreground rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-              title={dict.common.delete}>
+              aria-label={dict.common.delete}>
 
 									<Trash2 className="w-4 h-4" />
 								</button>
@@ -562,14 +563,16 @@ export default function MediaLibrary() {
 												</span>
                   }
 											{canDeletePackages &&
+<Tooltip content={dict.common.delete}>
                   <button data-ev-id="ev_delete_package"
                   onClick={() => openDeletePackageDialog(pkg)}
                   disabled={inUse}
                   className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  title={dict.common.delete}>
+                  aria-label={dict.common.delete}>
 
 												<Trash2 className="w-4 h-4" />
 											</button>
+                  </Tooltip>
                   }
 										</div>
 									</div>);

@@ -18,6 +18,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { showToast } from '@/components/ui/Toast';
 import { formatDate } from '@/utils/formatDate';
 import type { TeamMember } from '@/hooks/useTeam';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export default function Team() {
   const { locale } = useLocale();
@@ -390,22 +391,26 @@ export default function Team() {
                       </td>
                       <td data-ev-id="ev_4627091ed1" className="px-4 py-3 text-end">
                         <div data-ev-id="ev_01fee27dfd" className="flex items-center justify-end gap-2">
+                          <Tooltip content={dict.team.assignCourse}>
                           <button
                         data-ev-id="ev_54aa067e3e"
                         onClick={() => openAssignModal([member.id])}
                         className="p-2 hover:bg-muted rounded-lg transition-colors"
-                        title={dict.team.assignCourse}>
+                        aria-label={dict.team.assignCourse}>
 
                             <Plus className="w-4 h-4 text-muted-foreground" />
                           </button>
+                          </Tooltip>
+                          <Tooltip content={dict.team.viewLearning}>
                           <button
                         data-ev-id="ev_2fab873a8b"
                         onClick={() => setSelectedMemberId(member.id)}
                         className="p-2 hover:bg-muted rounded-lg transition-colors"
-                        title={dict.team.viewLearning}>
+                        aria-label={dict.team.viewLearning}>
 
                             <Chevron className="w-4 h-4 text-muted-foreground" />
                           </button>
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>);
@@ -469,7 +474,6 @@ export default function Team() {
                   type="button"
                   onClick={() => setAssigningTo((prev) => prev.filter((id) => id !== m.id))}
                   aria-label={`${dict.common.remove} ${m.full_name}`}
-                  title={dict.common.remove}
                   className="hover:text-destructive transition-colors focus-ring rounded">
 											<X className="w-3 h-3" />
 										</button>

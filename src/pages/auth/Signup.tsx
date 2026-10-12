@@ -112,6 +112,8 @@ export default function Signup() {
 
 					<button data-ev-id="ev_4f75f373ea"
           type="button"
+          aria-label={t.auth.showPassword}
+          aria-pressed={showPassword}
           onClick={() => setShowPassword(!showPassword)}
           className="absolute end-3 top-[38px] text-foreground-muted hover:text-foreground transition-colors focus-ring rounded"
           tabIndex={-1}>

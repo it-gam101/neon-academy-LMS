@@ -510,7 +510,7 @@ export default function ScormPlayer() {
 				<iframe data-ev-id="ev_8eedc28920"
         ref={iframeRef}
         src={bridgeUrl}
-        title={getTitle(module) || 'SCORM Content'}
+        title={getTitle(module) || dict.scorm.scormPackage}
         className="w-full h-full border-0"
         style={{ minHeight: 'calc(100vh - 100px)' }}
         sandbox="allow-scripts allow-same-origin allow-modals" />
