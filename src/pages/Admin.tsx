@@ -450,7 +450,7 @@ export default function Admin() {
                                 <Badge variant="success">{dict.admin.newBadge}</Badge>
                                 }
 																</p>
-																<p data-ev-id="ev_c249aee36b" className="text-sm text-muted-foreground">{user.email}</p>
+																<p data-ev-id="ev_c249aee36b" className="text-sm text-muted-foreground"><span data-ev-id="ev_email_ltr_row" dir="ltr">{user.email}</span></p>
 															</div>
 														</td>
 														<td data-ev-id="ev_3de9573198" className="px-4 py-3">
@@ -572,9 +572,9 @@ export default function Admin() {
 														{(log.actor as {full_name?: string;email?: string;} | null)?.full_name || (log.actor as {full_name?: string;email?: string;} | null)?.email || '-'}
 													</td>
 													<td data-ev-id="ev_0c08e86104" className="px-4 py-3">
-														<Badge variant="info">{log.action}</Badge>
+														<Badge variant="info">{(dict.admin.auditActions as Record<string, string | undefined>)[log.action] ?? log.action}</Badge>
 													</td>
-													<td data-ev-id="ev_e787e135f1" className="px-4 py-3 text-muted-foreground">{log.entity}</td>
+													<td data-ev-id="ev_e787e135f1" className="px-4 py-3 text-muted-foreground">{(dict.admin.auditEntities as Record<string, string | undefined>)[log.entity] ?? log.entity}</td>
 													<td data-ev-id="ev_f6476c4c17" className="px-4 py-3 text-sm text-muted-foreground">
 														{formatAuditMeta(log.meta) ?
                           <code data-ev-id="ev_7361b7eabe" dir="ltr" className="text-xs break-all">{formatAuditMeta(log.meta)}</code> :
@@ -705,7 +705,7 @@ export default function Admin() {
 				{editingUser &&
         <div data-ev-id="ev_5cbb9a8e39" className="space-y-4">
 						<div data-ev-id="ev_1cae0f10fb">
-							<p data-ev-id="ev_d84c46f509" className="text-sm text-muted-foreground mb-1">{editingUser.email}</p>
+							<p data-ev-id="ev_d84c46f509" className="text-sm text-muted-foreground mb-1"><span data-ev-id="ev_email_ltr_edit" dir="ltr">{editingUser.email}</span></p>
 						</div>
 
 						<div data-ev-id="ev_8efaf2b04c">

@@ -418,16 +418,17 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 									</Tooltip>
 								</div>
 
-								<div data-ev-id="ev_c208197684" className="flex-1 min-w-0">
-									<span data-ev-id="ev_6cd62dc848" className="text-xs text-muted-foreground">
+{/* Dispatch 4f: opens by keyboard too — no handler of its own; its click (and Enter / Space) bubbles to the row's toggle. */}
+								<button data-ev-id="ev_c208197684" type="button" aria-expanded={!!q.isExpanded} className="flex-1 min-w-0 text-start rounded focus-ring">
+									<span data-ev-id="ev_6cd62dc848" className="block text-xs text-muted-foreground">
 										{q.question_type === 'single' ? dict.studio.singleChoice :
                 q.question_type === 'multi' ? dict.studio.multipleChoice :
                 dict.studio.trueFalse} • {q.points} {locale === 'he' ? 'נק׳' : 'pts'}
 									</span>
-									<p data-ev-id="ev_17b246ad74" className="font-medium text-foreground truncate">
+									<span data-ev-id="ev_17b246ad74" className="block font-medium text-foreground truncate">
 										{(locale === 'he' ? q.question_he : q.question_en) || (locale === 'he' ? 'שאלה חדשה' : 'New question')}
-									</p>
-								</div>
+									</span>
+								</button>
 
 								<div data-ev-id="ev_9a79ce3e8e" className="flex items-center gap-2">
 									{q.isNew &&

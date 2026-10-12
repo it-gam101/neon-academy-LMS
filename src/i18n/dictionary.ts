@@ -712,6 +712,24 @@ export interface Dictionary {
 		actor: string;
 		action: string;
 		entity: string;
+		/** Dispatch 4f: Audit Log actions and entities in words (an unknown value shows as stored). */
+		auditActions: {
+			course_deleted: string;
+			course_published: string;
+			enrollment_assigned: string;
+			enrollments_completed_by_module_delete: string;
+			manager_changed: string;
+			role_changed: string;
+			user_registered: string;
+			report_generated: string;
+		};
+		auditEntities: {
+			courses: string;
+			enrollments: string;
+			modules: string;
+			profiles: string;
+			report_snapshots: string;
+		};
 		timestamp: string;
 		details: string;
 		// Actions
@@ -783,6 +801,8 @@ export interface Dictionary {
 		vc4elSite: string;
 		enlargeImage: string;
 		toggleZoom: string;
+		/** Dispatch 4f: under an enlarged image — how to return to the page. */
+		lightboxHint: string;
 		backToOverview: string;
 		trySandbox: string;
 	};
@@ -1467,6 +1487,23 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			actor: 'User',
 			action: 'Action',
 			entity: 'Entity',
+			auditActions: {
+				course_deleted: 'Course deleted',
+				course_published: 'Course published',
+				enrollment_assigned: 'Course assigned',
+				enrollments_completed_by_module_delete: 'Enrollments completed after a module was deleted',
+				manager_changed: 'Manager changed',
+				role_changed: 'Role changed',
+				user_registered: 'User registered',
+				report_generated: 'Report generated',
+			},
+			auditEntities: {
+				courses: 'Course',
+				enrollments: 'Enrollment',
+				modules: 'Module',
+				profiles: 'User',
+				report_snapshots: 'Report',
+			},
 			timestamp: 'Timestamp',
 			details: 'Details',
 			roleChanged: 'Role changed',
@@ -1532,6 +1569,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			vc4elSite: 'vibe-coding4elearning.com',
 			enlargeImage: 'Enlarge image',
 			toggleZoom: 'Toggle zoom',
+			lightboxHint: 'To return to the page, press Esc or click outside the image.',
 			backToOverview: 'Back to overview',
 			trySandbox: 'Try the SCORM sandbox',
 		},
@@ -2215,6 +2253,23 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			actor: 'משתמש',
 			action: 'פעולה',
 			entity: 'ישות',
+			auditActions: {
+				course_deleted: 'קורס נמחק',
+				course_published: 'קורס פורסם',
+				enrollment_assigned: 'קורס הוקצה',
+				enrollments_completed_by_module_delete: 'הרשמות הושלמו לאחר מחיקת מודול',
+				manager_changed: 'המנהל שונה',
+				role_changed: 'התפקיד שונה',
+				user_registered: 'משתמש נרשם',
+				report_generated: 'דוח הופק',
+			},
+			auditEntities: {
+				courses: 'קורס',
+				enrollments: 'הרשמה',
+				modules: 'מודול',
+				profiles: 'משתמש',
+				report_snapshots: 'דוח',
+			},
 			timestamp: 'זמן',
 			details: 'פרטים',
 			roleChanged: 'תפקיד שונה',
@@ -2280,6 +2335,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			vc4elSite: 'vibe-coding4elearning.com',
 			enlargeImage: 'הגדלת תמונה',
 			toggleZoom: 'מיקוד תצוגה',
+			lightboxHint: 'כדי לחזור לדף, הקישו Esc או לחצו מחוץ לתמונה.',
 			backToOverview: 'חזרה לעמוד הראשי',
 			trySandbox: 'התנסו בארגז החול של SCORM',
 		},

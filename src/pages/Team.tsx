@@ -150,7 +150,7 @@ export default function Team() {
               {selectedMember.full_name}
             </h1>
             <p data-ev-id="ev_c419422cb8" className="text-muted-foreground">
-              {selectedMember.email}
+              <span data-ev-id="ev_email_ltr_team" dir="ltr">{selectedMember.email}</span>
             </p>
           </div>
           <button

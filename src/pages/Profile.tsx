@@ -290,7 +290,7 @@ export default function Profile() {
           }
 
           <div data-ev-id="ev_identity_info" className="flex-1">
-            <p data-ev-id="ev_profile_email" className="text-lg font-medium text-foreground">{profile?.email}</p>
+            <p data-ev-id="ev_profile_email" className="text-lg font-medium text-foreground"><span data-ev-id="ev_email_ltr_profile" dir="ltr">{profile?.email}</span></p>
             {profile?.role &&
             <Badge variant="default" size="md">
                 {t.roles[profile.role]}

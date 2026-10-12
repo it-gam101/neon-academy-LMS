@@ -468,7 +468,7 @@ export default function HRAnalytics() {
 												<button data-ev-id="ev_6c6b7f1713"
                       onClick={saveSnapshot}
                       disabled={savingSnapshot}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 													<Save className="w-4 h-4" />
 													{dict.common.saveSnapshot}

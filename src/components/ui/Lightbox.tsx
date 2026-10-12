@@ -118,10 +118,12 @@ export function LightboxImage({ src, alt, caption, width, height, className }: L
         type="button"
         onClick={handleClose}
         aria-label={t.common.close}
-        className="absolute top-4 z-10 p-2 rounded-lg bg-muted/80 hover:bg-muted text-foreground transition-colors focus-ring"
+        className="absolute top-4 z-10 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-muted/80 hover:bg-muted text-foreground text-sm font-medium transition-colors focus-ring"
         style={{ insetInlineEnd: '1rem' }}>
 
-            <X className="w-6 h-6" />
+            {/* Dispatch 4f (Isaac): the way back is labelled — a bare × was hard to find. */}
+            <X className="w-5 h-5" />
+            {t.common.close}
           </button>
 
           {/* Image container */}
@@ -167,6 +169,8 @@ export function LightboxImage({ src, alt, caption, width, height, className }: L
                 {caption}
               </div>
           }
+            {/* Dispatch 4f (Isaac): how to return — Esc, or a click outside the image. */}
+            <p data-ev-id="ev_lightbox_hint" className="mt-3 text-center text-xs text-muted-foreground">{t.landing.lightboxHint}</p>
           </div>
         </div>
       }

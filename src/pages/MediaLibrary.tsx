@@ -368,10 +368,13 @@ export default function MediaLibrary() {
 
 			{/* Tab row for anyone who can view packages (instructor+) */}
 			{canViewPackages &&
-      <div data-ev-id="ev_media_tabs" className="flex items-center bg-muted rounded-lg p-1 mb-6">
+      <div data-ev-id="ev_media_tabs" role="tablist" className="flex items-center bg-muted rounded-lg p-1 mb-6">
 					<button data-ev-id="ev_tab_files"
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'files'}
         onClick={() => setActiveTab('files')}
-        className={`px-4 py-2 text-sm rounded-md transition-colors ${
+        className={`px-4 py-2 text-sm rounded-md transition-colors focus-ring ${
         activeTab === 'files' ?
         'bg-background text-foreground shadow-sm' :
         'text-muted-foreground hover:text-foreground'}`
@@ -380,8 +383,11 @@ export default function MediaLibrary() {
 						{dict.media.tabFiles}
 					</button>
 					<button data-ev-id="ev_tab_packages"
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'packages'}
         onClick={() => setActiveTab('packages')}
-        className={`px-4 py-2 text-sm rounded-md transition-colors ${
+        className={`px-4 py-2 text-sm rounded-md transition-colors focus-ring ${
         activeTab === 'packages' ?
         'bg-background text-foreground shadow-sm' :
         'text-muted-foreground hover:text-foreground'}`
