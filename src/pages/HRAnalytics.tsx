@@ -193,7 +193,7 @@ export default function HRAnalytics() {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (enrollments || []).forEach((e: any) => {
-          const dept = e.user?.department || 'Unknown';
+          const dept = e.user?.department || dict.common.noDepartment;
           if (!deptStats[dept]) {
             deptStats[dept] = { department: dept, enrolled: 0, completed: 0, overdue: 0 };
           }

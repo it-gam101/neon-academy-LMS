@@ -116,7 +116,7 @@ export function ModuleList({ courseId, modules, enrolled, enrollmentId, isPrevie
       case 'quiz':{
           const questionCount = mod.quiz?.questions?.length ?? 0;
           const questionLabel = questionCount > 0 ?
-          ` (${questionCount} ${locale === 'he' ? 'שאלות' : 'Q'})` :
+          ` (${questionCount} ${dict.common.questionsShort})` :
           '';
           return `${dict.course.quiz} ${index + 1}${questionLabel}`;
         }

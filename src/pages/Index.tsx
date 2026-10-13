@@ -231,7 +231,7 @@ export default function Index() {
           <section data-ev-id="ev_711616a136" className="px-4 pb-16 md:pb-24 max-w-6xl mx-auto">
             <LightboxImage
               src={`${IMG_BASE}/catalogue.webp`}
-              alt={locale === 'he' ? 'קטלוג קורסים' : 'Course catalogue'}
+              alt={t.landing.altCatalogue}
               width={1200}
               height={675}
               caption={t.landing.showcaseCaption} />
@@ -248,7 +248,7 @@ export default function Index() {
               <div data-ev-id="ev_2061c62540" className="w-full md:w-1/2 order-2 md:order-1">
                 <LightboxImage
                   src={`${IMG_BASE}/my-learning-he.webp`}
-                  alt={locale === 'he' ? 'מסך הלמידה שלי' : 'My Learning screen'}
+                  alt={t.landing.altMyLearning}
                   width={600}
                   height={400}
                   caption={t.landing.feature1Body} />
@@ -277,7 +277,7 @@ export default function Index() {
               <div data-ev-id="ev_d0547cb23e" className="w-full md:w-1/2">
                 <LightboxImage
                   src={`${IMG_BASE}/scorm-player.webp`}
-                  alt={locale === 'he' ? 'נגן SCORM' : 'SCORM player'}
+                  alt={t.landing.altScormPlayer}
                   width={600}
                   height={400}
                   caption={t.landing.feature2Body} />
@@ -290,7 +290,7 @@ export default function Index() {
               <div data-ev-id="ev_c1d619da42" className="w-full md:w-1/2 order-2 md:order-1">
                 <LightboxImage
                   src={`${IMG_BASE}/hr-analytics.webp`}
-                  alt={locale === 'he' ? 'לוח בקרה HR' : 'HR Analytics dashboard'}
+                  alt={t.landing.altHrAnalytics}
                   width={600}
                   height={400}
                   caption={t.landing.feature3Body} />
@@ -313,7 +313,7 @@ export default function Index() {
               <div data-ev-id="ev_3061b87568">
                 <LightboxImage
                   src={`${IMG_BASE}/content-studio.webp`}
-                  alt={locale === 'he' ? 'סטודיו יצירת תוכן' : 'Content studio'}
+                  alt={t.landing.altStudio}
                   width={600}
                   height={400}
                   caption={t.landing.secondary1Caption}
@@ -326,7 +326,7 @@ export default function Index() {
               <div data-ev-id="ev_eee086d1eb">
                 <LightboxImage
                   src={`${IMG_BASE}/assign-course.webp`}
-                  alt={locale === 'he' ? 'שיבוץ קורס לצוות' : 'Assign course to team'}
+                  alt={t.landing.altAssignCourse}
                   width={600}
                   height={400}
                   caption={t.landing.secondary2Caption}

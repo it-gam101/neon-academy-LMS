@@ -336,6 +336,11 @@ export interface Dictionary {
 		saveSnapshot: string;
 		exportCsv: string;
 		profileLoadError: string;
+		/** Dispatch v1a (version 1.0): strings that were written in the code. */
+		questionsShort: string;
+		unexpectedError: string;
+		noDepartment: string;
+		breadcrumbLabel: string;
 		retry: string;
 	};
 	
@@ -583,6 +588,20 @@ export interface Dictionary {
 		correctAnswer: string;
 		correctAnswers: string;
 		questionPoints: string;
+		/** Dispatch v1a (version 1.0): strings that were written in the code. */
+		questionDeleted: string;
+		questionTextMissing: string;
+		optionsMissing: string;
+		questionSaved: string;
+		questionAdded: string;
+		noQuestionsHint: string;
+		pointsShort: string;
+		newQuestion: string;
+		newQuestionBadge: string;
+		confirmDeleteQuestion: string;
+		questionPlaceholder: string;
+		enrolledLearners: string;
+		timeLimitHelp: string;
 		saveDraft: string;
 		publishCourse: string;
 		unpublishCourse: string;
@@ -803,6 +822,13 @@ export interface Dictionary {
 		toggleZoom: string;
 		/** Dispatch 4f: under an enlarged image — how to return to the page. */
 		lightboxHint: string;
+		/** Dispatch v1a (version 1.0): strings that were written in the code. */
+		altCatalogue: string;
+		altMyLearning: string;
+		altScormPlayer: string;
+		altHrAnalytics: string;
+		altStudio: string;
+		altAssignCourse: string;
 		backToOverview: string;
 		trySandbox: string;
 	};
@@ -1130,6 +1156,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			saveSnapshot: 'Save Snapshot',
 			exportCsv: 'Export CSV',
 			profileLoadError: "Couldn't load your profile",
+			questionsShort: 'Q',
+			unexpectedError: 'An unexpected error occurred. Try refreshing the page or going back.',
+			noDepartment: 'No department',
+			breadcrumbLabel: 'Breadcrumb',
 			retry: 'Retry',
 		},
 		
@@ -1366,6 +1396,19 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			correctAnswer: 'Correct answer',
 			correctAnswers: 'Correct answers',
 			questionPoints: 'Points',
+			questionDeleted: 'Question deleted',
+			questionTextMissing: 'Please fill in the question text in both languages',
+			optionsMissing: 'Please fill in all options in both languages',
+			questionSaved: 'Question saved',
+			questionAdded: 'Question added',
+			noQuestionsHint: 'No questions yet. Click "{button}" to start.',
+			pointsShort: 'pts',
+			newQuestion: 'New question',
+			newQuestionBadge: 'New',
+			confirmDeleteQuestion: 'Delete this question?',
+			questionPlaceholder: 'Question in English...',
+			enrolledLearners: '{count} enrolled learner(s)',
+			timeLimitHelp: 'Leave empty for no time limit',
 			saveDraft: 'Save Draft',
 			publishCourse: 'Publish Course',
 			unpublishCourse: 'Unpublish',
@@ -1570,6 +1613,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			enlargeImage: 'Enlarge image',
 			toggleZoom: 'Toggle zoom',
 			lightboxHint: 'To return to the page, press Esc or click outside the image.',
+			altCatalogue: 'Course catalogue',
+			altMyLearning: 'My Learning screen',
+			altScormPlayer: 'SCORM player',
+			altHrAnalytics: 'HR Analytics dashboard',
+			altStudio: 'Content studio',
+			altAssignCourse: 'Assign course to team',
 			backToOverview: 'Back to overview',
 			trySandbox: 'Try the SCORM sandbox',
 		},
@@ -1896,6 +1945,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			saveSnapshot: 'שמור תמונת מצב',
 			exportCsv: 'ייצוא CSV',
 			profileLoadError: 'לא ניתן לטעון את הפרופיל שלך',
+			questionsShort: 'שאלות',
+			unexpectedError: 'אירעה שגיאה בלתי צפויה. אפשר לרענן את הדף או לחזור למסך הקודם.',
+			noDepartment: 'ללא מחלקה',
+			breadcrumbLabel: 'נתיב ניווט',
 			retry: 'נסה שוב',
 		},
 		
@@ -2132,6 +2185,19 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			correctAnswer: 'תשובה נכונה',
 			correctAnswers: 'תשובות נכונות',
 			questionPoints: 'נקודות',
+			questionDeleted: 'השאלה נמחקה',
+			questionTextMissing: 'נא למלא את טקסט השאלה בשתי השפות',
+			optionsMissing: 'נא למלא את כל האפשרויות בשתי השפות',
+			questionSaved: 'השאלה נשמרה',
+			questionAdded: 'השאלה נוספה',
+			noQuestionsHint: 'אין שאלות עדיין. לחצו על „{button}“ כדי להתחיל.',
+			pointsShort: 'נק׳',
+			newQuestion: 'שאלה חדשה',
+			newQuestionBadge: 'חדשה',
+			confirmDeleteQuestion: 'למחוק את השאלה?',
+			questionPlaceholder: 'השאלה בעברית...',
+			enrolledLearners: '{count} לומדים רשומים',
+			timeLimitHelp: 'אם השדה ריק, למבחן לא תהיה מגבלת זמן',
 			saveDraft: 'שמור טיוטה',
 			publishCourse: 'פרסם קורס',
 			unpublishCourse: 'בטל פרסום',
@@ -2336,6 +2402,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			enlargeImage: 'הגדלת תמונה',
 			toggleZoom: 'מיקוד תצוגה',
 			lightboxHint: 'כדי לחזור לדף, הקישו Esc או לחצו מחוץ לתמונה.',
+			altCatalogue: 'קטלוג קורסים',
+			altMyLearning: 'מסך הלמידה שלי',
+			altScormPlayer: 'נגן SCORM',
+			altHrAnalytics: 'לוח בקרה HR',
+			altStudio: 'סטודיו יצירת תוכן',
+			altAssignCourse: 'שיבוץ קורס לצוות',
 			backToOverview: 'חזרה לעמוד הראשי',
 			trySandbox: 'התנסו בארגז החול של SCORM',
 		},

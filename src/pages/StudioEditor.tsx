@@ -1420,7 +1420,7 @@ export default function StudioEditor() {
 									<div data-ev-id="ev_0fd824dbbd" className="flex-1">
 										<span data-ev-id="ev_7bc8188839" className="text-sm text-muted-foreground">
 											{mod.module_type === 'quiz' ?
-                  `${dict.course.quiz} ${index + 1}${quizCountFor(mod.id) ? ` (${quizCountFor(mod.id)} ${locale === 'he' ? 'שאלות' : 'Q'})` : ''}` :
+                  `${dict.course.quiz} ${index + 1}${quizCountFor(mod.id) ? ` (${quizCountFor(mod.id)} ${dict.common.questionsShort})` : ''}` :
                   mod.module_type === 'scorm_package' ?
                   `SCORM ${index + 1}` :
                   `${dict.course.lesson} ${index + 1}${lessonBlockCounts[mod.id] ? ` (${lessonBlockCounts[mod.id]} ${dict.studioBlocks.blocks})` : ''}`}
@@ -1538,7 +1538,7 @@ export default function StudioEditor() {
 
 						{enrollmentCount !== null &&
           <p data-ev-id="ev_dz_count" className="text-sm text-muted-foreground mb-4">
-								{locale === 'he' ? `${enrollmentCount} לומדים רשומים` : `${enrollmentCount} enrolled learner(s)`}
+								{dict.studio.enrolledLearners.replace('{count}', String(enrollmentCount))}
 							</p>
           }
 
@@ -1756,7 +1756,7 @@ export default function StudioEditor() {
             className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
 
 							<p data-ev-id="ev_qs_time_hint" className="text-xs text-muted-foreground mt-1">
-								{locale === 'he' ? 'השאר ריק למבחן ללא מגבלת זמן' : 'Leave empty for no time limit'}
+								{dict.studio.timeLimitHelp}
 							</p>
 						</div>
 						<div data-ev-id="ev_qs_shuffle">

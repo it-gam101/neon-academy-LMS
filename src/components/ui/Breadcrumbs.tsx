@@ -25,7 +25,7 @@ export function Breadcrumbs({ items, showHome = false }: BreadcrumbsProps) {
   items;
 
   return (
-    <nav data-ev-id="ev_ad5c5cfb1a" aria-label="Breadcrumb" className="flex items-center flex-wrap gap-1.5 text-sm mb-4">
+    <nav data-ev-id="ev_ad5c5cfb1a" aria-label={dict.common.breadcrumbLabel} className="flex items-center flex-wrap gap-1.5 text-sm mb-4">
       {allItems.map((item, index) => {
         const isLast = index === allItems.length - 1;
         const isHome = index === 0 && showHome;
@@ -40,9 +40,9 @@ export function Breadcrumbs({ items, showHome = false }: BreadcrumbsProps) {
                 {item.label}
               </span> :
             item.href ?
-            <Link
-              to={item.href}
-              className="text-muted-foreground hover:text-foreground transition-colors focus-ring rounded flex items-center gap-1.5">
+            <Link data-ev-id="ev_76e938dfbc"
+            to={item.href}
+            className="text-muted-foreground hover:text-foreground transition-colors focus-ring rounded flex items-center gap-1.5">
 
                 {isHome && <Home className="w-3.5 h-3.5" aria-hidden="true" />}
                 <span data-ev-id="ev_cd072e756f" className="truncate max-w-[150px]">{item.label}</span>

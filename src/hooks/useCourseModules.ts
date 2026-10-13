@@ -108,7 +108,9 @@ export function useCourseModules(courseId: string) {
 						.from('quiz_attempts')
 						.select('*')
 						.eq('user_id', user.id)
-						.in('quiz_id', quizIds);
+						.in('quiz_id', quizIds)
+						// Dispatch v1a: newest first — ModuleList reads attempts[0] as the last attempt.
+						.order('created_at', { ascending: false });
 
 					attemptsData = attempts || [];
 				}
@@ -134,9 +136,11 @@ export function useCourseModules(courseId: string) {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const modulesWithProgress = (modulesData || []).map((mod: any) => ({
 				...mod,
+				// Dispatch v1a: the quiz embed comes back as an array (quizzes.module_id is not unique) — use its one quiz.
+				quiz: Array.isArray(mod.quiz) ? mod.quiz[0] : mod.quiz,
 				progress: progressData.find(p => p.module_id === mod.id),
 				attempts: mod.quiz 
-					? attemptsData.filter(a => a.quiz_id === mod.quiz.id)
+					? attemptsData.filter(a => a.quiz_id === (Array.isArray(mod.quiz) ? mod.quiz[0]?.id : mod.quiz.id))
 					: [],
 				scorm_registration: mod.module_type === 'scorm_package' && mod.scorm_package_id
 					? scormRegistrationsData.find(r => r.package_id === mod.scorm_package_id)

@@ -252,7 +252,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
       setQuestions(updated);
       onCountChangeRef.current?.(updated.length);
       setDeleteConfirm(null);
-      showToast('success', locale === 'he' ? 'השאלה נמחקה' : 'Question deleted');
+      showToast('success', dict.studio.questionDeleted);
     } finally {
       setRemovingQuestion(false);
     }
@@ -265,13 +265,13 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 
     // Validate
     if (!q.question_en.trim() || !q.question_he.trim()) {
-      showToast('error', locale === 'he' ? 'נא למלא את טקסט השאלה בשתי השפות' : 'Please fill in question text in both languages');
+      showToast('error', dict.studio.questionTextMissing);
       return;
     }
 
     const hasEmptyOption = q.options.some((opt) => !opt.en.trim() || !opt.he.trim());
     if (hasEmptyOption) {
-      showToast('error', locale === 'he' ? 'נא למלא את כל האפשרויות בשתי השפות' : 'Please fill in all options in both languages');
+      showToast('error', dict.studio.optionsMissing);
       return;
     }
 
@@ -304,7 +304,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
         } else if (!data || data.length === 0) {
           setQuestionError(dict.common.changeRefused);
         } else {
-          showToast('success', locale === 'he' ? 'השאלה נשמרה' : 'Question saved');
+          showToast('success', dict.studio.questionSaved);
         }
       } else {
         // Insert new
@@ -328,7 +328,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
           };
           setQuestions(updated);
           onCountChangeRef.current?.(updated.length);
-          showToast('success', locale === 'he' ? 'השאלה נוספה' : 'Question added');
+          showToast('success', dict.studio.questionAdded);
         }
       }
     } catch (err) {
@@ -379,7 +379,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 			{/* Questions List */}
 			{questions.length === 0 ?
       <p data-ev-id="ev_35f8555eee" className="text-center text-muted-foreground py-6 border border-dashed border-border rounded-lg">
-					{locale === 'he' ? 'אין שאלות עדיין. לחץ על "הוסף שאלה" להתחיל.' : 'No questions yet. Click "Add Question" to start.'}
+					{dict.studio.noQuestionsHint.replace('{button}', dict.studio.addQuestion)}
 				</p> :
 
       <div data-ev-id="ev_ac2780f8fe" className="flex flex-col gap-2">
@@ -423,17 +423,17 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 									<span data-ev-id="ev_6cd62dc848" className="block text-xs text-muted-foreground">
 										{q.question_type === 'single' ? dict.studio.singleChoice :
                 q.question_type === 'multi' ? dict.studio.multipleChoice :
-                dict.studio.trueFalse} • {q.points} {locale === 'he' ? 'נק׳' : 'pts'}
+                dict.studio.trueFalse} • {q.points} {dict.studio.pointsShort}
 									</span>
 									<span data-ev-id="ev_17b246ad74" className="block font-medium text-foreground truncate">
-										{(locale === 'he' ? q.question_he : q.question_en) || (locale === 'he' ? 'שאלה חדשה' : 'New question')}
+										{(locale === 'he' ? q.question_he : q.question_en) || dict.studio.newQuestion}
 									</span>
 								</button>
 
 								<div data-ev-id="ev_9a79ce3e8e" className="flex items-center gap-2">
 									{q.isNew &&
               <span data-ev-id="ev_a2f7d87386" className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded">
-											{locale === 'he' ? 'חדש' : 'New'}
+											{dict.studio.newQuestionBadge}
 										</span>
               }
 									{q.isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
@@ -485,7 +485,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
                 rows={2}
                 dir="ltr"
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                placeholder="Enter question in English..." />
+                placeholder={getDictionary('en').studio.questionPlaceholder} />
 
 										</div>
 										<div data-ev-id="ev_644aab4a38">
@@ -498,7 +498,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
                 rows={2}
                 dir="rtl"
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                placeholder="הזן שאלה בעברית..." />
+                placeholder={getDictionary('he').studio.questionPlaceholder} />
 
 										</div>
 									</div>
@@ -592,7 +592,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 										{deleteConfirm === (q.id || `new-${index}`) ?
               <div data-ev-id="ev_dad8932b6a" className="flex items-center gap-2">
 												<span data-ev-id="ev_30855e552d" className="text-sm text-destructive">
-													{locale === 'he' ? 'למחוק את השאלה?' : 'Delete this question?'}
+													{dict.studio.confirmDeleteQuestion}
 												</span>
 												<button data-ev-id="ev_f0cea5294f"
                 type="button"
