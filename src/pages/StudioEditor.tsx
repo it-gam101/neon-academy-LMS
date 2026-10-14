@@ -1720,7 +1720,7 @@ export default function StudioEditor() {
         <div data-ev-id="ev_quiz_settings_form" className="flex flex-col gap-4">
 						<div data-ev-id="ev_qs_pass_score">
 							<label data-ev-id="ev_qs_pass_label" className="block text-sm font-medium text-foreground mb-1">
-								{dict.studio.passScore} (%)
+								{dict.studio.passScore}
 							</label>
 							<input data-ev-id="ev_qs_pass_input"
             type="number"

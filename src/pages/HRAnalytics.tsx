@@ -83,13 +83,14 @@ export default function HRAnalytics() {
           const thirtyDaysAgo = new Date();
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-          const { data: moduleProgress } = await withTimeout(
+          const { data: moduleProgress, error: progressError } = await withTimeout(
             supabase.
             from('module_progress').
             select('enrollment:enrollments(user_id)').
             gte('updated_at', thirtyDaysAgo.toISOString()),
             10000
           );
+          if (progressError) throw progressError;
 
           const activeUserIds = new Set(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,9 +139,10 @@ export default function HRAnalytics() {
 
     try {
       if (type === 'completion') {
-        const { data: enrollments } = await supabase.
+        const { data: enrollments, error: enrollmentsError } = await supabase.
         from('enrollments').
         select('*, course:courses(id, title_en, title_he)');
+        if (enrollmentsError) throw enrollmentsError;
 
         const courseStats: Record<string, {
           title: string;
@@ -175,14 +177,15 @@ export default function HRAnalytics() {
           }))
         });
       } else if (type === 'compliance') {
-        const { data: enrollments } = await supabase.
+        const { data: enrollments, error: enrollmentsError } = await supabase.
         from('enrollments').
         select(`
 						*,
 						course:courses!inner(id, title_en, title_he, is_mandatory),
-						user:profiles(department)
+						user:profiles!enrollments_user_id_fkey(department)
 					`).
         eq('courses.is_mandatory', true);
+        if (enrollmentsError) throw enrollmentsError;
 
         const deptStats: Record<string, {
           department: string;
@@ -213,12 +216,12 @@ export default function HRAnalytics() {
         });
       } else {
         // Engagement report
-        const { data: courses } = await supabase.
+        const { data: courses, error: coursesError } = await supabase.
         from('courses').
         select('id, title_en, title_he').
         eq('status', 'published');
 
-        const { data: moduleProgress } = await supabase.
+        const { data: moduleProgress, error: progressError } = await supabase.
         from('module_progress').
         select(`
 						score,
@@ -226,12 +229,15 @@ export default function HRAnalytics() {
 						module:modules(course_id)
 					`);
 
-        const { data: quizAttempts } = await supabase.
+        const { data: quizAttempts, error: attemptsError } = await supabase.
         from('quiz_attempts').
         select(`
 						score,
 						quiz:quizzes(module:modules(course_id))
 					`);
+
+        const engagementError = coursesError || progressError || attemptsError;
+        if (engagementError) throw engagementError;
 
         const courseEngagement: Record<string, {
           title: string;
@@ -281,7 +287,9 @@ export default function HRAnalytics() {
         });
       }
     } catch (err) {
-      showToast('error', dict.common.error);
+      console.error('generateReport failed:', err);
+      setReportData(null);
+      showToast('error', errorMessage(err, dict.common.error));
     }
 
     setGeneratingReport(false);

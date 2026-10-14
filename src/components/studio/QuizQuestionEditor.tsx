@@ -3,7 +3,6 @@ import { Plus, Trash2, ChevronDown, ChevronUp, Check, X } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
-import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import type { Tables, TablesInsert } from '@/integrations/supabase/helpers';
 import { ErrorText } from '@/components/ui/ErrorText';
@@ -46,6 +45,8 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
   // Dispatch 4b: one deletion per click.
   const [removingQuestion, setRemovingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState<string | null>(null);
+  // Dispatch v1b: success is said INSIDE the dialog too — a toast paints beneath its backdrop (rule 9b).
+  const [questionNotice, setQuestionNotice] = useState<string | null>(null);
 
   // Store callback in ref to avoid re-triggering fetch on parent re-renders
   const onCountChangeRef = useRef(onQuestionCountChange);
@@ -68,7 +69,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
       order('sort_order');
 
       if (error) {
-        showToast('error', error.message);
+        setQuestionError(error.message);
       } else if (data) {
         const mapped: EditableQuestion[] = data.map((q) => ({
           id: q.id,
@@ -226,6 +227,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
     if (removingQuestion) return;
     const q = questions[index];
     setQuestionError(null);
+    setQuestionNotice(null);
     setRemovingQuestion(true);
     try {
       if (q.id && supabase) {
@@ -252,7 +254,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
       setQuestions(updated);
       onCountChangeRef.current?.(updated.length);
       setDeleteConfirm(null);
-      showToast('success', dict.studio.questionDeleted);
+      setQuestionNotice(dict.studio.questionDeleted);
     } finally {
       setRemovingQuestion(false);
     }
@@ -262,16 +264,17 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
     const q = questions[index];
     if (!supabase) return;
     setQuestionError(null);
+    setQuestionNotice(null);
 
     // Validate
     if (!q.question_en.trim() || !q.question_he.trim()) {
-      showToast('error', dict.studio.questionTextMissing);
+      setQuestionError(dict.studio.questionTextMissing);
       return;
     }
 
     const hasEmptyOption = q.options.some((opt) => !opt.en.trim() || !opt.he.trim());
     if (hasEmptyOption) {
-      showToast('error', dict.studio.optionsMissing);
+      setQuestionError(dict.studio.optionsMissing);
       return;
     }
 
@@ -304,7 +307,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
         } else if (!data || data.length === 0) {
           setQuestionError(dict.common.changeRefused);
         } else {
-          showToast('success', dict.studio.questionSaved);
+          setQuestionNotice(dict.studio.questionSaved);
         }
       } else {
         // Insert new
@@ -318,7 +321,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
         );
 
         if (error) {
-          showToast('error', error.message);
+          setQuestionError(error.message);
         } else if (data) {
           const updated = [...questions];
           updated[index] = {
@@ -328,7 +331,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
           };
           setQuestions(updated);
           onCountChangeRef.current?.(updated.length);
-          showToast('success', dict.studio.questionAdded);
+          setQuestionNotice(dict.studio.questionAdded);
         }
       }
     } catch (err) {
@@ -375,9 +378,16 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 					<ErrorText error={questionError} />
 				</div>
 			}
+			{questionNotice &&
+				<div data-ev-id="ev_qqe_notice"
+					role="status"
+					className="px-3 py-2 rounded-lg border border-primary/30 bg-primary/10 text-sm text-primary">
+					{questionNotice}
+				</div>
+			}
 
 			{/* Questions List */}
-			{questions.length === 0 ?
+			{questions.length === 0 && !questionError ?
       <p data-ev-id="ev_35f8555eee" className="text-center text-muted-foreground py-6 border border-dashed border-border rounded-lg">
 					{dict.studio.noQuestionsHint.replace('{button}', dict.studio.addQuestion)}
 				</p> :
