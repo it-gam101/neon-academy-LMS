@@ -690,6 +690,16 @@ export interface Dictionary {
 		departmentCol: string;
 		courseCol: string;
 		snapshotSaved: string;
+		// Dispatch H1: saved snapshots
+		savedSnapshots: string;
+		savedSnapshotsDesc: string;
+		noSnapshots: string;
+		snapshotSavedOnCol: string;
+		snapshotReportCol: string;
+		snapshotSavedByCol: string;
+		snapshotSavedLine: string;
+		snapshotsLimit: string;
+		reportEmpty: string;
 	};
 	
 	// Admin
@@ -1480,7 +1490,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			complianceReport: 'Compliance Report',
 			complianceReportDesc: 'Mandatory course completion by department',
 			courseEngagement: 'Course Engagement',
-			courseEngagementDesc: 'Scores, time spent, and attempt metrics',
+			courseEngagementDesc: 'Scores and attempt metrics',
 			generateReport: 'Generate Report',
 			generating: 'Generating...',
 			enrollmentCount: 'Enrolled',
@@ -1493,6 +1503,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			departmentCol: 'Department',
 			courseCol: 'Course',
 			snapshotSaved: 'Report snapshot saved',
+			savedSnapshots: 'Saved snapshots',
+			savedSnapshotsDesc: "A snapshot keeps a report's figures as they were when it was saved.",
+			noSnapshots: "No snapshots yet. To keep a report's figures, generate it above and choose Save Snapshot.",
+			snapshotSavedOnCol: 'Saved on',
+			snapshotReportCol: 'Report',
+			snapshotSavedByCol: 'Saved by',
+			snapshotSavedLine: 'Saved {date} by {name}',
+			snapshotsLimit: 'Showing the {count} most recent snapshots.',
+			reportEmpty: 'No data to show.',
 		},
 		
 		admin: {
@@ -2269,7 +2288,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			complianceReport: 'דוח ציות',
 			complianceReportDesc: 'השלמת קורסי חובה לפי מחלקה',
 			courseEngagement: 'מעורבות בקורסים',
-			courseEngagementDesc: 'ציונים, זמן שהושקע ומדדי ניסיונות',
+			courseEngagementDesc: 'ציונים ומדדי ניסיונות',
 			generateReport: 'הפקת דוח',
 			generating: 'הפקה...',
 			enrollmentCount: 'רשומים',
@@ -2282,6 +2301,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			departmentCol: 'מחלקה',
 			courseCol: 'קורס',
 			snapshotSaved: 'תמונת מצב הדוח נשמרה',
+			savedSnapshots: 'תמונות מצב שמורות',
+			savedSnapshotsDesc: 'תמונת מצב שומרת את נתוני הדוח כפי שהיו בעת השמירה.',
+			noSnapshots: 'עדיין אין תמונות מצב. כדי לשמור את נתוני הדוח, יש להפיק אותו למעלה וללחוץ על "שמירת תמונת מצב".',
+			snapshotSavedOnCol: 'תאריך שמירה',
+			snapshotReportCol: 'דוח',
+			snapshotSavedByCol: 'נשמרה על ידי',
+			snapshotSavedLine: 'נשמרה ב-{date} על ידי {name}',
+			snapshotsLimit: 'מוצגות {count} תמונות המצב האחרונות.',
+			reportEmpty: 'אין נתונים להצגה.',
 		},
 		
 		admin: {

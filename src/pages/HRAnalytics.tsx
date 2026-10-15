@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLatest } from '@/hooks/useLatest';
-import { BarChart3, Users, AlertTriangle, TrendingUp, Download, Save } from 'lucide-react';
+import { BarChart3, Users, AlertTriangle, TrendingUp, Save } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,9 @@ import { Badge } from '@/components/ui/Badge';
 import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { errorMessage } from '@/lib/errorText';
+import { ReportTable } from '@/components/hr/ReportTable';
+import { SavedSnapshots } from '@/components/hr/SavedSnapshots';
+import type { ReportRow, ReportType } from '@/lib/reports';
 
 interface KPIs {
   completionRate: number;
@@ -20,20 +23,8 @@ interface KPIs {
   topCourses: {id: string;title_en: string;title_he: string;enrollments: number;}[];
 }
 
-interface ReportRow {
-  title?: string;
-  department?: string;
-  enrolled?: number;
-  completed?: number;
-  overdue?: number;
-  rate?: number;
-  avgScore?: number | null;
-  avgTime?: number | null;
-  attempts?: number;
-}
-
 interface ReportData {
-  type: 'completion' | 'compliance' | 'engagement';
+  type: ReportType;
   rows: ReportRow[];
 }
 
@@ -49,6 +40,8 @@ export default function HRAnalytics() {
   const [generatingReport, setGeneratingReport] = useState(false);
   // Dispatch 4b: one snapshot per click — a double-click saved two.
   const [savingSnapshot, setSavingSnapshot] = useState(false);
+  // Dispatch H1: bumped after each saved snapshot, so the Saved snapshots list shows it without a reload.
+  const [snapshotsVersion, setSnapshotsVersion] = useState(0);
 
   useEffect(() => {
     if (!supabase) return;
@@ -145,7 +138,8 @@ export default function HRAnalytics() {
         if (enrollmentsError) throw enrollmentsError;
 
         const courseStats: Record<string, {
-          title: string;
+          title_en: string;
+          title_he: string;
           enrolled: number;
           completed: number;
           overdue: number;
@@ -156,7 +150,9 @@ export default function HRAnalytics() {
           const id = e.course.id;
           if (!courseStats[id]) {
             courseStats[id] = {
-              title: locale === 'he' ? e.course.title_he : e.course.title_en,
+              // Dispatch H1 (R1): both titles; the table and the CSV choose the language when drawn.
+              title_en: e.course.title_en,
+              title_he: e.course.title_he,
               enrolled: 0,
               completed: 0,
               overdue: 0
@@ -188,7 +184,7 @@ export default function HRAnalytics() {
         if (enrollmentsError) throw enrollmentsError;
 
         const deptStats: Record<string, {
-          department: string;
+          department: string | null;
           enrolled: number;
           completed: number;
           overdue: number;
@@ -196,9 +192,11 @@ export default function HRAnalytics() {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (enrollments || []).forEach((e: any) => {
-          const dept = e.user?.department || dict.common.noDepartment;
+          // Dispatch H1 (R1): "no department" is null here and worded when drawn, in the reader's language.
+          const department: string | null = e.user?.department || null;
+          const dept = department ?? '';
           if (!deptStats[dept]) {
-            deptStats[dept] = { department: dept, enrolled: 0, completed: 0, overdue: 0 };
+            deptStats[dept] = { department, enrolled: 0, completed: 0, overdue: 0 };
           }
           deptStats[dept].enrolled++;
           if (e.status === 'completed') deptStats[dept].completed++;
@@ -233,6 +231,7 @@ export default function HRAnalytics() {
         from('quiz_attempts').
         select(`
 						score,
+						user_id,
 						quiz:quizzes(module:modules(course_id))
 					`);
 
@@ -240,18 +239,22 @@ export default function HRAnalytics() {
         if (engagementError) throw engagementError;
 
         const courseEngagement: Record<string, {
-          title: string;
+          title_en: string;
+          title_he: string;
           scores: number[];
           times: number[];
           attempts: number;
+          learners: Set<string>;
         }> = {};
 
         (courses || []).forEach((c) => {
           courseEngagement[c.id] = {
-            title: locale === 'he' ? c.title_he : c.title_en,
+            title_en: c.title_en,
+            title_he: c.title_he,
             scores: [],
             times: [],
-            attempts: 0
+            attempts: 0,
+            learners: new Set<string>()
           };
         });
 
@@ -269,20 +272,23 @@ export default function HRAnalytics() {
           const courseId = qa.quiz?.module?.course_id;
           if (courseId && courseEngagement[courseId]) {
             courseEngagement[courseId].attempts++;
+            if (qa.user_id) courseEngagement[courseId].learners.add(qa.user_id);
           }
         });
 
         setReportData({
           type: 'engagement',
           rows: Object.values(courseEngagement).map((c) => ({
-            title: c.title,
+            title_en: c.title_en,
+            title_he: c.title_he,
             avgScore: c.scores.length > 0 ?
             Math.round(c.scores.reduce((a, b) => a + b, 0) / c.scores.length) :
             null,
             avgTime: c.times.length > 0 ?
             Math.round(c.times.reduce((a, b) => a + b, 0) / c.times.length / 60) :
             null,
-            attempts: c.attempts
+            // Dispatch H1 (R4): attempts ÷ the learners who attempted, to one decimal; null (shown "-") when nobody has.
+            avgAttempts: c.learners.size > 0 ? Math.round(c.attempts / c.learners.size * 10) / 10 : null
           }))
         });
       }
@@ -316,6 +322,7 @@ export default function HRAnalytics() {
         showToast('error', error.message);
       } else {
         showToast('success', dict.hrAnalytics.snapshotSaved);
+        setSnapshotsVersion((v) => v + 1);
       }
     } catch (err) {
       console.error('saveSnapshot failed:', err);
@@ -323,24 +330,6 @@ export default function HRAnalytics() {
     } finally {
       setSavingSnapshot(false);
     }
-  };
-
-  const exportCsv = () => {
-    if (!reportData) return;
-
-    const headers = Object.keys(reportData.rows[0] || {});
-    const csv = [
-    headers.join(','),
-    ...reportData.rows.map((row) => headers.map((h) => row[h] ?? '').join(','))].
-    join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${reportData.type}-report.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const tabs = [
@@ -456,96 +445,23 @@ export default function HRAnalytics() {
 									</button>
 								</div>
 
-								{/* Report table */}
+								{/* Report table — Dispatch H1: shared with a reopened snapshot; Export CSV writes exactly its columns */}
 								{reportData &&
-                <div data-ev-id="ev_8defc1a524" className="bg-card border border-border rounded-lg overflow-hidden">
-										<div data-ev-id="ev_73a9cadda8" className="flex items-center justify-between p-4 border-b border-border">
-											<h3 data-ev-id="ev_19c223c775" className="font-medium text-foreground">
-												{reportData.type === 'completion' ? dict.hrAnalytics.completionSummary :
-                      reportData.type === 'compliance' ? dict.hrAnalytics.complianceReport :
-                      dict.hrAnalytics.courseEngagement}
-											</h3>
-											<div data-ev-id="ev_c18b87b03b" className="flex items-center gap-2">
-												<button data-ev-id="ev_857b53227b"
-                      onClick={exportCsv}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted transition-colors">
+								<ReportTable
+								type={reportData.type}
+								rows={reportData.rows}
+								actions={
+								<button data-ev-id="ev_6c6b7f1713"
+								onClick={saveSnapshot}
+								disabled={savingSnapshot}
+								className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+										<Save className="w-4 h-4" />
+										{dict.common.saveSnapshot}
+									</button>
+								} />
+								}
 
-													<Download className="w-4 h-4" />
-													{dict.common.exportCsv}
-												</button>
-												<button data-ev-id="ev_6c6b7f1713"
-                      onClick={saveSnapshot}
-                      disabled={savingSnapshot}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-
-													<Save className="w-4 h-4" />
-													{dict.common.saveSnapshot}
-												</button>
-											</div>
-										</div>
-
-										<div data-ev-id="ev_00d4d89971" className="overflow-x-auto">
-											<table data-ev-id="ev_7f93c7d467" className="w-full">
-												<thead data-ev-id="ev_6e92382ce3" className="bg-muted">
-													<tr data-ev-id="ev_f92d789534">
-														{reportData.type === 'compliance' ?
-                          <th data-ev-id="ev_94965ba788" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.hrAnalytics.departmentCol}</th> :
-
-                          <th data-ev-id="ev_68c67f2e80" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.hrAnalytics.courseCol}</th>
-                          }
-														{reportData.type === 'engagement' ?
-                          <>
-																<th data-ev-id="ev_6e6e3b70e6" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.hrAnalytics.avgScore}</th>
-																<th data-ev-id="ev_1b7073bf5d" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.hrAnalytics.avgTime}</th>
-																<th data-ev-id="ev_5c047aa944" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.hrAnalytics.avgAttempts}</th>
-															</> :
-
-                          <>
-																<th data-ev-id="ev_df72c8c0ef" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.hrAnalytics.enrollmentCount}</th>
-																<th data-ev-id="ev_98b57ba3bc" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.hrAnalytics.completedCount}</th>
-																<th data-ev-id="ev_bbaf077ad7" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.hrAnalytics.completionRateCol}</th>
-																<th data-ev-id="ev_45a2987b22" className="text-start px-4 py-3 text-sm font-medium text-muted-foreground">{dict.hrAnalytics.overdueCountCol}</th>
-															</>
-                          }
-													</tr>
-												</thead>
-												<tbody data-ev-id="ev_cc8ed3068f" className="divide-y divide-border">
-													{reportData.rows.map((row, i) =>
-                        <tr data-ev-id="ev_bb4ee88eae" key={i}>
-															<td data-ev-id="ev_8206ec624f" className="px-4 py-3 text-foreground">
-																{row.title || row.department}
-															</td>
-															{reportData.type === 'engagement' ?
-                          <>
-																	<td data-ev-id="ev_8aa2991b92" className="px-4 py-3 text-muted-foreground">
-																		{row.avgScore !== null ? `${row.avgScore}%` : '-'}
-																	</td>
-																	<td data-ev-id="ev_238daed558" className="px-4 py-3 text-muted-foreground">
-																		{row.avgTime !== null ? `${row.avgTime} ${dict.common.minutes}` : '-'}
-																	</td>
-																	<td data-ev-id="ev_600eaf429e" className="px-4 py-3 text-muted-foreground">{row.attempts}</td>
-																</> :
-
-                          <>
-																	<td data-ev-id="ev_a8466e6d08" className="px-4 py-3 text-muted-foreground">{row.enrolled}</td>
-																	<td data-ev-id="ev_a3cc61b5d2" className="px-4 py-3 text-primary">{row.completed}</td>
-																	<td data-ev-id="ev_9b1f26c66b" className="px-4 py-3">
-																		<Badge variant={row.rate >= 70 ? 'success' : row.rate >= 40 ? 'warning' : 'danger'}>
-																			{row.rate}%
-																		</Badge>
-																	</td>
-																	<td data-ev-id="ev_18af289756" className={`px-4 py-3 ${row.overdue > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-																		{row.overdue}
-																	</td>
-																</>
-                          }
-														</tr>
-                        )}
-												</tbody>
-											</table>
-										</div>
-									</div>
-                }
+								<SavedSnapshots version={snapshotsVersion} />
 							</div>);
 
           }}
