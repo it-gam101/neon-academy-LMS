@@ -153,11 +153,13 @@ export default function MediaLibrary() {
     if (ownerIds.length === 0) return;
 
     const fetchOwners = async () => {
-      const { data } = await supabase.
+      const { data, error } = await supabase.
       from('profiles').
       select('id, full_name').
       in('id', ownerIds);
 
+      // Dispatch R2: the names only decorate the list ("Uploaded by"); a failure leaves them out, and is logged.
+      if (error) console.error('Media Library: loading owner names failed', error);
       if (data) {
         const nameMap = new Map<string, string>();
         data.forEach((p) => nameMap.set(p.id, p.full_name || ''));
@@ -190,9 +192,16 @@ export default function MediaLibrary() {
       }
 
       // Fetch module usage counts
-      const { data: modData } = await supabase.
+      // Dispatch R2: these counts decide whether Delete is allowed — a failed read counted 0 and enabled Delete on a
+      // package in use. A failure is now shown in place of the list, with Retry.
+      const { data: modData, error: modErr } = await supabase.
       from('modules').
       select('scorm_package_id');
+      if (modErr) {
+        console.error('Failed to load SCORM package usage:', modErr);
+        setPackagesError(errorMessage(modErr, 'Failed to load SCORM packages'));
+        return;
+      }
 
       const modMap = new Map<string, number>();
       (modData || []).forEach((m: {scorm_package_id: string | null;}) => {
@@ -203,9 +212,14 @@ export default function MediaLibrary() {
       setModuleUsage(modMap);
 
       // Fetch registration usage counts
-      const { data: regData } = await supabase.
+      const { data: regData, error: regErr } = await supabase.
       from('scorm_registrations').
       select('package_id');
+      if (regErr) {
+        console.error('Failed to load SCORM package usage:', regErr);
+        setPackagesError(errorMessage(regErr, 'Failed to load SCORM packages'));
+        return;
+      }
 
       const regMap = new Map<string, number>();
       (regData || []).forEach((r: {package_id: string | null;}) => {

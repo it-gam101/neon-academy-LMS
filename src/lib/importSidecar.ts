@@ -38,11 +38,13 @@ export async function importSidecarContent(
   const importPlan = buildImportPlan(plan, { storageBaseUrl, startSortOrder });
 
   // Fill ONLY empty course fields. Never overwrite what the author typed.
-  const { data: courseRow } = await supabase.
+  // Dispatch R2: a failed read is said (it silently skipped the fill); no row still just skips it.
+  const { data: courseRow, error: courseError } = await supabase.
   from('courses').
   select('title_en, title_he, description_en, description_he, estimated_minutes').
   eq('id', courseId).
-  single();
+  maybeSingle();
+  if (courseError) throw courseError;
 
   if (courseRow) {
     const cf = importPlan.courseFields;

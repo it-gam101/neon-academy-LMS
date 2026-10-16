@@ -8,6 +8,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { getDictionary } from '@/i18n/dictionary';
 import { ensureSession } from '@/lib/ensureSession';
 import { ErrorText } from '@/components/ui/ErrorText';
+import { errorMessage } from '@/lib/errorText';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Badge } from '@/components/ui/Badge';
 import type { Tables } from '@/integrations/supabase/helpers';
@@ -103,12 +104,14 @@ export default function ScormPlayer() {
         setEnrollment(enrollmentData);
 
         // Fetch course
-        const { data: courseData } = await supabase.
+        const { data: courseData, error: courseError } = await supabase.
         from('courses').
         select('*').
         eq('id', enrollmentData.course_id).
-        single();
+        maybeSingle();
 
+        // Dispatch R2: a failed read is said; no row (an archived course) still plays, as before.
+        if (courseError) throw courseError;
         if (courseData) setCourse(courseData);
 
         // Fetch module with scorm_package
@@ -146,12 +149,16 @@ export default function ScormPlayer() {
         }
 
         // Fetch existing registration
-        const { data: regData } = await supabase.
+        const { data: regData, error: regError } = await supabase.
         from('scorm_registrations').
         select('*').
         eq('package_id', pkg.id).
         eq('enrollment_id', enrollmentId).
         maybeSingle();
+
+        // Dispatch R2: a failed read is said — it was dropped, and the write below then marked a COMPLETED module
+        // in_progress again.
+        if (regError) throw regError;
 
         if (regData) {
           setRegistration(regData);
@@ -176,7 +183,7 @@ export default function ScormPlayer() {
         setLoading(false);
       } catch (err) {
         console.error('Failed to load SCORM data:', err);
-        setError(dict.common.errorOccurred);
+        setError(errorMessage(err, dict.common.errorOccurred));
         setLoading(false);
       }
     };

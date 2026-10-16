@@ -44,11 +44,13 @@ export default function Studio() {
     if (creatorIds.length === 0) return;
 
     const fetchOwners = async () => {
-      const { data } = await supabase.
+      const { data, error } = await supabase.
       from('profiles').
       select('id, full_name').
       in('id', creatorIds);
 
+      // Dispatch R2: the names only decorate the list; a failure leaves them out, and is logged.
+      if (error) console.error('Studio: loading creator names failed', error);
       if (data) {
         const nameMap = new Map<string, string>();
         data.forEach((p) => nameMap.set(p.id, p.full_name || ''));

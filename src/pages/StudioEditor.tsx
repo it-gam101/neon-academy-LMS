@@ -53,6 +53,8 @@ export default function StudioEditor() {
   // before, every failure read "Not Found".
   const [loadError, setLoadError] = useState<unknown>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  // Dispatch R2: the module list could not be re-read after an import or an upload (the content IS saved).
+  const [modulesRefreshError, setModulesRefreshError] = useState<{cause: unknown;} | null>(null);
   const [saving, setSaving] = useState(false);
   const [addingModule, setAddingModule] = useState(false);
   // Dispatch 3: uploading the course image.
@@ -204,6 +206,27 @@ export default function StudioEditor() {
       return null;
     }
   }, []);
+
+  // Dispatch R2: re-read the modules after an import or a SCORM upload. The content is already saved, so a failed read
+  // must not look like a failed import (a retry would import it twice): the list keeps what it showed, and a note above
+  // it says so, with the underlying message and Retry. Never throws.
+  const reloadModules = async () => {
+    if (!supabase || !courseId) return;
+    try {
+      const { data, error } = await supabase.
+      from('modules').
+      select('*').
+      eq('course_id', courseId).
+      order('sort_order');
+      if (error) throw error;
+      setModulesRefreshError(null);
+      setModules(data ?? []);
+      setQuizzes(await loadQuizzes(data ?? []));
+    } catch (err) {
+      console.error('StudioEditor: re-reading the modules failed', err);
+      setModulesRefreshError({ cause: err });
+    }
+  };
 
   // Form state
   const [titleEn, setTitleEn] = useState('');
@@ -834,15 +857,8 @@ export default function StudioEditor() {
       // Re-read rather than append: the import creates several modules, and the
       // badge reads quiz data too (item 100 — refreshing modules alone leaves it
       // reporting no_questions for a quiz the import just filled).
-      const { data } = await supabase.
-      from('modules').
-      select('*').
-      eq('course_id', courseId).
-      order('sort_order');
-      if (data) {
-        setModules(data);
-        setQuizzes(await loadQuizzes(data));
-      }
+      // Dispatch R2: never throws — a failed re-read is said above the module list (the import itself succeeded).
+      await reloadModules();
       await syncCourseType(courseId);
 
       // Close BEFORE the toast: a toast fired under an open dialog paints beneath
@@ -1374,6 +1390,18 @@ export default function StudioEditor() {
 						</div>
 					</div>
 
+					{modulesRefreshError &&
+					<div data-ev-id="ev_modules_refresh_error" role="alert" className="mb-4 px-3 py-2 rounded-lg border border-destructive/40 bg-destructive/10 text-sm text-destructive">
+							<p data-ev-id="ev_modules_refresh_text">{dict.studio.modulesNotRefreshed}</p>
+							<ErrorText error={modulesRefreshError.cause} />
+							<button data-ev-id="ev_modules_refresh_retry"
+							type="button"
+							onClick={reloadModules}
+							className="mt-2 px-3 py-1 text-sm border border-destructive/40 rounded-lg hover:bg-destructive/10 transition-colors">
+								{dict.errors.retry}
+							</button>
+						</div>
+					}
 					{modules.length === 0 ?
           <p data-ev-id="ev_0c64ff2cae" className="text-center text-muted-foreground py-8">
 							{dict.common.noResults}
@@ -1792,20 +1820,9 @@ export default function StudioEditor() {
           // Re-read rather than append. The import may have created several modules,
           // and choosing "editable modules" removes the SCORM block — appending it
           // would leave a row in the list that no longer exists in the database.
-          if (supabase && courseId) {
-            const { data } = await supabase.
-            from('modules').
-            select('*').
-            eq('course_id', courseId).
-            order('sort_order');
-            if (data) {
-              setModules(data);
-              // The import plan can create quiz modules complete with questions, so the
-              // badge's quiz copy must be refreshed too. Refreshing only the module list
-              // leaves the badge reporting no_questions for a quiz the import just filled.
-              setQuizzes(await loadQuizzes(data));
-            }
-          }
+          // The import plan can create quiz modules complete with questions, so the badge's quiz copy is refreshed too
+          // (reloadModules). Dispatch R2: a failed re-read is said above the module list (the upload itself succeeded).
+          await reloadModules();
           setShowScormUploadModal(false);
         }} />
 

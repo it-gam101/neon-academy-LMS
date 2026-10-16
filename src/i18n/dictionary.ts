@@ -590,6 +590,8 @@ export interface Dictionary {
 		questionPoints: string;
 		/** Dispatch v1a (version 1.0): strings that were written in the code. */
 		questionDeleted: string;
+		// Dispatch R2
+		modulesNotRefreshed: string;
 		questionTextMissing: string;
 		optionsMissing: string;
 		questionSaved: string;
@@ -1407,6 +1409,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			correctAnswers: 'Correct answers',
 			questionPoints: 'Points',
 			questionDeleted: 'Question deleted',
+			modulesNotRefreshed: 'The content was saved, but the module list could not be refreshed. Retry, or reload the page.',
 			questionTextMissing: 'Please fill in the question text in both languages',
 			optionsMissing: 'Please fill in all options in both languages',
 			questionSaved: 'Question saved',
@@ -2205,6 +2208,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			correctAnswers: 'תשובות נכונות',
 			questionPoints: 'נקודות',
 			questionDeleted: 'השאלה נמחקה',
+			modulesNotRefreshed: 'התוכן נשמר, אך לא ניתן היה לרענן את רשימת המודולים. אפשר לנסות שוב או לטעון מחדש את הדף.',
 			questionTextMissing: 'נא למלא את טקסט השאלה בשתי השפות',
 			optionsMissing: 'נא למלא את כל האפשרויות בשתי השפות',
 			questionSaved: 'השאלה נשמרה',

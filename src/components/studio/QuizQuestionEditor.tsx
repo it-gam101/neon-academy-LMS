@@ -47,6 +47,19 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
   const [questionError, setQuestionError] = useState<string | null>(null);
   // Dispatch v1b: success is said INSIDE the dialog too — a toast paints beneath its backdrop (rule 9b).
   const [questionNotice, setQuestionNotice] = useState<string | null>(null);
+  // Dispatch R2: a question's own message (its checks, its save, a failed delete) is shown INSIDE its card, above its
+  // Delete / Save row where the click was — the slot at the top sat out of sight. That slot keeps the list-level
+  // messages (the list failed to load) and a deletion (the card is gone), and scrolls itself into view.
+  const [cardMessage, setCardMessage] = useState<{key: string;kind: 'error' | 'notice';text: string;} | null>(null);
+  const cardKey = (q: EditableQuestion, index: number) => q.id || `new-${index}`;
+  const topMessageRef = useRef<HTMLDivElement>(null);
+  const cardMessageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (questionError || questionNotice) topMessageRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [questionError, questionNotice]);
+  useEffect(() => {
+    if (cardMessage) cardMessageRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [cardMessage]);
 
   // Store callback in ref to avoid re-triggering fetch on parent re-renders
   const onCountChangeRef = useRef(onQuestionCountChange);
@@ -228,6 +241,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
     const q = questions[index];
     setQuestionError(null);
     setQuestionNotice(null);
+    setCardMessage(null);
     setRemovingQuestion(true);
     try {
       if (q.id && supabase) {
@@ -238,11 +252,11 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
         select();
 
         if (error) {
-          setQuestionError(error.message);
+          setCardMessage({ key: cardKey(q, index), kind: 'error', text: error.message });
           return;
         }
         if (!data || data.length === 0) {
-          setQuestionError(dict.common.changeRefused);
+          setCardMessage({ key: cardKey(q, index), kind: 'error', text: dict.common.changeRefused });
           return;
         }
       }
@@ -265,16 +279,20 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
     if (!supabase) return;
     setQuestionError(null);
     setQuestionNotice(null);
+    // Dispatch R2: every message of this save is said in this question's card.
+    const key = cardKey(q, index);
+    const say = (kind: 'error' | 'notice', text: string) => setCardMessage({ key, kind, text });
+    setCardMessage(null);
 
     // Validate
     if (!q.question_en.trim() || !q.question_he.trim()) {
-      setQuestionError(dict.studio.questionTextMissing);
+      say('error', dict.studio.questionTextMissing);
       return;
     }
 
     const hasEmptyOption = q.options.some((opt) => !opt.en.trim() || !opt.he.trim());
     if (hasEmptyOption) {
-      setQuestionError(dict.studio.optionsMissing);
+      say('error', dict.studio.optionsMissing);
       return;
     }
 
@@ -303,11 +321,11 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
         );
 
         if (error) {
-          setQuestionError(error.message);
+          say('error', error.message);
         } else if (!data || data.length === 0) {
-          setQuestionError(dict.common.changeRefused);
+          say('error', dict.common.changeRefused);
         } else {
-          setQuestionNotice(dict.studio.questionSaved);
+          say('notice', dict.studio.questionSaved);
         }
       } else {
         // Insert new
@@ -321,7 +339,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
         );
 
         if (error) {
-          setQuestionError(error.message);
+          say('error', error.message);
         } else if (data) {
           const updated = [...questions];
           updated[index] = {
@@ -331,13 +349,14 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
           };
           setQuestions(updated);
           onCountChangeRef.current?.(updated.length);
-          setQuestionNotice(dict.studio.questionAdded);
+          // The card's key is now its id.
+          setCardMessage({ key: data.id, kind: 'notice', text: dict.studio.questionAdded });
         }
       }
     } catch (err) {
       const msg = errorMessage(err, dict.common.error);
       console.error('handleSaveQuestion failed:', err);
-      setQuestionError(msg);
+      say('error', msg);
     } finally {
       setSaving(false);
     }
@@ -373,6 +392,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 
 			{questionError &&
 				<div data-ev-id="ev_qqe_error"
+					ref={topMessageRef}
 					role="alert"
 					className="px-3 py-2 rounded-lg border border-destructive/40 bg-destructive/10 text-sm text-destructive">
 					<ErrorText error={questionError} />
@@ -380,6 +400,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 			}
 			{questionNotice &&
 				<div data-ev-id="ev_qqe_notice"
+					ref={topMessageRef}
 					role="status"
 					className="px-3 py-2 rounded-lg border border-primary/30 bg-primary/10 text-sm text-primary">
 					{questionNotice}
@@ -596,6 +617,16 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
                 })}
 										</div>
 									</div>
+
+									{/* Dispatch R2: this question's message, beside the buttons that caused it */}
+									{cardMessage && cardMessage.key === cardKey(q, index) &&
+									<div data-ev-id="ev_qqe_card_message"
+									ref={cardMessageRef}
+									role={cardMessage.kind === 'error' ? 'alert' : 'status'}
+									className={`px-3 py-2 rounded-lg text-sm ${cardMessage.kind === 'error' ? 'border border-destructive/40 bg-destructive/10 text-destructive' : 'border border-primary/30 bg-primary/10 text-primary'}`}>
+											{cardMessage.kind === 'error' ? <ErrorText error={cardMessage.text} /> : cardMessage.text}
+										</div>
+									}
 
 									{/* Action buttons */}
 									<div data-ev-id="ev_3a49907a32" className="flex items-center justify-between pt-2 border-t border-border">

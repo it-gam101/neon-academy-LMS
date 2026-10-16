@@ -35,7 +35,7 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 			setError(null);
 			
 			// Fetch categories with timeout
-			const { data: categoriesData } = await withTimeout(
+			const { data: categoriesData, error: categoriesError } = await withTimeout(
 				supabase
 					.from('course_categories')
 					.select('*')
@@ -44,6 +44,8 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 				10000
 			);
 			
+			// Dispatch R2: a failed read is said (the category filter was silently empty).
+			if (categoriesError) throw categoriesError;
 			if (categoriesData) setCategories(categoriesData);
 
 			// Build courses query
@@ -71,7 +73,7 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 			let enrollments: Tables<'enrollments'>[] = [];
 			
 			if (user) {
-				const { data: enrollmentsData } = await withTimeout(
+				const { data: enrollmentsData, error: enrollmentsError } = await withTimeout(
 					supabase
 						.from('enrollments')
 						.select('*')
@@ -79,6 +81,8 @@ export function useCourses(options?: { onlyPublished?: boolean; onlyOwn?: boolea
 						.then(r => r),
 					10000
 				);
+				// Dispatch R2: a failed read is said (every course showed Enroll instead of Continue).
+				if (enrollmentsError) throw enrollmentsError;
 				enrollments = enrollmentsData || [];
 			}
 

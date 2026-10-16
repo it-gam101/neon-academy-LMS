@@ -62,7 +62,7 @@ export function useQuiz(moduleId: string) {
 
 			// Fetch user's attempts
 			if (user) {
-				const { data: attemptsData } = await withTimeout(
+				const { data: attemptsData, error: attemptsError } = await withTimeout(
 					supabase
 						.from('quiz_attempts')
 						.select('*')
@@ -72,6 +72,8 @@ export function useQuiz(moduleId: string) {
 					10000
 				);
 
+				// Dispatch R2: a failed read is said (the quiz showed every attempt as still available).
+				if (attemptsError) throw attemptsError;
 				setAttempts(attemptsData || []);
 			}
 		} catch (err) {

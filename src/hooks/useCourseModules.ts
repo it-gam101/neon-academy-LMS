@@ -77,22 +77,28 @@ export function useCourseModules(courseId: string) {
 
 			if (user) {
 				// Get enrollment
-				const { data: enrollment } = await supabase
+				// Dispatch R2: maybeSingle — "not enrolled" is no row, not an error; a failed read is said (it read as "not enrolled").
+				const { data: enrollment, error: enrollmentError } = await supabase
 					.from('enrollments')
 					.select('*')
 					.eq('user_id', user.id)
 					.eq('course_id', courseId)
-					.single();
+					.maybeSingle();
+
+				if (enrollmentError) throw enrollmentError;
 
 				enrollmentData = enrollment;
 				setEnrollment(enrollment);
 
 				if (enrollment) {
 					// Get module progress
-					const { data: progress } = await supabase
+					const { data: progress, error: progressError } = await supabase
 						.from('module_progress')
 						.select('*')
 						.eq('enrollment_id', enrollment.id);
+
+					// Dispatch R2: a failed read is said (every module showed as not started).
+					if (progressError) throw progressError;
 
 					progressData = progress || [];
 				}
@@ -104,7 +110,7 @@ export function useCourseModules(courseId: string) {
 					.map((m) => m.quiz[0].id) || [];
 
 				if (quizIds.length > 0) {
-					const { data: attempts } = await supabase
+					const { data: attempts, error: attemptsError } = await supabase
 						.from('quiz_attempts')
 						.select('*')
 						.eq('user_id', user.id)
@@ -112,6 +118,8 @@ export function useCourseModules(courseId: string) {
 						// Dispatch v1a: newest first — ModuleList reads attempts[0] as the last attempt.
 						.order('created_at', { ascending: false });
 
+					// Dispatch R2: a failed read is said (no attempts and no last result were shown).
+					if (attemptsError) throw attemptsError;
 					attemptsData = attempts || [];
 				}
 
@@ -122,12 +130,14 @@ export function useCourseModules(courseId: string) {
 					.map((m) => m.scorm_package_id) || [];
 
 				if (scormPackageIds.length > 0 && enrollment) {
-					const { data: registrations } = await supabase
+					const { data: registrations, error: registrationsError } = await supabase
 						.from('scorm_registrations')
 						.select('*')
 						.eq('enrollment_id', enrollment.id)
 						.in('package_id', scormPackageIds);
 
+					// Dispatch R2: a failed read is said (a SCORM module showed no result).
+					if (registrationsError) throw registrationsError;
 					scormRegistrationsData = registrations || [];
 				}
 			}
