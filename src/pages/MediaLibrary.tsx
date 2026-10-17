@@ -34,7 +34,8 @@ interface ScormPackage {
   id: string;
   title: string;
   scorm_version: string;
-  size_bytes: number;
+  // Dispatch S1: null for a package registered without its size (the sample MBTI) — it showed «null B».
+  size_bytes: number | null;
   created_at: string;
 }
 
@@ -563,7 +564,7 @@ export default function MediaLibrary() {
 										<div data-ev-id="ev_package_info" className="flex-1 min-w-0">
 											<p data-ev-id="ev_package_title" className="font-medium text-foreground truncate">{pkg.title}</p>
 											<p data-ev-id="ev_package_meta" className="text-xs text-muted-foreground mt-1">
-												{pkg.scorm_version} · {formatFileSize(pkg.size_bytes)} · {formatDate(pkg.created_at, locale)}
+												{pkg.scorm_version} · {pkg.size_bytes != null ? formatFileSize(pkg.size_bytes) + ' · ' : ''}{formatDate(pkg.created_at, locale)}
 											</p>
 											{/* Item 103: these counts exist to explain the disabled delete, and RLS
 											    shows a non-admin ZERO scorm_registrations rows — verified live, an

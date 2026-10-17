@@ -1071,35 +1071,35 @@ export function LessonBlockEditor({ moduleId, onBlockCountChange, onPersisted, o
 			<div data-ev-id="ev_6d8f025a66" className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
 				<button data-ev-id="ev_e96ac3b246"
         onClick={() => handleAddBlock('heading')}
-        className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+        className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary/60 rounded-lg hover:bg-primary/10 transition-colors">
 
 					<Plus className="w-4 h-4" />
 					{dict.studioBlocks.addHeading}
 				</button>
 				<button data-ev-id="ev_6fefab9f15"
         onClick={() => handleAddBlock('text')}
-        className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+        className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary/60 rounded-lg hover:bg-primary/10 transition-colors">
 
 					<Plus className="w-4 h-4" />
 					{dict.studioBlocks.addText}
 				</button>
 				<button data-ev-id="ev_e7ee3bc4e0"
         onClick={() => handleAddBlock('video')}
-        className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+        className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary/60 rounded-lg hover:bg-primary/10 transition-colors">
 
 					<Plus className="w-4 h-4" />
 					{dict.studioBlocks.addVideo}
 				</button>
 				<button data-ev-id="ev_add_image_btn"
         onClick={() => handleAddBlock('image')}
-        className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+        className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary/60 rounded-lg hover:bg-primary/10 transition-colors">
 
 					<Image className="w-4 h-4" />
 					{dict.studioBlocks.addImage}
 				</button>
 				<button data-ev-id="ev_add_pdf_btn"
         onClick={() => handleAddBlock('pdf')}
-        className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+        className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary/60 rounded-lg hover:bg-primary/10 transition-colors">
 
 					<FileText className="w-4 h-4" />
 					{dict.studioBlocks.addPdf}

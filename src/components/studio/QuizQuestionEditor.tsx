@@ -383,7 +383,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
 				<button data-ev-id="ev_5549b47bbe"
         type="button"
         onClick={handleAddQuestion}
-        className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+        className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary/60 rounded-lg hover:bg-primary/10 transition-colors">
 
 					<Plus className="w-4 h-4" />
 					{dict.studio.addQuestion}
@@ -544,7 +544,7 @@ export function QuizQuestionEditor({ quizId, onQuestionCountChange }: QuizQuesti
                 <button data-ev-id="ev_8f771edbb0"
                 type="button"
                 onClick={() => handleAddOption(index)}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-foreground border border-border rounded hover:bg-muted transition-colors">
+                className="flex items-center gap-1 px-2 py-1 text-xs text-primary border border-primary/60 rounded hover:bg-primary/10 transition-colors">
 
 													<Plus className="w-3 h-3" />
 													{dict.studio.addOption}

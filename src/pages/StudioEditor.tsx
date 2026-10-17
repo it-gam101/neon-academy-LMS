@@ -29,6 +29,7 @@ import { ensureSession } from '@/lib/ensureSession';
 import { functionErrorMessage } from '@/lib/functionError';
 import { resizeImageToBlob } from '@/lib/resizeImage';
 import { cleanUrl } from '@/lib/contentSafety';
+import { formatDate } from '@/utils/formatDate';
 
 type Course = Tables<'courses'>;
 
@@ -1367,7 +1368,7 @@ export default function StudioEditor() {
 							<button data-ev-id="ev_3d7cf3be7a"
               onClick={() => handleAddModule('lesson')}
               disabled={addingModule}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary/60 rounded-lg hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 								<BookOpen className="w-4 h-4" />
 								{dict.studio.addLesson}
@@ -1375,14 +1376,14 @@ export default function StudioEditor() {
 							<button data-ev-id="ev_5a93129782"
               onClick={() => handleAddModule('quiz')}
               disabled={addingModule}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary/60 rounded-lg hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
 								<FileQuestion className="w-4 h-4" />
 								{dict.studio.addQuiz}
 							</button>
 							<button data-ev-id="ev_add_scorm_btn"
               onClick={handleOpenScormChooser}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors">
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary/60 rounded-lg hover:bg-primary/10 transition-colors">
 
 								<Package className="w-4 h-4" />
 								{dict.studioUpload.addScorm}
@@ -2105,7 +2106,7 @@ export default function StudioEditor() {
 									<div data-ev-id="ev_pkg_info" className="flex-1 min-w-0">
 										<p data-ev-id="ev_pkg_title" className="font-medium text-foreground truncate">{pkg.title}</p>
 										<p data-ev-id="ev_pkg_meta" className="text-xs text-muted-foreground">
-											{pkg.scorm_version} • {new Date(pkg.created_at).toLocaleDateString(locale)}
+											{pkg.scorm_version} • {formatDate(pkg.created_at, locale)}
 										</p>
 									</div>
 								</button>

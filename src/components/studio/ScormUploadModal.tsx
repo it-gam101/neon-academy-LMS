@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useLatest } from '@/hooks/useLatest';
 import { X, Package, Upload, CheckCircle, AlertCircle, Loader2, FileArchive } from 'lucide-react';
 import { unzipSync } from 'fflate';
 import { useLocale } from '@/hooks/useLocale';
@@ -462,17 +463,61 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 
   const canUpload = manifestInfo && unzippedFiles && packageTitle.trim() && state === 'idle';
 
+  // Dispatch S1: a real dialog — announced as one (role, aria-modal, its title), Escape closes it (not while an upload
+  // runs, like its × button), keyboard focus moves into it on open, stays inside, and returns to the button that opened it.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useLatest(onClose);
+  const busyRef = useLatest(state === 'uploading' || state === 'registering');
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    panelRef.current?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      const panel = panelRef.current;
+      if (!panel) return;
+      if (e.key === 'Escape') {
+        if (!busyRef.current) {
+          e.preventDefault();
+          onCloseRef.current();
+        }
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const items = Array.from(panel.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter((el) => !el.hasAttribute('disabled') && el.getClientRects().length > 0);
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === panel || !panel.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !panel.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      if (opener?.isConnected) opener.focus();
+    };
+  }, [busyRef, onCloseRef]);
+
   return (
     <div data-ev-id="ev_7f7858894d" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
 			<div data-ev-id="ev_acef3fbde6"
-      className="relative w-full max-w-lg mx-4 bg-card border border-border rounded-lg shadow-xl"
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="scorm-upload-title"
+      tabIndex={-1}
+      className="relative w-full max-w-lg mx-4 bg-card border border-border rounded-lg shadow-xl focus:outline-none"
       dir={locale === 'he' ? 'rtl' : 'ltr'}>
 
 				{/* Header */}
 				<div data-ev-id="ev_5459e922dd" className="flex items-center justify-between px-6 py-4 border-b border-border">
 					<div data-ev-id="ev_57eadd6305" className="flex items-center gap-2">
 						<Package className="w-5 h-5 text-primary" />
-						<h2 data-ev-id="ev_daf392ee82" className="text-lg font-semibold text-foreground">{dict.studioUpload.title}</h2>
+						<h2 data-ev-id="ev_daf392ee82" id="scorm-upload-title" className="text-lg font-semibold text-foreground">{dict.studioUpload.title}</h2>
 					</div>
 					<button data-ev-id="ev_154283dd65"
           onClick={onClose}
@@ -486,10 +531,13 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
 
 				{/* Content */}
 				<div data-ev-id="ev_ffb4d97d8a" className="px-6 py-4 space-y-4">
-					{/* File input */}
+					{/* File input — Dispatch S1: a button for the keyboard too (Tab, then Enter or Space); it worked only with a mouse */}
 					{!selectedFile &&
           <div data-ev-id="ev_3a1824f2e7"
-          className="flex flex-col items-center justify-center gap-4 p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') {e.preventDefault();fileInputRef.current?.click();}}}
+          className="flex flex-col items-center justify-center gap-4 p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary"
           onClick={() => fileInputRef.current?.click()}>
 
 							<FileArchive className="w-12 h-12 text-muted-foreground" />
