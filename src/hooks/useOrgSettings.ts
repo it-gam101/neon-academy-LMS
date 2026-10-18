@@ -2,14 +2,18 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { withTimeout } from '@/utils/fetchWithTimeout';
 import { useLocale } from '@/hooks/useLocale';
+import { isEmailAddress, isHttpsAddress } from '@/lib/contentSafety';
 
 export interface OrgSettings {
 	orgName: string | null;
 	logoUrl: string | null;
 	defaultLocale: 'en' | 'he';
+	/** Item 115: the support contact (Admin → Organization); null when unset or not a valid shape — never linked. */
+	supportEmail: string | null;
+	supportUrl: string | null;
 }
 
-const FALLBACK: OrgSettings = { orgName: null, logoUrl: null, defaultLocale: 'en' };
+const FALLBACK: OrgSettings = { orgName: null, logoUrl: null, defaultLocale: 'en', supportEmail: null, supportUrl: null };
 
 // Org branding is ONE row that changes almost never, read by four components. Cache it at
 // module level so a page load costs a single request no matter how many of them mount.
@@ -27,7 +31,7 @@ async function loadOrgSettings(): Promise<OrgSettings> {
 		const { data, error } = await withTimeout(
 			supabase.
 			from('org_settings').
-			select('org_name, logo_url, default_locale').
+			select('org_name, logo_url, default_locale, support_email, support_url').
 			limit(1).
 			maybeSingle(),
 			10000
@@ -40,7 +44,9 @@ async function loadOrgSettings(): Promise<OrgSettings> {
 		return {
 			orgName: data.org_name?.trim() || null,
 			logoUrl: data.logo_url?.trim() || null,
-			defaultLocale: data.default_locale === 'he' ? 'he' : 'en'
+			defaultLocale: data.default_locale === 'he' ? 'he' : 'en',
+			supportEmail: data.support_email && isEmailAddress(data.support_email.trim()) ? data.support_email.trim() : null,
+			supportUrl: data.support_url && isHttpsAddress(data.support_url.trim()) ? data.support_url.trim() : null
 		};
 	} catch (err) {
 		console.error('Failed to load org settings:', err);

@@ -15,6 +15,7 @@ import { ensureSession } from '@/lib/ensureSession';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { errorMessage } from '@/lib/errorText';
 import { cleanUrl } from '@/lib/contentSafety';
+import { SupportContact } from '@/components/ui/SupportContact';
 
 export default function Profile() {
   const { locale, t } = useLocale();
@@ -304,7 +305,7 @@ export default function Profile() {
           <div data-ev-id="ev_field_dept">
             <p data-ev-id="ev_dept_label" className="text-sm font-medium text-muted-foreground mb-1">{t.common.department}</p>
             <p data-ev-id="ev_dept_value" className="text-foreground">{profile?.department || '—'}</p>
-            <p data-ev-id="ev_dept_hint" className="text-xs text-muted-foreground mt-1">{t.profile.managedByAdmin}</p>
+            <p data-ev-id="ev_dept_hint" className="text-xs text-muted-foreground mt-1">{t.profile.managedByAdmin}<SupportContact compact /></p>
           </div>
 
           {/* Manager (read-only, fetched via plain query) */}

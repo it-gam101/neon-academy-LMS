@@ -21,7 +21,7 @@ import { formatDateTime } from '@/utils/formatDate';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { errorMessage } from '@/lib/errorText';
-import { cleanUrl } from '@/lib/contentSafety';
+import { cleanUrl, isEmailAddress, isHttpsAddress } from '@/lib/contentSafety';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 type Profile = Tables<'profiles'>;
@@ -339,6 +339,9 @@ export default function Admin() {
           org_name: orgSettings.org_name,
           logo_url: orgSettings.logo_url,
           default_locale: orgSettings.default_locale,
+          // Item 115: the support contact (NULL = none)
+          support_email: orgSettings.support_email || null,
+          support_url: orgSettings.support_url || null,
           updated_at: new Date().toISOString()
         }).
         eq('id', orgSettings.id).
@@ -362,6 +365,10 @@ export default function Admin() {
       setSavingSettings(false);
     }
   };
+
+  // Item 115: checked as typed against the shapes the database's CHECKs accept; Save waits until both are valid.
+  const supportEmailInvalid = !!orgSettings?.support_email && !isEmailAddress(orgSettings.support_email);
+  const supportUrlInvalid = !!orgSettings?.support_url && !isHttpsAddress(orgSettings.support_url);
 
   const filteredUsers = users.filter((u) => {
     if (!searchQuery) return true;
@@ -656,10 +663,45 @@ export default function Admin() {
 											</select>
 										</div>
 
+										{/* Item 115: the support contact, shown wherever someone is told to contact the administrator */}
+										<div data-ev-id="ev_org_support">
+											<label data-ev-id="ev_org_support_email_label" htmlFor="org-support-email" className="block text-sm font-medium text-foreground mb-1">
+												{dict.admin.supportEmail}
+											</label>
+											<input data-ev-id="ev_org_support_email"
+											id="org-support-email"
+											type="email"
+											dir="ltr"
+											value={orgSettings.support_email || ''}
+											onChange={(e) => {setOrgSettingsSaved(false);setOrgSettings({ ...orgSettings, support_email: cleanUrl(e.target.value) || null });}}
+											aria-invalid={supportEmailInvalid}
+											aria-describedby="org-support-hint"
+											className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+											{supportEmailInvalid &&
+											<p data-ev-id="ev_org_support_email_error" role="alert" className="mt-1 text-sm text-destructive">{dict.admin.supportEmailInvalid}</p>
+											}
+											<label data-ev-id="ev_org_support_url_label" htmlFor="org-support-url" className="block text-sm font-medium text-foreground mb-1 mt-4">
+												{dict.admin.supportUrl}
+											</label>
+											<input data-ev-id="ev_org_support_url"
+											id="org-support-url"
+											type="url"
+											dir="ltr"
+											value={orgSettings.support_url || ''}
+											onChange={(e) => {setOrgSettingsSaved(false);setOrgSettings({ ...orgSettings, support_url: cleanUrl(e.target.value) || null });}}
+											aria-invalid={supportUrlInvalid}
+											aria-describedby="org-support-hint"
+											className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+											{supportUrlInvalid &&
+											<p data-ev-id="ev_org_support_url_error" role="alert" className="mt-1 text-sm text-destructive">{dict.admin.supportUrlInvalid}</p>
+											}
+											<p data-ev-id="ev_org_support_hint" id="org-support-hint" className="mt-1 text-xs text-muted-foreground">{dict.admin.supportHint}</p>
+										</div>
+
 										<div data-ev-id="ev_0928916928" className="flex items-center gap-3">
 											<button data-ev-id="ev_e62a14f3ac"
                     onClick={handleSaveOrgSettings}
-                    disabled={savingSettings}
+                    disabled={savingSettings || supportEmailInvalid || supportUrlInvalid}
                     className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 												<Save className="w-4 h-4" />
 												{savingSettings ? dict.common.loading : dict.common.save}

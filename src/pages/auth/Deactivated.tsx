@@ -4,6 +4,7 @@ import { UserX } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthLayout } from '@/components/auth/AuthLayout';
+import { SupportContact } from '@/components/ui/SupportContact';
 
 export default function Deactivated() {
   const { t } = useLocale();
@@ -25,6 +26,8 @@ export default function Deactivated() {
 					{t.auth.accountDeactivatedDescription}
 				</p>
 				<div data-ev-id="ev_deactivated_actions" className="flex flex-col gap-3">
+					{/* Item 115: the organisation's support contact, when one is set */}
+					<SupportContact />
 					<Link data-ev-id="ev_2be6856eff"
           to="/auth/login"
           className="text-sm text-primary hover:underline">

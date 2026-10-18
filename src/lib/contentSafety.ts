@@ -41,6 +41,16 @@ export function isAllowedMediaUrl(url: string): boolean {
   return cleanUrl(url).startsWith('https://');
 }
 
+/** Item 115: an e-mail address — the shape the database's CHECK on org_settings.support_email accepts. */
+export function isEmailAddress(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+/** Item 115: an https address with something after the scheme — the database's CHECK on org_settings.support_url. */
+export function isHttpsAddress(value: string): boolean {
+  return /^https:\/\/\S+$/.test(value);
+}
+
 const NON_EMBEDDABLE_HOSTS = ['sharepoint.com', 'onedrive.live.com', '1drv.ms', 'drive.google.com', 'docs.google.com', 'dropbox.com'];
 
 /**

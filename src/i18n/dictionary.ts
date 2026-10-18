@@ -65,6 +65,7 @@ export interface Dictionary {
 		accountDeactivated: string;
 		accountDeactivatedDescription: string;
 		contactAdmin: string;
+		supportPage: string;
 		tryDifferentAccount: string;
 	};
 	
@@ -777,6 +778,12 @@ export interface Dictionary {
 		uploadingLogo: string;
 		defaultLocale: string;
 		settingsSaved: string;
+		// Item 115
+		supportEmail: string;
+		supportUrl: string;
+		supportHint: string;
+		supportEmailInvalid: string;
+		supportUrlInvalid: string;
 		newRegistrations: string;
 		newRegistrationsCta: string;
 		newBadge: string;
@@ -907,6 +914,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			accountDeactivated: 'Account Deactivated',
 			accountDeactivatedDescription: 'Your account has been deactivated. Please contact your administrator for assistance.',
 			contactAdmin: 'Contact Administrator',
+			supportPage: 'Support page',
 			tryDifferentAccount: 'Try a different account',
 		},
 		
@@ -1583,6 +1591,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			uploadingLogo: 'Uploading…',
 			defaultLocale: 'Default language',
 			settingsSaved: 'Settings saved',
+			supportEmail: 'Support e-mail',
+			supportUrl: 'Support page (web address)',
+			supportHint: 'Shown wherever someone is told to contact the administrator — for example, to a deactivated account. Leave both empty to show no contact.',
+			supportEmailInvalid: 'Enter a valid e-mail address.',
+			supportUrlInvalid: 'The address must start with https://',
 			newRegistrations: 'New registrations this week',
 			newRegistrationsCta: 'Review new users',
 			newBadge: 'New',
@@ -1706,6 +1719,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			accountDeactivated: 'החשבון הושבת',
 			accountDeactivatedDescription: 'החשבון הושבת. לקבלת סיוע יש לפנות למנהלי המערכת.',
 			contactAdmin: 'פנייה למנהלי המערכת',
+			supportPage: 'דף התמיכה',
 			tryDifferentAccount: 'התחברות בחשבון אחר',
 		},
 		
@@ -2382,6 +2396,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			uploadingLogo: 'העלאה…',
 			defaultLocale: 'שפת ברירת מחדל',
 			settingsSaved: 'ההגדרות נשמרו',
+			supportEmail: 'אימייל לתמיכה',
+			supportUrl: 'דף תמיכה (כתובת אינטרנט)',
+			supportHint: 'מוצג בכל מקום שבו מופנים למנהלי המערכת – למשל בחשבון שהושבת. אם שני השדות ריקים, לא יוצגו פרטי קשר.',
+			supportEmailInvalid: 'יש להזין כתובת אימייל תקינה.',
+			supportUrlInvalid: 'הכתובת חייבת להתחיל ב־https',
 			newRegistrations: 'הרשמות חדשות השבוע',
 			newRegistrationsCta: 'סקירת משתמשים חדשים',
 			newBadge: 'חדש',
