@@ -1,18 +1,28 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const allowedOrigins = [
-	'https://neon-academy.sticklight.app',
-	'https://academy.vibe-coding4elearning.com',
-	'https://f2446c28-ba8f-49f3-86a8-9fd01bcb6af6.preview.sticklight.com',
-];
+// Template work B1: the web addresses allowed to call this function come from the ALLOWED_ORIGINS secret, a
+// comma-separated list such as "https://academy.example.com,https://<project-id>.preview.sticklight.com", so each copy
+// of the Academy sets its own with no code change. While the secret is missing, nothing is allowed.
+const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+	.split(',')
+	.map((o) => o.trim().replace(/\/+$/, '').toLowerCase())
+	.filter((o) => o.length > 0);
 
+if (allowedOrigins.length === 0) {
+	console.error('ALLOWED_ORIGINS is not set: every browser call to this function will be refused. Add it in Secrets.');
+}
+
+// An origin that is not on the list gets NO Access-Control-Allow-Origin header, and the browser refuses the response.
 function getCorsHeaders(origin: string | null): Record<string, string> {
-	const allowedOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-	return {
-		'Access-Control-Allow-Origin': allowedOrigin,
+	const headers: Record<string, string> = {
 		'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 		'Access-Control-Allow-Methods': 'POST, OPTIONS',
+		Vary: 'Origin',
 	};
+	if (origin && allowedOrigins.includes(origin.toLowerCase())) {
+		headers['Access-Control-Allow-Origin'] = origin;
+	}
+	return headers;
 }
 
 interface ScormCommitRequest {
@@ -124,7 +134,7 @@ function extractCmiFields(rawCmi: Record<string, unknown>, scormVersion: string)
 	}
 }
 
-console.info('SCORM commit function started [v2 unwrapCmi]');
+console.info('SCORM commit function started [v3 origins-secret]');
 
 Deno.serve(async (req: Request) => {
 	const origin = req.headers.get('origin');
@@ -237,14 +247,24 @@ Deno.serve(async (req: Request) => {
 			);
 		}
 
-		// Get SCORM version for CMI extraction
-		const { data: packageData } = await supabaseService
+		// Get SCORM version for CMI extraction.
+		// B1: a failed read must not fall back to 1.2. A 2004 package read as 1.2 has no lesson_status, so the lesson
+		// would be saved as "incomplete", overwriting a completion. Refuse instead: the player offers Retry.
+		const { data: packageData, error: packageError } = await supabaseService
 			.from('scorm_packages')
 			.select('scorm_version')
 			.eq('id', package_id)
 			.single();
 
-		const scormVersion = packageData?.scorm_version || '1.2';
+		if (packageError || !packageData) {
+			console.error('SCORM package read error:', packageError);
+			return new Response(
+				JSON.stringify({ error: 'Failed to read SCORM package' }),
+				{ status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+			);
+		}
+
+		const scormVersion = packageData.scorm_version || '1.2';
 
 		// Extract CMI fields
 		const extracted = extractCmiFields(cmi, scormVersion);
@@ -314,24 +334,45 @@ Deno.serve(async (req: Request) => {
 			);
 
 		if (progressError) {
+			// B1: the lesson's progress was NOT saved. Say so, and the player offers Retry (a retry repeats these same
+			// upserts, which is safe). Answering 200 here left a finished lesson unfinished, with no sign of it.
 			console.error('Module progress upsert error:', progressError);
+			return new Response(
+				JSON.stringify({ error: 'Failed to save lesson progress' }),
+				{ status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+			);
 		}
 
 		// Check if all modules are completed and update enrollment
 		let enrollmentStatus = enrollment.status;
 
+		// B1: every read and write below is checked. A failure answers 500 and the player offers Retry, which repeats
+		// the same writes (safe). Before, a failed read of the course's modules gave an EMPTY list — every() of an empty
+		// list is true, so the course was marked completed — and a failed write answered 200 with a status never saved.
+		const rollupFailed = (step: string, err: unknown) => {
+			console.error(`Enrollment rollup error (${step}):`, err);
+			return new Response(
+				JSON.stringify({ error: 'Failed to update course progress' }),
+				{ status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+			);
+		};
+
 		if (isCompleted) {
 			// Get all modules for the course
-			const { data: allModules } = await supabaseService
+			const { data: allModules, error: modulesError } = await supabaseService
 				.from('modules')
 				.select('id')
 				.eq('course_id', enrollment.course_id);
 
+			if (modulesError || !allModules) return rollupFailed('read modules', modulesError);
+
 			// Get progress for all modules
-			const { data: allProgress } = await supabaseService
+			const { data: allProgress, error: allProgressError } = await supabaseService
 				.from('module_progress')
 				.select('module_id, status, score, passed')
 				.eq('enrollment_id', enrollment_id);
+
+			if (allProgressError || !allProgress) return rollupFailed('read module_progress', allProgressError);
 
 			const progressMap = new Map((allProgress || []).map((p) => [p.module_id, p]));
 			const allCompleted = (allModules || []).every((m) => {
@@ -350,14 +391,17 @@ Deno.serve(async (req: Request) => {
 
 				const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
 
-				await supabaseService
+				const { data: completedRows, error: completeError } = await supabaseService
 					.from('enrollments')
 					.update({
 						status: 'completed',
 						completed_at: new Date().toISOString(),
 						score: avgScore,
 					})
-					.eq('id', enrollment_id);
+					.eq('id', enrollment_id)
+					.select('id');
+
+				if (completeError || !completedRows?.length) return rollupFailed('complete', completeError ?? 'no row updated');
 
 				enrollmentStatus = 'completed';
 			} else if (enrollment.status === 'completed') {
@@ -365,18 +409,24 @@ Deno.serve(async (req: Request) => {
 				// Leaving it "completed" is exactly the misrepresentation this change
 				// exists to end, so demote it and clear the completion average, which
 				// was computed including the failed module.
-				await supabaseService
+				const { data: demotedRows, error: demoteError } = await supabaseService
 					.from('enrollments')
 					.update({ status: 'in_progress', completed_at: null, score: null })
-					.eq('id', enrollment_id);
+					.eq('id', enrollment_id)
+					.select('id');
+
+				if (demoteError || !demotedRows?.length) return rollupFailed('demote', demoteError ?? 'no row updated');
 
 				enrollmentStatus = 'in_progress';
 			}
 		} else if (enrollment.status === 'not_started') {
-			await supabaseService
+			const { data: startedRows, error: startError } = await supabaseService
 				.from('enrollments')
 				.update({ status: 'in_progress' })
-				.eq('id', enrollment_id);
+				.eq('id', enrollment_id)
+				.select('id');
+
+			if (startError || !startedRows?.length) return rollupFailed('start', startError ?? 'no row updated');
 
 			enrollmentStatus = 'in_progress';
 		}

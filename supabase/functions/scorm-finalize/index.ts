@@ -1,20 +1,29 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { AwsClient } from 'npm:aws4fetch';
 
-const allowedOrigins = [
-	'https://neon-academy.sticklight.app',
-	'https://academy.vibe-coding4elearning.com',
-	'http://localhost:5173',
-	'https://f2446c28-ba8f-49f3-86a8-9fd01bcb6af6.preview.sticklight.com',
-];
+// Template work B1: the web addresses allowed to call this function come from the ALLOWED_ORIGINS secret, a
+// comma-separated list such as "https://academy.example.com,https://<project-id>.preview.sticklight.com", so each copy
+// of the Academy sets its own with no code change. While the secret is missing, nothing is allowed.
+const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+	.split(',')
+	.map((o) => o.trim().replace(/\/+$/, '').toLowerCase())
+	.filter((o) => o.length > 0);
 
+if (allowedOrigins.length === 0) {
+	console.error('ALLOWED_ORIGINS is not set: every browser call to this function will be refused. Add it in Secrets.');
+}
+
+// An origin that is not on the list gets NO Access-Control-Allow-Origin header, and the browser refuses the response.
 function getCorsHeaders(origin: string | null): Record<string, string> {
-	const allowedOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-	return {
-		'Access-Control-Allow-Origin': allowedOrigin,
+	const headers: Record<string, string> = {
 		'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 		'Access-Control-Allow-Methods': 'POST, OPTIONS',
+		Vary: 'Origin',
 	};
+	if (origin && allowedOrigins.includes(origin.toLowerCase())) {
+		headers['Access-Control-Allow-Origin'] = origin;
+	}
+	return headers;
 }
 
 interface FinalizeRequest {
@@ -64,7 +73,7 @@ function isValidUUID(str: string): boolean {
 	return uuidRegex.test(str);
 }
 
-console.info('SCORM finalize function started [v2 cors-exact]');
+console.info('SCORM finalize function started [v3 origins-secret]');
 
 Deno.serve(async (req: Request) => {
 	const origin = req.headers.get('origin');
