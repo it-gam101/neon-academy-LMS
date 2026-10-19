@@ -13,7 +13,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { LightboxImage } from '@/components/ui/Lightbox';
-import { BookOpen, GraduationCap, Users, PenTool, BarChart3, Settings, ChevronRight, ChevronLeft, PlayCircle, Clock, Sparkles, Mail } from 'lucide-react';
+import { BookOpen, GraduationCap, Users, PenTool, BarChart3, Settings, ChevronRight, ChevronLeft, PlayCircle, Clock, Sparkles, Mail, Loader2 } from 'lucide-react';
 import type { UserRole } from '@/contexts/auth-context';
 import logoSrc from '@/assets/logo.svg';
 import { useOrgSettings } from '@/hooks/useOrgSettings';
@@ -74,9 +74,9 @@ const quickActions: QuickAction[] = [
 const IMG_BASE = 'https://pub-390efbd60a134343a0477c83ce0cebfb.r2.dev/site';
 
 export default function Index() {
-  const { isAuthenticated, profile, isDeactivated } = useAuth();
+  const { isAuthenticated, isLoading, profile, isDeactivated } = useAuth();
   const { t, isRTL, locale } = useLocale();
-  const { orgName, logoUrl } = useOrgSettings();
+  const { orgName, logoUrl, publicLanding, ready: orgReady } = useOrgSettings();
   const navigate = useNavigate();
   const heroHeadingRef = useRef<HTMLHeadingElement>(null);
 
@@ -162,6 +162,17 @@ export default function Index() {
 
   // Marketing landing page for unauthenticated users
   if (!isAuthenticated) {
+    // Template B2: the landing page is a per-company switch (Admin → Organization). Wait for the session check and
+    // the setting rather than flash the wrong page; switched off (every copy's default), go to the sign-in page.
+    if (isLoading || !orgReady) {
+      return (
+        <div data-ev-id="ev_landing_wait" role="status" aria-label={t.common.loading} className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>);
+    }
+    if (!publicLanding) {
+      return <Navigate to="/auth/login" replace />;
+    }
     return (
       <div data-ev-id="ev_be0b5200d3" className="min-h-screen bg-background bg-grid-texture flex flex-col">
         {/* Landing header */}

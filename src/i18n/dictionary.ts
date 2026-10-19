@@ -784,6 +784,9 @@ export interface Dictionary {
 		supportHint: string;
 		supportEmailInvalid: string;
 		supportUrlInvalid: string;
+		// Template B2
+		publicLanding: string;
+		publicLandingHint: string;
 		newRegistrations: string;
 		newRegistrationsCta: string;
 		newBadge: string;
@@ -1596,6 +1599,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			supportHint: 'Shown wherever someone is told to contact the administrator — for example, to a deactivated account. Leave both empty to show no contact.',
 			supportEmailInvalid: 'Enter a valid e-mail address.',
 			supportUrlInvalid: 'The address must start with https://',
+			publicLanding: 'Public landing page',
+			publicLandingHint: 'On: signed-out visitors see the Neon Academy showcase page and can try the public SCORM sandbox. Off: they go straight to the sign-in page.',
 			newRegistrations: 'New registrations this week',
 			newRegistrationsCta: 'Review new users',
 			newBadge: 'New',
@@ -2401,6 +2406,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			supportHint: 'מוצג בכל מקום שבו מופנים למנהלי המערכת – למשל בחשבון שהושבת. אם שני השדות ריקים, לא יוצגו פרטי קשר.',
 			supportEmailInvalid: 'יש להזין כתובת אימייל תקינה.',
 			supportUrlInvalid: 'הכתובת חייבת להתחיל ב־https',
+			publicLanding: 'דף נחיתה ציבורי',
+			publicLandingHint: 'מופעל: מי שלא נכנסו למערכת רואים את דף התצוגה של אקדמיית ניאון ויכולים לנסות את ארגז החול הציבורי של SCORM. כבוי: מועברים ישירות לדף הכניסה.',
 			newRegistrations: 'הרשמות חדשות השבוע',
 			newRegistrationsCta: 'סקירת משתמשים חדשים',
 			newBadge: 'חדש',

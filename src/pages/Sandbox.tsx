@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLatest } from '@/hooks/useLatest';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { AlertCircle, Loader2, RefreshCw, Package } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrgSettings } from '@/hooks/useOrgSettings';
 import { getDictionary } from '@/i18n/dictionary';
 import { Badge } from '@/components/ui/Badge';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
@@ -58,7 +59,9 @@ const PICKER_ROLES = ['super_admin', 'hr_manager', 'instructor'];
 
 export default function Sandbox() {
   const { locale } = useLocale();
-  const { profile, isAuthenticated } = useAuth();
+  const { profile, isAuthenticated, isLoading } = useAuth();
+  // Template B2: the PUBLIC demo follows the per-company landing switch; signed-in users always reach the Sandbox.
+  const { publicLanding, ready: orgReady } = useOrgSettings();
   const dict = getDictionary(locale);
   const dictRef = useLatest(dict);
 
@@ -241,6 +244,19 @@ export default function Sandbox() {
 
   // Display version in badge
   const displayVersion = isDefaultPackage ? DEFAULT_VERSION : activeVersion;
+
+  // Template B2: with the landing switched off (every copy's default), a signed-out visitor goes to sign-in.
+  if (!isAuthenticated) {
+    if (isLoading || !orgReady) {
+      return (
+        <div data-ev-id="ev_sandbox_wait" role="status" aria-label={dict.common.loading} className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>);
+    }
+    if (!publicLanding) {
+      return <Navigate to="/auth/login" replace />;
+    }
+  }
 
   // Error state
   if (error || originError) {

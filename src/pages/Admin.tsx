@@ -342,6 +342,8 @@ export default function Admin() {
           // Item 115: the support contact (NULL = none)
           support_email: orgSettings.support_email || null,
           support_url: orgSettings.support_url || null,
+          // Template B2: the public landing page for signed-out visitors
+          public_landing: orgSettings.public_landing,
           updated_at: new Date().toISOString()
         }).
         eq('id', orgSettings.id).
@@ -696,6 +698,23 @@ export default function Admin() {
 											<p data-ev-id="ev_org_support_url_error" role="alert" className="mt-1 text-sm text-destructive">{dict.admin.supportUrlInvalid}</p>
 											}
 											<p data-ev-id="ev_org_support_hint" id="org-support-hint" className="mt-1 text-xs text-muted-foreground">{dict.admin.supportHint}</p>
+										</div>
+
+										{/* Template B2: the public landing page (and the public Sandbox demo) for signed-out visitors */}
+										<div data-ev-id="ev_org_public_landing">
+											<div data-ev-id="ev_org_public_landing_row" className="flex items-center gap-2">
+												<input data-ev-id="ev_org_public_landing_input"
+												id="org-public-landing"
+												type="checkbox"
+												checked={orgSettings.public_landing}
+												onChange={(e) => {setOrgSettingsSaved(false);setOrgSettings({ ...orgSettings, public_landing: e.target.checked });}}
+												aria-describedby="org-public-landing-hint"
+												className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+												<label data-ev-id="ev_org_public_landing_label" htmlFor="org-public-landing" className="text-sm font-medium text-foreground">
+													{dict.admin.publicLanding}
+												</label>
+											</div>
+											<p data-ev-id="ev_org_public_landing_hint" id="org-public-landing-hint" className="mt-1 text-xs text-muted-foreground">{dict.admin.publicLandingHint}</p>
 										</div>
 
 										<div data-ev-id="ev_0928916928" className="flex items-center gap-3">

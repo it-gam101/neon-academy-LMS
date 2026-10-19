@@ -359,6 +359,7 @@ export type Database = {
           id: string
           logo_url: string | null
           org_name: string
+          public_landing: boolean
           support_email: string | null
           support_url: string | null
           updated_at: string
@@ -369,6 +370,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           org_name?: string
+          public_landing?: boolean
           support_email?: string | null
           support_url?: string | null
           updated_at?: string
@@ -379,6 +381,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           org_name?: string
+          public_landing?: boolean
           support_email?: string | null
           support_url?: string | null
           updated_at?: string
