@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { useSearchParams } from 'react-router';
 
 interface Tab {
   id: string;
@@ -14,10 +15,18 @@ interface TabsProps {
 }
 
 export function Tabs({ tabs, defaultTab, onChange, children }: TabsProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
+  // The open tab lives in the address (?tab=<id>), so a reload or a link opens the same tab. A missing or unknown
+  // value falls back to the default. Switching replaces the history entry, so Back is not filled with tab clicks.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requested = searchParams.get('tab');
+  const activeTab = requested && tabs.some((tab) => tab.id === requested) ? requested : defaultTab || tabs[0]?.id;
 
   const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tabId);
+      return next;
+    }, { replace: true });
     onChange?.(tabId);
   };
 

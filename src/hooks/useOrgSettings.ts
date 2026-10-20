@@ -26,6 +26,29 @@ const FALLBACK: OrgSettings = { orgName: null, logoUrl: null, defaultLocale: 'en
 let cache: OrgSettings | null = null;
 let inFlight: Promise<OrgSettings> | null = null;
 let localeApplied = false;
+// Every mounted useOrgSettings, so a save in Admin → Organization reaches the header, the landing page and the tab
+// title at once instead of on the next reload.
+const listeners = new Set<(next: OrgSettings) => void>();
+
+// The browser tab shows the company's name (index.html holds one fixed title for every copy), unless the title
+// already begins with it, as ours does: "Neon Academy | Corporate Learning Management".
+function applyTitle(orgName: string | null) {
+	if (orgName && document.title !== orgName && !document.title.startsWith(`${orgName} |`)) document.title = orgName;
+}
+
+/** Re-reads the row after Admin → Organization saves it and hands it to every mounted hook. */
+export function reloadOrgSettings(): Promise<void> {
+	const request = loadOrgSettings();
+	inFlight = request;
+	return request.then((loaded) => {
+		if (inFlight === request) inFlight = null;
+		// loadOrgSettings answers FALLBACK when the read fails: keep what is shown rather than blank the brand.
+		if (loaded === FALLBACK && cache) return;
+		cache = loaded;
+		applyTitle(loaded.orgName);
+		listeners.forEach((listener) => listener(loaded));
+	});
+}
 
 async function loadOrgSettings(): Promise<OrgSettings> {
 	if (!supabase) return FALLBACK;
@@ -80,8 +103,7 @@ export function useOrgSettings(): OrgSettings & { ready: boolean } {
 				if (!localStorage.getItem('neon-academy-locale')) applyLocale(loaded.defaultLocale);
 			}
 
-			// Template B2: the browser tab shows the company's name (index.html holds one fixed title for every copy).
-			if (loaded.orgName && !document.title.startsWith(loaded.orgName)) document.title = loaded.orgName;
+			applyTitle(loaded.orgName);
 
 			if (alive) {
 				setSettings(loaded);
@@ -93,6 +115,18 @@ export function useOrgSettings(): OrgSettings & { ready: boolean } {
 			alive = false;
 		};
 	}, [applyLocale]);
+
+	// A reload after Admin → Organization saves (reloadOrgSettings) reaches this hook too.
+	useEffect(() => {
+		const onReload = (next: OrgSettings) => {
+			setSettings(next);
+			setReady(true);
+		};
+		listeners.add(onReload);
+		return () => {
+			listeners.delete(onReload);
+		};
+	}, []);
 
 	return { ...settings, ready };
 }

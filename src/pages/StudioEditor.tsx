@@ -338,20 +338,20 @@ export default function StudioEditor() {
     pendingSaveRef.current = course ?
     {
       dirty:
-      titleEn !== course.title_en ||
-      titleHe !== course.title_he ||
-      (descriptionEn || '') !== (course.description_en || '') ||
-      (descriptionHe || '') !== (course.description_he || '') ||
+      titleEn.trim() !== course.title_en.trim() ||
+      titleHe.trim() !== course.title_he.trim() ||
+      (descriptionEn || '').trim() !== (course.description_en || '').trim() ||
+      (descriptionHe || '').trim() !== (course.description_he || '').trim() ||
       (categoryId || '') !== (course.category_id || '') ||
       (thumbnailUrl || '') !== (course.thumbnail_url || '') ||
       (estimatedMinutes || '') !== (course.estimated_minutes?.toString() || '') ||
       isMandatory !== course.is_mandatory ||
       (dueDays || '') !== (course.due_days?.toString() || ''),
       values: {
-        title_en: titleEn,
-        title_he: titleHe,
-        description_en: descriptionEn || null,
-        description_he: descriptionHe || null,
+        title_en: titleEn.trim(),
+        title_he: titleHe.trim(),
+        description_en: descriptionEn.trim() || null,
+        description_he: descriptionHe.trim() || null,
         category_id: categoryId || null,
         thumbnail_url: thumbnailUrl || null,
         estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
@@ -422,10 +422,10 @@ export default function StudioEditor() {
         supabase.
         from('courses').
         update({
-          title_en: titleEn,
-          title_he: titleHe,
-          description_en: descriptionEn || null,
-          description_he: descriptionHe || null,
+          title_en: titleEn.trim(),
+          title_he: titleHe.trim(),
+          description_en: descriptionEn.trim() || null,
+          description_he: descriptionHe.trim() || null,
           category_id: categoryId || null,
           thumbnail_url: thumbnailUrl || null,
           estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
@@ -568,10 +568,10 @@ export default function StudioEditor() {
       const { data, error } = await supabase.
       from('courses').
       update({
-        title_en: titleEn,
-        title_he: titleHe,
-        description_en: descriptionEn || null,
-        description_he: descriptionHe || null,
+        title_en: titleEn.trim(),
+        title_he: titleHe.trim(),
+        description_en: descriptionEn.trim() || null,
+        description_he: descriptionHe.trim() || null,
         category_id: categoryId || null,
         thumbnail_url: thumbnailUrl || null,
         estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,

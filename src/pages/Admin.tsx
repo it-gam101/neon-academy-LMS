@@ -22,6 +22,7 @@ import type { Tables } from '@/integrations/supabase/helpers';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { errorMessage } from '@/lib/errorText';
 import { cleanUrl, isEmailAddress, isHttpsAddress } from '@/lib/contentSafety';
+import { reloadOrgSettings } from '@/hooks/useOrgSettings';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 type Profile = Tables<'profiles'>;
@@ -139,7 +140,7 @@ export default function Admin() {
         update({
           role: editingUser.role,
           manager_id: editingUser.manager_id,
-          department: editingUser.department,
+          department: editingUser.department?.trim() || null,
           is_active: editingUser.is_active
         }).
         eq('id', editingUser.id).
@@ -174,8 +175,8 @@ export default function Admin() {
           supabase.
           from('course_categories').
           insert({
-            name_en: editingCategory.name_en,
-            name_he: editingCategory.name_he,
+            name_en: editingCategory.name_en.trim(),
+            name_he: editingCategory.name_he.trim(),
             sort_order: editingCategory.sort_order
           }).
           select().
@@ -195,8 +196,8 @@ export default function Admin() {
           supabase.
           from('course_categories').
           update({
-            name_en: editingCategory.name_en,
-            name_he: editingCategory.name_he,
+            name_en: editingCategory.name_en.trim(),
+            name_he: editingCategory.name_he.trim(),
             sort_order: editingCategory.sort_order
           }).
           eq('id', editingCategory.id).
@@ -336,7 +337,7 @@ export default function Admin() {
         supabase.
         from('org_settings').
         update({
-          org_name: orgSettings.org_name,
+          org_name: orgSettings.org_name.trim(),
           logo_url: orgSettings.logo_url,
           default_locale: orgSettings.default_locale,
           // Item 115: the support contact (NULL = none)
@@ -358,6 +359,7 @@ export default function Admin() {
       } else {
         showToast('success', dict.admin.settingsSaved);
         setOrgSettingsSaved(true);
+        void reloadOrgSettings();
       }
     } catch (err) {
       const msg = errorMessage(err, dict.common.error);

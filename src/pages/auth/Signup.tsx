@@ -38,7 +38,7 @@ export default function Signup() {
       password,
       options: {
         data: {
-          full_name: fullName
+          full_name: fullName.trim()
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`
       }

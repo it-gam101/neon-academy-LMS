@@ -88,10 +88,16 @@ export default function MediaLibrary() {
   // Item 102: the Sandbox empty state links here promising "upload one", so honour
   // ?tab=packages and land on the tab that actually offers it. The render still
   // gates on canViewPackages, so a role without access falls back to Files.
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'files' | 'packages'>(
-    searchParams.get('tab') === 'packages' ? 'packages' : 'files'
-  );
+  // The open tab lives in the address, as in the shared Tabs, so a reload keeps it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab: 'files' | 'packages' = searchParams.get('tab') === 'packages' ? 'packages' : 'files';
+  const setActiveTab = (tab: 'files' | 'packages') => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tab);
+      return next;
+    }, { replace: true });
+  };
   const [packages, setPackages] = useState<ScormPackage[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [moduleUsage, setModuleUsage] = useState<Map<string, number>>(new Map());

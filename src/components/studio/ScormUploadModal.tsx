@@ -264,8 +264,8 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
         from('modules').
         insert({
           course_id: courseId,
-          title_en: packageTitle,
-          title_he: packageTitle,
+          title_en: packageTitle.trim(),
+          title_he: packageTitle.trim(),
           module_type: 'scorm_package',
           sort_order: sortOrder ?? 0,
           content_json: null
@@ -376,7 +376,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
           },
           body: JSON.stringify({
             packageId,
-            title: packageTitle,
+            title: packageTitle.trim(),
             scormVersion: manifestInfo.scormVersion,
             entryPoint: manifestInfo.entryPoint,
             manifestJson: {
