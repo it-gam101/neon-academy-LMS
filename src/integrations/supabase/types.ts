@@ -158,7 +158,7 @@ export type Database = {
           id: string
           score: number | null
           status: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           assigned_by?: string | null
@@ -169,7 +169,7 @@ export type Database = {
           id?: string
           score?: number | null
           status?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           assigned_by?: string | null
@@ -180,7 +180,7 @@ export type Database = {
           id?: string
           score?: number | null
           status?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
