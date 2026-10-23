@@ -79,6 +79,14 @@ export interface Dictionary {
 		changePassword: string;
 		savePassword: string;
 		passwordsDoNotMatch: string;
+		emailSection: string;
+		currentEmail: string;
+		emailPending: string;
+		newEmail: string;
+		changeEmail: string;
+		emailChangeSent: string;
+		emailInvalid: string;
+		emailSame: string;
 		memberSince: string;
 		avatarUrl: string;
 		managedByAdmin: string;
@@ -754,6 +762,9 @@ export interface Dictionary {
 			role_changed: string;
 			user_registered: string;
 			report_generated: string;
+			email_changed: string;
+			email_changed_by_admin: string;
+			user_deleted: string;
 		};
 		auditEntities: {
 			courses: string;
@@ -930,6 +941,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			changePassword: 'Change password',
 			savePassword: 'Update password',
 			passwordsDoNotMatch: 'Passwords do not match',
+			emailSection: 'Email address',
+			currentEmail: 'Current address:',
+			emailPending: 'Waiting for confirmation:',
+			newEmail: 'New address',
+			changeEmail: 'Change email',
+			emailChangeSent: 'A confirmation link was sent to {email}. Your address changes once you open it. A link may also arrive at your current address; if so, open that one too. Until then, sign in with your current address.',
+			emailInvalid: 'Enter a valid email address.',
+			emailSame: 'That is already your email address.',
 			memberSince: 'Member since',
 			avatarUrl: 'Avatar image URL',
 			managedByAdmin: 'Managed by your administrator',
@@ -1513,7 +1532,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			overdueCountCol: 'Overdue',
 			avgScore: 'Avg. Score',
 			avgTime: 'Avg. Time',
-			avgAttempts: 'Avg. Attempts',
+			avgAttempts: 'Avg. quiz attempts',
 			departmentCol: 'Department',
 			courseCol: 'Course',
 			snapshotSaved: 'Report snapshot saved',
@@ -1572,6 +1591,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 				role_changed: 'Role changed',
 				user_registered: 'User registered',
 				report_generated: 'Report generated',
+				email_changed: 'Email changed',
+				email_changed_by_admin: 'Email changed by an admin',
+				user_deleted: 'Account deleted',
 			},
 			auditEntities: {
 				courses: 'Course',
@@ -1737,6 +1759,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			changePassword: 'שינוי סיסמה',
 			savePassword: 'עדכון סיסמה',
 			passwordsDoNotMatch: 'הסיסמאות אינן תואמות',
+			emailSection: 'כתובת האימייל',
+			currentEmail: 'הכתובת הנוכחית:',
+			emailPending: 'בהמתנה לאישור:',
+			newEmail: 'כתובת חדשה',
+			changeEmail: 'שינוי כתובת האימייל',
+			emailChangeSent: 'קישור לאישור נשלח אל {email}. הכתובת תשתנה לאחר פתיחת הקישור. ייתכן שיגיע קישור גם לכתובת הנוכחית, ובמקרה כזה יש לפתוח גם אותו. עד אז ההתחברות היא עם הכתובת הנוכחית.',
+			emailInvalid: 'יש להזין כתובת אימייל תקינה.',
+			emailSame: 'זו כבר כתובת האימייל הנוכחית.',
 			memberSince: 'תאריך הצטרפות',
 			avatarUrl: 'כתובת תמונת פרופיל',
 			managedByAdmin: 'מנוהל על ידי מנהל המערכת',
@@ -2320,7 +2350,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			overdueCountCol: 'באיחור',
 			avgScore: 'ציון ממוצע',
 			avgTime: 'זמן ממוצע',
-			avgAttempts: 'ניסיונות ממוצע',
+			avgAttempts: 'ממוצע ניסיונות במבחן',
 			departmentCol: 'מחלקה',
 			courseCol: 'קורס',
 			snapshotSaved: 'תמונת מצב הדוח נשמרה',
@@ -2379,6 +2409,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 				role_changed: 'התפקיד שונה',
 				user_registered: 'הרשמה חדשה',
 				report_generated: 'דוח הופק',
+				email_changed: 'האימייל שונה',
+				email_changed_by_admin: 'האימייל שונה בממשק הניהול',
+				user_deleted: 'חשבון נמחק',
 			},
 			auditEntities: {
 				courses: 'קורס',

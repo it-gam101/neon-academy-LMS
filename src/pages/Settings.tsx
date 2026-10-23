@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLocale } from '@/hooks/useLocale';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { showToast } from '@/components/ui/Toast';
 import { withTimeout } from '@/utils/fetchWithTimeout';
@@ -13,6 +14,55 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Item 120: change your own login e-mail. Supabase mails a confirmation link (to the new address, and possibly to
+  // the current one too); the address changes only once it is opened, and window 1's trigger then updates the profile.
+  const { user } = useAuth();
+  const [newEmail, setNewEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [emailSentTo, setEmailSentTo] = useState<string | null>(null);
+  const [savingEmail, setSavingEmail] = useState(false);
+
+  const handleChangeEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError('');
+    setEmailSentTo(null);
+
+    const email = newEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError(t.profile.emailInvalid);
+      return;
+    }
+    if (email === (user?.email ?? '').toLowerCase()) {
+      setEmailError(t.profile.emailSame);
+      return;
+    }
+
+    if (!supabase || savingEmail) return;
+
+    setSavingEmail(true);
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.updateUser({ email }, { emailRedirectTo: `${window.location.origin}/settings` }),
+        10000
+      );
+
+      if (error) {
+        console.error('Email update error:', error);
+        setEmailError(error.message || t.common.error);
+        return;
+      }
+
+      setEmailSentTo(email);
+      setNewEmail('');
+    } catch (err) {
+      const msg = errorMessage(err, t.common.error);
+      console.error('handleChangeEmail failed:', err);
+      setEmailError(msg);
+    } finally {
+      setSavingEmail(false);
+    }
+  };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +120,7 @@ export default function SettingsPage() {
 					<button data-ev-id="ev_986062f63a"
           type="button"
           onClick={() => setLocale('en')}
+          aria-pressed={locale === 'en'}
           className={
           locale === 'en' ?
           'px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors' :
@@ -81,6 +132,7 @@ export default function SettingsPage() {
 					<button data-ev-id="ev_5ab06dd8ff"
           type="button"
           onClick={() => setLocale('he')}
+          aria-pressed={locale === 'he'}
           className={
           locale === 'he' ?
           'px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors' :
@@ -90,6 +142,52 @@ export default function SettingsPage() {
 						{t.profile.hebrew}
 					</button>
 				</div>
+			</div>
+
+			{/* Section C - Email address (item 120) */}
+			<div data-ev-id="ev_settings_email" className="bg-card border border-border rounded-xl p-6 mb-6">
+				<h2 data-ev-id="ev_settings_email_title" className="text-lg font-semibold text-foreground mb-4">{t.profile.emailSection}</h2>
+				<p data-ev-id="ev_settings_email_current" className="text-sm text-muted-foreground mb-2">
+					<span data-ev-id="ev_settings_email_current_label">{t.profile.currentEmail}</span>{' '}
+					<span data-ev-id="ev_settings_email_current_value" dir="ltr" className="text-foreground font-medium">{user?.email ?? ''}</span>
+				</p>
+				{user?.new_email && !emailSentTo &&
+				<p data-ev-id="ev_settings_email_pending" className="text-sm text-muted-foreground mb-2">
+					<span data-ev-id="ev_settings_email_pending_label">{t.profile.emailPending}</span>{' '}
+					<span data-ev-id="ev_settings_email_pending_value" dir="ltr" className="text-foreground">{user.new_email}</span>
+				</p>
+				}
+				<form data-ev-id="ev_settings_email_form" onSubmit={handleChangeEmail} noValidate className="flex flex-col gap-4 max-w-md mt-4">
+					<div data-ev-id="ev_settings_email_field">
+						<label data-ev-id="ev_settings_email_label" htmlFor="newEmail" className="block text-sm font-medium text-foreground mb-1">
+							{t.profile.newEmail}
+						</label>
+						<input data-ev-id="ev_settings_email_input"
+						id="newEmail"
+						type="email"
+						dir="ltr"
+						autoComplete="email"
+						value={newEmail}
+						onChange={(e) => setNewEmail(e.target.value)}
+						className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+					</div>
+					{emailError &&
+					<p data-ev-id="ev_settings_email_error" className="text-sm text-danger"><ErrorText error={emailError} /></p>
+					}
+					{emailSentTo &&
+					<p data-ev-id="ev_settings_email_sent" className="text-sm text-foreground">
+						{t.profile.emailChangeSent.split('{email}')[0]}
+						<span data-ev-id="ev_settings_email_sent_value" dir="ltr" className="font-medium">{emailSentTo}</span>
+						{t.profile.emailChangeSent.split('{email}')[1]}
+					</p>
+					}
+					<button data-ev-id="ev_settings_email_submit"
+					type="submit"
+					disabled={savingEmail}
+					className="self-start px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50">
+						{savingEmail ? t.common.loading : t.profile.changeEmail}
+					</button>
+				</form>
 			</div>
 
 			{/* Section B - Change Password */}

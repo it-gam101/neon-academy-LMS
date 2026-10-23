@@ -440,6 +440,7 @@ export default function MediaLibrary() {
 				<div data-ev-id="ev_033a0b251a" className="flex items-center bg-muted rounded-lg p-1">
 					<button data-ev-id="ev_c47da7cc8a"
             onClick={() => setKindFilter('all')}
+            aria-pressed={kindFilter === 'all'}
             className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
             kindFilter === 'all' ?
             'bg-background text-foreground shadow-sm' :
@@ -450,6 +451,7 @@ export default function MediaLibrary() {
 					</button>
 					<button data-ev-id="ev_fd95fb4535"
             onClick={() => setKindFilter('image')}
+            aria-pressed={kindFilter === 'image'}
             className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
             kindFilter === 'image' ?
             'bg-background text-foreground shadow-sm' :
@@ -460,6 +462,7 @@ export default function MediaLibrary() {
 					</button>
 					<button data-ev-id="ev_e5ddb0cff4"
             onClick={() => setKindFilter('pdf')}
+            aria-pressed={kindFilter === 'pdf'}
             className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
             kindFilter === 'pdf' ?
             'bg-background text-foreground shadow-sm' :

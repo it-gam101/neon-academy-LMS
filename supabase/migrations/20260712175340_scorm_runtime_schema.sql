@@ -195,6 +195,10 @@ LIMIT 1
 ON CONFLICT DO NOTHING;
 
 -- Insert module linked to SCORM package
+-- Guarded (Isaac, 2026-10-21): the package and the course above are inserted only when a super_admin exists, which is
+-- never the case on an EMPTY database (a Duplicate copy, a template, a fresh backend). There the unconditional insert
+-- broke modules_course_id_fkey and made Sticklight's Duplicate fail. Where they exist, this inserts exactly as before.
+-- The live database ran this file once and never runs it again.
 INSERT INTO public.modules (
   id,
   course_id,
@@ -204,7 +208,7 @@ INSERT INTO public.modules (
   scorm_package_id,
   sort_order
 )
-VALUES (
+SELECT
   'c3d4e5f6-a7b8-9012-cdef-345678901234'::uuid,
   'b2c3d4e5-f6a7-8901-bcde-f23456789012'::uuid,
   'MBTI Assessment',
@@ -212,5 +216,6 @@ VALUES (
   'scorm_package',
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid,
   1
-)
+WHERE EXISTS (SELECT 1 FROM public.courses WHERE id = 'b2c3d4e5-f6a7-8901-bcde-f23456789012'::uuid)
+  AND EXISTS (SELECT 1 FROM public.scorm_packages WHERE id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid)
 ON CONFLICT DO NOTHING;

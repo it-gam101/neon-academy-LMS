@@ -505,6 +505,7 @@ export default function QuizPage() {
                     handleAnswer(question.id, index);
                   }
                 }}
+                aria-pressed={isSelected}
                 className={`w-full p-4 text-start border rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
                 isSelected ?
                 'bg-primary/10 border-primary text-foreground' :

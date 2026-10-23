@@ -50,6 +50,7 @@ export function PreviewBanner({ courseId, children }: PreviewBannerProps) {
             <button data-ev-id="ev_224fdb856f"
             type="button"
             onClick={() => setViewMode('desktop')}
+            aria-pressed={viewMode === 'desktop'}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
             viewMode === 'desktop' ?
             'bg-white text-amber-900 shadow-sm' :
@@ -62,6 +63,7 @@ export function PreviewBanner({ courseId, children }: PreviewBannerProps) {
             <button data-ev-id="ev_1694d410cd"
             type="button"
             onClick={() => setViewMode('mobile')}
+            aria-pressed={viewMode === 'mobile'}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
             viewMode === 'mobile' ?
             'bg-white text-amber-900 shadow-sm' :

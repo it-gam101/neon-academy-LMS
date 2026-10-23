@@ -123,6 +123,7 @@ export default function Studio() {
             <div data-ev-id="ev_0ad9b52c05" className="flex items-center bg-muted rounded-lg p-1">
 								<button data-ev-id="ev_1773e1bd08"
               onClick={() => setScope('mine')}
+              aria-pressed={scope === 'mine'}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
               scope === 'mine' ?
               'bg-background text-foreground shadow-sm' :
@@ -133,6 +134,7 @@ export default function Studio() {
 								</button>
 								<button data-ev-id="ev_9fdefee281"
               onClick={() => setScope('all')}
+              aria-pressed={scope === 'all'}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
               scope === 'all' ?
               'bg-background text-foreground shadow-sm' :

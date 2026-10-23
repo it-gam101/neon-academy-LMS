@@ -371,6 +371,7 @@ export default function Sandbox() {
           title={dict.sandbox.title}
           className="w-full h-full border-0"
           style={{ minHeight: 'calc(100vh - 200px)' }}
+          allow="fullscreen"
           sandbox="allow-scripts allow-same-origin allow-modals"
           onLoad={handleIframeLoad} />
 

@@ -520,6 +520,7 @@ export default function ScormPlayer() {
         title={getTitle(module) || dict.scorm.scormPackage}
         className="w-full h-full border-0"
         style={{ minHeight: 'calc(100vh - 100px)' }}
+        allow="fullscreen"
         sandbox="allow-scripts allow-same-origin allow-modals" />
 
 				{/* Item 112: the finish is saved. Laid OVER the player rather than replacing it, so the

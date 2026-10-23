@@ -68,8 +68,9 @@ export default function HRAnalytics() {
         if (enrollments) {
           const total = enrollments.length;
           const completed = enrollments.filter((e) => e.status === 'completed').length;
+          // Item 108: a deleted user's kept records (user_id empty) are history: in the rates, never overdue.
           const overdue = enrollments.filter((e) =>
-          e.status !== 'completed' && e.due_at && new Date(e.due_at) < new Date()
+          e.user_id !== null && e.status !== 'completed' && e.due_at && new Date(e.due_at) < new Date()
           ).length;
 
           // Active learners (any progress in last 30 days)
@@ -126,6 +127,15 @@ export default function HRAnalytics() {
     fetchKPIs();
   }, [dictRef]);
 
+  // Item 122: the report on screen is marked — the house style's leading-edge accent (inline-start, so the right
+  // in Hebrew), which also shows on hover and keyboard focus.
+  const reportCardClass = (type: ReportType) =>
+  `group relative overflow-hidden p-4 bg-card border rounded-lg text-start transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0 disabled:opacity-50 ${
+  reportData?.type === type ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-primary/5'}`;
+  const reportAccentClass = (type: ReportType) =>
+  `pointer-events-none absolute inset-y-0 start-0 w-1 transition-colors ${
+  reportData?.type === type ? 'bg-primary' : 'bg-transparent group-hover:bg-primary group-focus-visible:bg-primary'}`;
+
   const generateReport = async (type: 'completion' | 'compliance' | 'engagement') => {
     if (!supabase) return;
     setGeneratingReport(true);
@@ -160,7 +170,7 @@ export default function HRAnalytics() {
           }
           courseStats[id].enrolled++;
           if (e.status === 'completed') courseStats[id].completed++;
-          if (e.status !== 'completed' && e.due_at && new Date(e.due_at) < new Date()) {
+          if (e.user_id !== null && e.status !== 'completed' && e.due_at && new Date(e.due_at) < new Date()) {
             courseStats[id].overdue++;
           }
         });
@@ -192,6 +202,8 @@ export default function HRAnalytics() {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (enrollments || []).forEach((e: any) => {
+          // Item 108: Compliance measures today's staff, so a deleted user's kept records (user_id empty) are left out.
+          if (e.user_id === null) return;
           // Dispatch H1 (R1): "no department" is null here and worded when drawn, in the reader's language.
           const department: string | null = e.user?.department || null;
           const dept = department ?? '';
@@ -420,7 +432,9 @@ export default function HRAnalytics() {
 									<button data-ev-id="ev_a8b63bfbae"
                   onClick={() => generateReport('completion')}
                   disabled={generatingReport}
-                  className="p-4 bg-card border border-border rounded-lg text-start hover:border-primary/50 transition-colors disabled:opacity-50">
+                  aria-pressed={reportData?.type === 'completion'}
+                  className={reportCardClass('completion')}>
+										<span data-ev-id="ev_report_accent_completion" aria-hidden="true" className={reportAccentClass('completion')} />
 
 										<h3 data-ev-id="ev_ae2d165069" className="font-medium text-foreground mb-1">{dict.hrAnalytics.completionSummary}</h3>
 										<p data-ev-id="ev_e5515a1cc3" className="text-sm text-muted-foreground">{dict.hrAnalytics.completionSummaryDesc}</p>
@@ -429,7 +443,9 @@ export default function HRAnalytics() {
 									<button data-ev-id="ev_c4b1643432"
                   onClick={() => generateReport('compliance')}
                   disabled={generatingReport}
-                  className="p-4 bg-card border border-border rounded-lg text-start hover:border-primary/50 transition-colors disabled:opacity-50">
+                  aria-pressed={reportData?.type === 'compliance'}
+                  className={reportCardClass('compliance')}>
+										<span data-ev-id="ev_report_accent_compliance" aria-hidden="true" className={reportAccentClass('compliance')} />
 
 										<h3 data-ev-id="ev_e6bd0fa445" className="font-medium text-foreground mb-1">{dict.hrAnalytics.complianceReport}</h3>
 										<p data-ev-id="ev_b902784c57" className="text-sm text-muted-foreground">{dict.hrAnalytics.complianceReportDesc}</p>
@@ -438,7 +454,9 @@ export default function HRAnalytics() {
 									<button data-ev-id="ev_b9a60f4f1e"
                   onClick={() => generateReport('engagement')}
                   disabled={generatingReport}
-                  className="p-4 bg-card border border-border rounded-lg text-start hover:border-primary/50 transition-colors disabled:opacity-50">
+                  aria-pressed={reportData?.type === 'engagement'}
+                  className={reportCardClass('engagement')}>
+										<span data-ev-id="ev_report_accent_engagement" aria-hidden="true" className={reportAccentClass('engagement')} />
 
 										<h3 data-ev-id="ev_429232c23a" className="font-medium text-foreground mb-1">{dict.hrAnalytics.courseEngagement}</h3>
 										<p data-ev-id="ev_ba4c6bb854" className="text-sm text-muted-foreground">{dict.hrAnalytics.courseEngagementDesc}</p>
