@@ -172,7 +172,7 @@ export default function SettingsPage() {
 						className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
 					</div>
 					{emailError &&
-					<p data-ev-id="ev_settings_email_error" className="text-sm text-danger"><ErrorText error={emailError} /></p>
+					<p data-ev-id="ev_settings_email_error" className="text-sm text-destructive"><ErrorText error={emailError} /></p>
 					}
 					{emailSentTo &&
 					<p data-ev-id="ev_settings_email_sent" className="text-sm text-foreground">
@@ -218,7 +218,7 @@ export default function SettingsPage() {
 					</div>
 					<p data-ev-id="ev_7074d2a99c" className="text-sm text-muted-foreground">{t.auth.passwordMinLength}</p>
 					{passwordError &&
-          <p data-ev-id="ev_e25eae8886" className="text-sm text-danger"><ErrorText error={passwordError} /></p>
+          <p data-ev-id="ev_e25eae8886" className="text-sm text-destructive"><ErrorText error={passwordError} /></p>
           }
 					<button data-ev-id="ev_6a77eaa7ec"
           type="submit"

@@ -731,6 +731,43 @@ export interface Dictionary {
 		noManager: string;
 		isActive: string;
 		userUpdated: string;
+		loginEmail: string;
+		emailChangeNow: string;
+		emailChangedTo: string;
+		selfEmailLocked: string;
+		selfDeleteLocked: string;
+		superAdminEmailLocked: string;
+		superAdminDeleteLocked: string;
+		retireHint: string;
+		deleteAccount: string;
+		deleteAccountTitle: string;
+		deleteAccountConfirm: string;
+		deleteModeLegend: string;
+		modeKeep: string;
+		modeKeepHelp: string;
+		modeErase: string;
+		modeEraseHelp: string;
+		deleteAlways: string;
+		typeToConfirm: string;
+		scopeEnrollments: string;
+		scopeCourses: string;
+		scopeTeam: string;
+		accountDeleted: string;
+		userActionErrors: {
+			unauthorized: string;
+			forbidden: string;
+			bad_request: string;
+			invalid_email: string;
+			self: string;
+			super_admin_target: string;
+			not_found: string;
+			same_email: string;
+			email_in_use: string;
+			storage_failed: string;
+			database_failed: string;
+			auth_failed: string;
+			server_error: string;
+		};
 		// Categories
 		categoryManagement: string;
 		addCategory: string;
@@ -1563,6 +1600,43 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			noManager: 'No manager',
 			isActive: 'Active',
 			userUpdated: 'User updated successfully',
+			loginEmail: 'Login email',
+			emailChangeNow: 'The change applies at once: no confirmation link is sent, and the old address stops working for sign-in.',
+			emailChangedTo: 'Email changed to {email}',
+			selfEmailLocked: 'This is your own account: change your email in Settings.',
+			selfDeleteLocked: 'You cannot delete your own account.',
+			superAdminEmailLocked: 'A super admin\'s email cannot be changed here. Give the account another role first.',
+			superAdminDeleteLocked: 'A super admin account cannot be deleted. Give it another role first.',
+			retireHint: 'To retire someone, untick Active instead: nothing is deleted, and they can no longer sign in.',
+			deleteAccount: 'Delete account…',
+			deleteAccountTitle: 'Delete account',
+			deleteAccountConfirm: 'Delete account',
+			deleteModeLegend: 'What happens to their learning records?',
+			modeKeep: 'Keep their completions and scores (anonymised)',
+			modeKeepHelp: 'Recommended. HR reports keep them as history, without a name.',
+			modeErase: 'Erase everything',
+			modeEraseHelp: 'Their enrollments and progress are deleted too, for example for a privacy request.',
+			deleteAlways: 'In both cases the login, profile, quiz attempts, SCORM data and saved reports are deleted, the profile photo is removed, and the name and email are cleared from the audit log. This cannot be undone.',
+			typeToConfirm: 'To confirm, type {email}',
+			scopeEnrollments: 'Enrollments: {count} ({completed} completed)',
+			scopeCourses: 'Courses they created: {count} (kept, without a creator)',
+			scopeTeam: 'Team members they manage: {count} (left without a manager)',
+			accountDeleted: 'Account deleted. Records kept: {kept}. Erased: {erased}.',
+			userActionErrors: {
+				unauthorized: 'Your session has expired. Sign in again.',
+				forbidden: 'Only an active super admin can do this.',
+				bad_request: 'The request was not valid.',
+				invalid_email: 'Enter a valid email address.',
+				self: 'This cannot be done to your own account.',
+				super_admin_target: 'This is a super admin account. Give it another role first.',
+				not_found: 'This account no longer exists.',
+				same_email: 'That is already this user\'s email.',
+				email_in_use: 'Another account already uses this email.',
+				storage_failed: 'The profile photo could not be removed, so nothing was deleted.',
+				database_failed: 'A database step failed; the account was not changed.',
+				auth_failed: 'The sign-in service refused the change.',
+				server_error: 'Unexpected server error.',
+			},
 			categoryManagement: 'Category Management',
 			addCategory: 'Add Category',
 			editCategory: 'Edit Category',
@@ -2381,6 +2455,43 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			noManager: 'ללא מנהל',
 			isActive: 'פעיל',
 			userUpdated: 'המשתמש עודכן בהצלחה',
+			loginEmail: 'אימייל להתחברות',
+			emailChangeNow: 'השינוי חל מיד: לא נשלח קישור לאישור, והכתובת הישנה כבר לא תאפשר התחברות.',
+			emailChangedTo: 'האימייל שונה. הכתובת החדשה: {email}',
+			selfEmailLocked: 'זה החשבון שלך: את כתובת האימייל אפשר לשנות בהגדרות.',
+			selfDeleteLocked: 'אי אפשר למחוק את החשבון שלך.',
+			superAdminEmailLocked: 'אי אפשר לשנות כאן את האימייל של מנהל ראשי. יש לשנות קודם את התפקיד.',
+			superAdminDeleteLocked: 'אי אפשר למחוק חשבון של מנהל ראשי. יש לשנות קודם את התפקיד.',
+			retireHint: 'כדי להפסיק גישה בלי למחוק דבר, עדיף לבטל את הסימון "פעיל": הנתונים נשמרים וההתחברות נחסמת.',
+			deleteAccount: 'מחיקת החשבון…',
+			deleteAccountTitle: 'מחיקת חשבון',
+			deleteAccountConfirm: 'מחיקת החשבון',
+			deleteModeLegend: 'מה יקרה לרשומות הלמידה?',
+			modeKeep: 'שמירת ההשלמות והציונים (ללא זיהוי)',
+			modeKeepHelp: 'מומלץ. דוחות משאבי אנוש ישמרו אותם כהיסטוריה, בלי שם.',
+			modeErase: 'מחיקת הכול',
+			modeEraseHelp: 'גם ההרשמות וההתקדמות נמחקות, למשל לבקשת פרטיות.',
+			deleteAlways: 'בשני המקרים נמחקים פרטי ההתחברות, הפרופיל, ניסיונות המבחנים, נתוני ה־SCORM והדוחות השמורים; תמונת הפרופיל מוסרת, והשם והאימייל מוסרים מיומן הביקורת. אי אפשר לבטל את הפעולה.',
+			typeToConfirm: 'לאישור יש להקליד {email}',
+			scopeEnrollments: 'הרשמות לקורסים: {count} (הושלמו: {completed})',
+			scopeCourses: 'קורסים שנוצרו בחשבון: {count} (נשארים, ללא יוצר)',
+			scopeTeam: 'חברי צוות בניהול החשבון: {count} (יישארו ללא מנהל)',
+			accountDeleted: 'החשבון נמחק. רשומות שנשמרו: {kept}. נמחקו: {erased}.',
+			userActionErrors: {
+				unauthorized: 'פג תוקף ההתחברות. יש להתחבר מחדש.',
+				forbidden: 'הפעולה זמינה רק לחשבון מנהל ראשי פעיל.',
+				bad_request: 'הבקשה אינה תקינה.',
+				invalid_email: 'יש להזין כתובת אימייל תקינה.',
+				self: 'אי אפשר לבצע את הפעולה על החשבון שלך.',
+				super_admin_target: 'זה חשבון של מנהל ראשי. יש לשנות קודם את התפקיד.',
+				not_found: 'החשבון כבר לא קיים.',
+				same_email: 'זו כבר כתובת האימייל של החשבון.',
+				email_in_use: 'חשבון אחר כבר משתמש בכתובת הזו.',
+				storage_failed: 'לא ניתן היה להסיר את תמונת הפרופיל, ולכן לא נמחק דבר.',
+				database_failed: 'שלב במסד הנתונים נכשל; החשבון לא שונה.',
+				auth_failed: 'שירות ההתחברות דחה את השינוי.',
+				server_error: 'שגיאת שרת לא צפויה.',
+			},
 			categoryManagement: 'ניהול קטגוריות',
 			addCategory: 'הוספת קטגוריה',
 			editCategory: 'עריכת קטגוריה',

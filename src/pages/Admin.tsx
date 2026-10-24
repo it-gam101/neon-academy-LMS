@@ -24,6 +24,9 @@ import { errorMessage } from '@/lib/errorText';
 import { cleanUrl, isEmailAddress, isHttpsAddress } from '@/lib/contentSafety';
 import { reloadOrgSettings } from '@/hooks/useOrgSettings';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
+import { callAdminUsers, type DeleteUserResult, type UpdateEmailResult } from '@/lib/adminUsers';
+import { useAuth } from '@/hooks/useAuth';
 
 type Profile = Tables<'profiles'>;
 type Category = Tables<'course_categories'>;
@@ -62,6 +65,13 @@ export default function Admin() {
   // Dispatch 4b: one save per click — a double-click on Save ran the write twice (two new categories).
   const [savingUser, setSavingUser] = useState(false);
   const [savingCategory, setSavingCategory] = useState(false);
+  // Items 108 + 120, window 4: delete an account / change its login e-mail (the admin-users function, window 2).
+  const { user: me } = useAuth();
+  const [deletingUser, setDeletingUser] = useState<Profile | null>(null);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [userEmailError, setUserEmailError] = useState<string | null>(null);
+  const [userEmailChangedTo, setUserEmailChangedTo] = useState<string | null>(null);
+  const [changingUserEmail, setChangingUserEmail] = useState(false);
 
   const fetchData = useCallback(async () => {
     // Dispatch 6: read the dictionary through the ref, so a language switch does not re-run this load.
@@ -163,6 +173,51 @@ export default function Admin() {
     } finally {
       setSavingUser(false);
     }
+  };
+
+  const isLockedAccount = (u: Profile) => u.id === me?.id || users.find((x) => x.id === u.id)?.role === 'super_admin';
+
+  const handleChangeUserEmail = async () => {
+    if (!editingUser || changingUserEmail || isLockedAccount(editingUser)) return;
+    setUserEmailError(null);
+    setUserEmailChangedTo(null);
+    const email = newUserEmail.trim().toLowerCase();
+    if (!isEmailAddress(email)) {
+      setUserEmailError(dict.admin.userActionErrors.invalid_email);
+      return;
+    }
+    if (email === (editingUser.email || '').toLowerCase()) {
+      setUserEmailError(dict.admin.userActionErrors.same_email);
+      return;
+    }
+    setChangingUserEmail(true);
+    try {
+      const res = await withTimeout(callAdminUsers<UpdateEmailResult>({ action: 'update_email', user_id: editingUser.id, email }, dict), 30000);
+      if (res.ok === false) {
+        setUserEmailError(res.message);
+        return;
+      }
+      setUsers((prev) => prev.map((u) => u.id === editingUser.id ? { ...u, email: res.data.email } : u));
+      // Only if the dialog is still open on this user — it may have been closed while the change ran.
+      setEditingUser((prev) => prev?.id === editingUser.id ? { ...prev, email: res.data.email } : prev);
+      setUserEmailChangedTo(res.data.email);
+      setNewUserEmail('');
+      if (res.data.warnings?.length) setUserEmailError(res.data.warnings.join(' '));
+    } catch (err) {
+      console.error('handleChangeUserEmail failed:', err);
+      setUserEmailError(errorMessage(err, dict.common.error));
+    } finally {
+      setChangingUserEmail(false);
+    }
+  };
+
+  const handleUserDeleted = (userId: string, result: DeleteUserResult) => {
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    setDeletingUser(null);
+    const done = dict.admin.accountDeleted.replace('{kept}', String(result.enrollments_kept)).replace('{erased}', String(result.enrollments_erased));
+    // One toast: two in the same millisecond share a key in ToastContainer. A cleanup warning makes it an error toast.
+    if (result.warnings?.length) showToast('error', `${done} ${result.warnings.join(' ')}`);
+    else showToast('success', done);
   };
 
   const handleSaveCategory = async () => {
@@ -478,7 +533,7 @@ export default function Admin() {
 														<td data-ev-id="ev_475761869c" className="px-4 py-3 text-end">
 															<Tooltip content={dict.admin.editUser}>
 															<button data-ev-id="ev_841070f0b7"
-                            onClick={() => {setEditUserError(null);setEditingUser(user);}}
+                            onClick={() => {setEditUserError(null);setNewUserEmail('');setUserEmailError(null);setUserEmailChangedTo(null);setEditingUser(user);}}
                             className="p-2 hover:bg-muted rounded-lg transition-colors"
                             aria-label={dict.admin.editUser}>
 
@@ -828,9 +883,64 @@ export default function Admin() {
 								{dict.admin.isActive}
 							</label>
 						</div>
+
+						{/* Items 108 + 120, window 4: the login e-mail, changed at once */}
+						<div data-ev-id="ev_admin_user_email" className="pt-4 border-t border-border space-y-2">
+							<label data-ev-id="ev_admin_user_email_label" htmlFor="adminNewEmail" className="block text-sm font-medium text-foreground">
+								{dict.admin.loginEmail}
+							</label>
+							<div data-ev-id="ev_admin_user_email_row" className="flex gap-2">
+								<input data-ev-id="ev_admin_user_email_input"
+								id="adminNewEmail"
+								type="email"
+								dir="ltr"
+								autoComplete="off"
+								value={newUserEmail}
+								onChange={(e) => setNewUserEmail(e.target.value)}
+								placeholder={dict.profile.newEmail}
+								disabled={isLockedAccount(editingUser) || changingUserEmail}
+								className="flex-1 min-w-0 px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50" />
+								<button data-ev-id="ev_admin_user_email_submit"
+								type="button"
+								onClick={handleChangeUserEmail}
+								disabled={isLockedAccount(editingUser) || changingUserEmail || !newUserEmail.trim()}
+								className="px-3 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+									{changingUserEmail ? dict.common.loading : dict.profile.changeEmail}
+								</button>
+							</div>
+							<p data-ev-id="ev_admin_user_email_help" className="text-xs text-muted-foreground">
+								{isLockedAccount(editingUser) ? editingUser.id === me?.id ? dict.admin.selfEmailLocked : dict.admin.superAdminEmailLocked : dict.admin.emailChangeNow}
+							</p>
+							{userEmailChangedTo &&
+							<p data-ev-id="ev_admin_user_email_done" className="text-sm text-primary">
+								{dict.admin.emailChangedTo.split('{email}')[0]}
+								<span data-ev-id="ev_admin_user_email_done_value" dir="ltr">{userEmailChangedTo}</span>
+								{dict.admin.emailChangedTo.split('{email}')[1]}
+							</p>
+							}
+							{userEmailError &&
+							<p data-ev-id="ev_admin_user_email_error" role="alert" className="text-sm text-destructive"><ErrorText error={userEmailError} /></p>
+							}
+						</div>
+
+						{/* Items 108 + 120, window 4: deleting the account — its own dialog, after the scope is stated */}
+						<div data-ev-id="ev_admin_user_delete" className="pt-4 border-t border-border space-y-2">
+							<p data-ev-id="ev_admin_user_delete_hint" className="text-xs text-muted-foreground">
+								{isLockedAccount(editingUser) ? editingUser.id === me?.id ? dict.admin.selfDeleteLocked : dict.admin.superAdminDeleteLocked : dict.admin.retireHint}
+							</p>
+							<button data-ev-id="ev_admin_user_delete_open"
+							type="button"
+							onClick={() => {const saved = users.find((x) => x.id === editingUser.id) ?? editingUser;setEditingUser(null);setDeletingUser(saved);}}
+							disabled={isLockedAccount(editingUser) || changingUserEmail}
+							className="px-3 py-2 border border-destructive text-destructive rounded-lg hover:bg-destructive/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+								{dict.admin.deleteAccount}
+							</button>
+						</div>
 					</div>
         }
 			</Modal>
+
+			<DeleteUserDialog user={deletingUser} onClose={() => setDeletingUser(null)} onDeleted={handleUserDeleted} />
 
 			{/* Edit Category Modal */}
 			<Modal
