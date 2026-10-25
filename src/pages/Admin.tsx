@@ -190,6 +190,11 @@ export default function Admin() {
       setUserEmailError(dict.admin.userActionErrors.same_email);
       return;
     }
+    // Item 127: the sign-in service answers a taken address with a bare "Error updating user", so say it here first.
+    if (users.some((u) => u.id !== editingUser.id && (u.email || '').toLowerCase() === email)) {
+      setUserEmailError(dict.admin.userActionErrors.email_in_use);
+      return;
+    }
     setChangingUserEmail(true);
     try {
       const res = await withTimeout(callAdminUsers<UpdateEmailResult>({ action: 'update_email', user_id: editingUser.id, email }, dict), 30000);
@@ -833,7 +838,8 @@ export default function Admin() {
 							<select data-ev-id="ev_219fa8da8a"
             value={editingUser.role}
             onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
-            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+            disabled={editingUser.id === me?.id}
+            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
 
 								<option data-ev-id="ev_ba70ef946a" value="employee">{dict.roles.employee}</option>
 								<option data-ev-id="ev_57d05f6171" value="instructor">{dict.roles.instructor}</option>
@@ -877,12 +883,16 @@ export default function Admin() {
             id="isActive"
             checked={editingUser.is_active}
             onChange={(e) => setEditingUser({ ...editingUser, is_active: e.target.checked })}
-            className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+            disabled={editingUser.id === me?.id}
+            className="w-4 h-4 rounded border-border text-primary focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed" />
 
 							<label data-ev-id="ev_cd06815662" htmlFor="isActive" className="text-sm font-medium text-foreground">
 								{dict.admin.isActive}
 							</label>
 						</div>
+						{editingUser.id === me?.id &&
+						<p data-ev-id="ev_admin_user_self_lock" className="text-xs text-muted-foreground">{dict.admin.selfRoleLocked}</p>
+						}
 
 						{/* Items 108 + 120, window 4: the login e-mail, changed at once */}
 						<div data-ev-id="ev_admin_user_email" className="pt-4 border-t border-border space-y-2">

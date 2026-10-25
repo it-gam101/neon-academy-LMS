@@ -736,6 +736,7 @@ export interface Dictionary {
 		emailChangedTo: string;
 		selfEmailLocked: string;
 		selfDeleteLocked: string;
+		selfRoleLocked: string;
 		superAdminEmailLocked: string;
 		superAdminDeleteLocked: string;
 		retireHint: string;
@@ -1605,6 +1606,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			emailChangedTo: 'Email changed to {email}',
 			selfEmailLocked: 'This is your own account: change your email in Settings.',
 			selfDeleteLocked: 'You cannot delete your own account.',
+			selfRoleLocked: 'This is your own account: only another super admin can change its role or untick Active.',
 			superAdminEmailLocked: 'A super admin\'s email cannot be changed here. Give the account another role first.',
 			superAdminDeleteLocked: 'A super admin account cannot be deleted. Give it another role first.',
 			retireHint: 'To retire someone, untick Active instead: nothing is deleted, and they can no longer sign in.',
@@ -2460,6 +2462,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			emailChangedTo: 'האימייל שונה. הכתובת החדשה: {email}',
 			selfEmailLocked: 'זה החשבון שלך: את כתובת האימייל אפשר לשנות בהגדרות.',
 			selfDeleteLocked: 'אי אפשר למחוק את החשבון שלך.',
+			selfRoleLocked: 'זה החשבון שלך: את התפקיד ואת הסימון "פעיל" אפשר לשנות רק מחשבון אחר של מנהל ראשי.',
 			superAdminEmailLocked: 'אי אפשר לשנות כאן את האימייל של מנהל ראשי. יש לשנות קודם את התפקיד.',
 			superAdminDeleteLocked: 'אי אפשר למחוק חשבון של מנהל ראשי. יש לשנות קודם את התפקיד.',
 			retireHint: 'כדי להפסיק גישה בלי למחוק דבר, עדיף לבטל את הסימון "פעיל": הנתונים נשמרים וההתחברות נחסמת.',
