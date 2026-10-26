@@ -140,7 +140,8 @@ export default function Index() {
   const continueEnrollment = inProgress[0];
 
   // Get 3 most recently published courses (sorted by created_at desc)
-  const newCourses = [...courses].
+  // Item 121: open courses only, plus those the user is already enrolled in (as the Catalogue).
+  const newCourses = courses.filter((c) => c.open_enrollment || !!c.enrollment).
   sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).
   slice(0, 3);
 

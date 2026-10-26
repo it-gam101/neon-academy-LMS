@@ -91,6 +91,7 @@ export type Database = {
           estimated_minutes: number | null
           id: string
           is_mandatory: boolean
+          open_enrollment: boolean
           status: string
           thumbnail_url: string | null
           title_en: string
@@ -108,6 +109,7 @@ export type Database = {
           estimated_minutes?: number | null
           id?: string
           is_mandatory?: boolean
+          open_enrollment?: boolean
           status?: string
           thumbnail_url?: string | null
           title_en: string
@@ -125,6 +127,7 @@ export type Database = {
           estimated_minutes?: number | null
           id?: string
           is_mandatory?: boolean
+          open_enrollment?: boolean
           status?: string
           thumbnail_url?: string | null
           title_en?: string

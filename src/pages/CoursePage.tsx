@@ -178,13 +178,15 @@ export default function CoursePage() {
               }
 								</div> :
 
+            course.open_enrollment ?
             <button data-ev-id="ev_84b0c9d34e"
             onClick={handleEnroll}
             disabled={enrolling}
             className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
 
 									{enrolling ? dict.common.loading : dict.catalogue.enroll}
-								</button>
+								</button> :
+            <p data-ev-id="ev_course_assigned_only" className="text-sm text-muted-foreground">{dict.course.assignedOnly}</p>
             }
 						</div>
 					</div>

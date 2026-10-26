@@ -422,6 +422,7 @@ export interface Dictionary {
 		courseCompletedMessage: string;
 		yourScore: string;
 		newContentSinceCompleted: string;
+		assignedOnly: string;
 		notStarted: string;
 		inProgress: string;
 		lesson: string;
@@ -515,6 +516,7 @@ export interface Dictionary {
 		bulkAssign: string;
 		selectUsers: string;
 		selectCourse: string;
+		courseAssignedOnly: string;
 		setDueDate: string;
 		assign: string;
 		assigning: string;
@@ -557,6 +559,9 @@ export interface Dictionary {
 		orPasteImageLink: string;
 		estimatedMinutes: string;
 		isMandatory: string;
+		openEnrollment: string;
+		openEnrollmentHelp: string;
+		assignedOnly: string;
 		dueDays: string;
 		dueDaysHelp: string;
 		moduleManager: string;
@@ -1307,6 +1312,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			courseCompletedMessage: 'Congratulations! You have completed this course.',
 			yourScore: 'Your score',
 			newContentSinceCompleted: 'Modules added since you completed this course: {count}',
+			assignedOnly: 'This course is assigned, not open for self-enrollment. To take it, ask your manager or HR.',
 			notStarted: 'Not Started',
 			inProgress: 'In Progress',
 			lesson: 'Lesson',
@@ -1368,7 +1374,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			completedTab: 'Completed',
 			overdueTab: 'Overdue',
 			noCourses: 'No courses yet',
-			noCoursesDescription: 'Visit the catalogue to enroll in courses.',
+			noCoursesDescription: 'Courses assigned to you appear here. You can also enroll yourself in open courses in the Catalogue.',
 			noInProgress: 'No courses in progress',
 			noInProgressDescription: 'Start a course to see it here.',
 			noCompleted: 'No completed courses',
@@ -1397,6 +1403,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			bulkAssign: 'Bulk Assign',
 			selectUsers: 'Select team members',
 			selectCourse: 'Select course',
+			courseAssignedOnly: '{title} (assigned only)',
 			setDueDate: 'Set due date',
 			assign: 'Assign',
 			assigning: 'Assigning...',
@@ -1436,6 +1443,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			orPasteImageLink: 'or paste a link',
 			estimatedMinutes: 'Estimated minutes',
 			isMandatory: 'Mandatory course',
+			openEnrollment: 'Open enrollment',
+			openEnrollmentHelp: 'On: listed in the Catalogue, and anyone can enroll. Off: only admins, HR and team managers can assign it.',
+			assignedOnly: 'Assigned only',
 			dueDays: 'Due days after enrollment',
 			dueDaysHelp: 'Leave empty for no automatic due date',
 			moduleManager: 'Module Manager',
@@ -2163,6 +2173,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			courseCompletedMessage: 'מזל טוב! השלמת את הקורס.',
 			yourScore: 'הציון שלך',
 			newContentSinceCompleted: 'יחידות שנוספו מאז שהשלמתם את הקורס: {count}',
+			assignedOnly: 'הקורס הזה ניתן בהקצאה בלבד ואינו פתוח להרשמה עצמית. לקבלת גישה יש לפנות להנהלה או למשאבי אנוש.',
 			notStarted: 'לא התחיל',
 			inProgress: 'בתהליך',
 			lesson: 'שיעור',
@@ -2224,7 +2235,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			completedTab: 'הושלמו',
 			overdueTab: 'באיחור',
 			noCourses: 'אין קורסים עדיין',
-			noCoursesDescription: 'בקטלוג אפשר להירשם לקורסים.',
+			noCoursesDescription: 'קורסים שהוקצו יופיעו כאן. אפשר גם להירשם לקורסים פתוחים בקטלוג.',
 			noInProgress: 'אין קורסים בתהליך',
 			noInProgressDescription: 'קורסים שהתחלתם יופיעו כאן.',
 			noCompleted: 'אין קורסים שהושלמו',
@@ -2253,6 +2264,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			bulkAssign: 'הקצאה מרובה',
 			selectUsers: 'בחירת חברי צוות',
 			selectCourse: 'בחירת קורס',
+			courseAssignedOnly: '{title} (בהקצאה בלבד)',
 			setDueDate: 'קביעת תאריך יעד',
 			assign: 'הקצאה',
 			assigning: 'הקצאה...',
@@ -2292,6 +2304,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			orPasteImageLink: 'או הדביקו קישור',
 			estimatedMinutes: 'דקות משוערות',
 			isMandatory: 'קורס חובה',
+			openEnrollment: 'הרשמה פתוחה',
+			openEnrollmentHelp: 'מופעל: הקורס מופיע בקטלוג וההרשמה פתוחה לכולם. כבוי: רק מנהלי המערכת, משאבי אנוש ומנהלי הצוותים יכולים להקצות אותו.',
+			assignedOnly: 'בהקצאה בלבד',
 			dueDays: 'ימים להשלמה מרגע ההרשמה',
 			dueDaysHelp: 'אם השדה ריק, לא ייקבע תאריך יעד אוטומטי',
 			moduleManager: 'ניהול מודולים',

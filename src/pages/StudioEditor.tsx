@@ -238,6 +238,7 @@ export default function StudioEditor() {
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState('');
   const [isMandatory, setIsMandatory] = useState(false);
+  const [openEnrollment, setOpenEnrollment] = useState(false);
   const [dueDays, setDueDays] = useState('');
 
   // Course fields are written ONLY by Save Draft and Publish. A route change unmounts this
@@ -256,6 +257,7 @@ export default function StudioEditor() {
       thumbnail_url: string | null;
       estimated_minutes: number | null;
       is_mandatory: boolean;
+      open_enrollment: boolean;
       due_days: number | null;
     };
     dict: typeof dict;
@@ -291,6 +293,7 @@ export default function StudioEditor() {
           setThumbnailUrl(courseData.thumbnail_url || '');
           setEstimatedMinutes(courseData.estimated_minutes?.toString() || '');
           setIsMandatory(courseData.is_mandatory);
+          setOpenEnrollment(courseData.open_enrollment);
           setDueDays(courseData.due_days?.toString() || '');
         }
 
@@ -346,6 +349,7 @@ export default function StudioEditor() {
       (thumbnailUrl || '') !== (course.thumbnail_url || '') ||
       (estimatedMinutes || '') !== (course.estimated_minutes?.toString() || '') ||
       isMandatory !== course.is_mandatory ||
+      openEnrollment !== course.open_enrollment ||
       (dueDays || '') !== (course.due_days?.toString() || ''),
       values: {
         title_en: titleEn.trim(),
@@ -356,6 +360,7 @@ export default function StudioEditor() {
         thumbnail_url: thumbnailUrl || null,
         estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
         is_mandatory: isMandatory,
+        open_enrollment: openEnrollment,
         due_days: dueDays ? parseInt(dueDays) : null
       },
       dict
@@ -430,6 +435,7 @@ export default function StudioEditor() {
           thumbnail_url: thumbnailUrl || null,
           estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
           is_mandatory: isMandatory,
+          open_enrollment: openEnrollment,
           due_days: dueDays ? parseInt(dueDays) : null,
           updated_at: new Date().toISOString()
         }).
@@ -576,6 +582,7 @@ export default function StudioEditor() {
         thumbnail_url: thumbnailUrl || null,
         estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
         is_mandatory: isMandatory,
+        open_enrollment: openEnrollment,
         due_days: dueDays ? parseInt(dueDays) : null,
         status: 'published',
         updated_at: new Date().toISOString()
@@ -1356,6 +1363,22 @@ export default function StudioEditor() {
 							<label data-ev-id="ev_f405750f7e" htmlFor="isMandatory" className="text-sm font-medium text-foreground">
 								{dict.studio.isMandatory}
 							</label>
+						</div>
+
+						<div data-ev-id="ev_open_enrollment" className="flex items-start gap-2">
+							<input data-ev-id="ev_open_enrollment_input"
+              type="checkbox"
+              id="openEnrollment"
+              checked={openEnrollment}
+              onChange={(e) => setOpenEnrollment(e.target.checked)}
+              className="w-4 h-4 mt-0.5 rounded border-border text-primary focus:ring-primary" />
+
+							<div data-ev-id="ev_open_enrollment_text">
+								<label data-ev-id="ev_open_enrollment_label" htmlFor="openEnrollment" className="text-sm font-medium text-foreground">
+									{dict.studio.openEnrollment}
+								</label>
+								<p data-ev-id="ev_open_enrollment_help" className="text-xs text-muted-foreground">{dict.studio.openEnrollmentHelp}</p>
+							</div>
 						</div>
 					</div>
 				</div>

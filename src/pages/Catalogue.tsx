@@ -20,6 +20,9 @@ export default function Catalogue() {
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
   const filteredCourses = courses.filter((course) => {
+    // Item 121: an assigned-only course is listed only to someone already enrolled in it.
+    if (!course.open_enrollment && !course.enrollment) return false;
+
     // Category filter
     if (selectedCategory && course.category_id !== selectedCategory) return false;
 

@@ -205,6 +205,7 @@ export default function Studio() {
 									<div data-ev-id="ev_c2e14383ec" className="flex items-center gap-2 mb-1">
 										<h3 data-ev-id="ev_3f57fde027" className="font-semibold text-foreground truncate">{getLocalizedTitle(course)}</h3>
 										{getStatusBadge(course.status)}
+										{!course.open_enrollment && <Badge>{dict.studio.assignedOnly}</Badge>}
 									</div>
 									<div data-ev-id="ev_132246d517" className="flex items-center gap-4 text-sm text-muted-foreground">
 										{course.category &&

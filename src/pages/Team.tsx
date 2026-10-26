@@ -501,7 +501,9 @@ export default function Team() {
 							<option data-ev-id="ev_7e19eda0e2" value="">{dict.common.select}...</option>
 							{courses.map((course) =>
               <option data-ev-id="ev_7157447790" key={course.id} value={course.id}>
-									{locale === 'he' ? course.title_he : course.title_en}
+									{course.open_enrollment ?
+									(locale === 'he' ? course.title_he : course.title_en) :
+									dict.team.courseAssignedOnly.replace('{title}', locale === 'he' ? course.title_he : course.title_en)}
 								</option>
               )}
 						</select>
