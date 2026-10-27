@@ -628,7 +628,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
                   checked={!importContent}
                   onChange={() => setImportContent(false)}
                   disabled={state !== 'idle'}
-                  className="mt-1 w-4 h-4 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
+                  className="mt-1 w-4 h-4 shrink-0 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
 											<span data-ev-id="ev_3b90d40f37" className="block">
 												<span data-ev-id="ev_83a3cf95f3" className="block text-sm text-foreground">{dict.studioUpload.importAsPackage}</span>
 												<span data-ev-id="ev_1dc6fb0297" className="block text-xs text-muted-foreground">{dict.studioUpload.importAsPackageDetail}</span>
@@ -642,7 +642,7 @@ export function ScormUploadModal({ courseId, sortOrder, onClose, onUploaded }: S
                   checked={importContent}
                   onChange={() => setImportContent(true)}
                   disabled={state !== 'idle'}
-                  className="mt-1 w-4 h-4 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
+                  className="mt-1 w-4 h-4 shrink-0 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
 											<span data-ev-id="ev_3fe887c9ba" className="block">
 												<span data-ev-id="ev_3fba9b40fc" className="block text-sm text-foreground">{dict.studioUpload.importAsModules}</span>
 												<span data-ev-id="ev_56281f9f9f" className="block text-xs text-muted-foreground">

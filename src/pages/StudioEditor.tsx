@@ -1352,7 +1352,7 @@ export default function StudioEditor() {
 
 						</div>
 
-						<div data-ev-id="ev_de40a34189" className="flex items-center gap-2">
+						<div data-ev-id="ev_de40a34189" className="flex items-center gap-2 self-start">
 							<input data-ev-id="ev_e0a4de18b6"
               type="checkbox"
               id="isMandatory"
@@ -1371,7 +1371,7 @@ export default function StudioEditor() {
               id="openEnrollment"
               checked={openEnrollment}
               onChange={(e) => setOpenEnrollment(e.target.checked)}
-              className="w-4 h-4 mt-0.5 rounded border-border text-primary focus:ring-primary" />
+              className="w-4 h-4 mt-0.5 shrink-0 rounded border-border text-primary focus:ring-primary" />
 
 							<div data-ev-id="ev_open_enrollment_text">
 								<label data-ev-id="ev_open_enrollment_label" htmlFor="openEnrollment" className="text-sm font-medium text-foreground">
@@ -2051,7 +2051,7 @@ export default function StudioEditor() {
             checked={!importAsModules}
             onChange={() => setImportAsModules(false)}
             disabled={addingFromLibrary}
-            className="mt-1 w-4 h-4 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
+            className="mt-1 w-4 h-4 shrink-0 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
 							<span data-ev-id="ev_lic_pkg_text" className="block">
 								<span data-ev-id="ev_lic_pkg_t" className="block text-sm text-foreground">{dict.studioUpload.importAsPackage}</span>
 								<span data-ev-id="ev_lic_pkg_d" className="block text-xs text-muted-foreground">{dict.studioUpload.importAsPackageDetail}</span>
@@ -2064,7 +2064,7 @@ export default function StudioEditor() {
             checked={importAsModules}
             onChange={() => setImportAsModules(true)}
             disabled={addingFromLibrary}
-            className="mt-1 w-4 h-4 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
+            className="mt-1 w-4 h-4 shrink-0 border-border bg-background text-primary focus:ring-2 focus:ring-primary" />
 							<span data-ev-id="ev_lic_mods_text" className="block">
 								<span data-ev-id="ev_lic_mods_t" className="block text-sm text-foreground">{dict.studioUpload.importAsModules}</span>
 								<span data-ev-id="ev_lic_mods_d" className="block text-xs text-muted-foreground">
