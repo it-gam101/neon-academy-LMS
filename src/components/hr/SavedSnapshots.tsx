@@ -136,7 +136,7 @@ export function SavedSnapshots({ version }: {version: number;}) {
 								const isOpen = s.id === openId;
 								return (
 									<tr data-ev-id="ev_hr_snapshots_row" key={s.id} className={isOpen ? 'bg-primary/5' : undefined}>
-											<td data-ev-id="ev_hr_snapshots_date" className="px-4 py-3 text-foreground whitespace-nowrap">{formatDateTime(s.savedAt, locale)}</td>
+											<td data-ev-id="ev_hr_snapshots_date" className="px-4 py-3 text-foreground">{formatDateTime(s.savedAt, locale)}</td>
 											<td data-ev-id="ev_hr_snapshots_report" className="px-4 py-3 text-muted-foreground">{reportTitle(s.type, dict)}</td>
 											<td data-ev-id="ev_hr_snapshots_by" className="px-4 py-3 text-muted-foreground">{s.savedBy ?? '—'}</td>
 											<td data-ev-id="ev_hr_snapshots_action" className="px-4 py-3 text-end">

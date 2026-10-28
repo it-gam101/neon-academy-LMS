@@ -318,9 +318,8 @@ export interface Dictionary {
 		optional: string;
 		minutes: string;
 		hours: string;
-		days: string;
-		ago: string;
-		in: string;
+		inDays: string;
+		daysAgo: string;
 		overdue: string;
 		today: string;
 		tomorrow: string;
@@ -498,6 +497,9 @@ export interface Dictionary {
 		completedOn: string;
 		dueIn: string;
 		overdueBy: string;
+		dueToday: string;
+		dueTomorrow: string;
+		overdueOneDay: string;
 		nextModule: string;
 	};
 	
@@ -759,6 +761,8 @@ export interface Dictionary {
 		scopeCourses: string;
 		scopeTeam: string;
 		accountDeleted: string;
+		deletedAccount: string;
+		deletedCourse: string;
 		userActionErrors: {
 			unauthorized: string;
 			forbidden: string;
@@ -1214,9 +1218,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			optional: 'Optional',
 			minutes: 'min',
 			hours: 'hours',
-			days: 'days',
-			ago: 'ago',
-			in: 'in',
+			inDays: 'in {n} days',
+			daysAgo: '{n} days ago',
 			overdue: 'Overdue',
 			today: 'Today',
 			tomorrow: 'Tomorrow',
@@ -1384,8 +1387,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			continueWhere: 'Continue where you left off',
 			lastActivity: 'Last activity',
 			completedOn: 'Completed on',
-			dueIn: 'Due in',
-			overdueBy: 'Overdue by',
+			dueIn: 'Due in {n} days',
+			overdueBy: 'Overdue by {n} days',
+			dueToday: 'Due today',
+			dueTomorrow: 'Due tomorrow',
+			overdueOneDay: 'Overdue by 1 day',
 			nextModule: 'Next module',
 		},
 		
@@ -1634,6 +1640,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			scopeCourses: 'Courses they created: {count} (kept, without a creator)',
 			scopeTeam: 'Team members they manage: {count} (left without a manager)',
 			accountDeleted: 'Account deleted. Records kept: {kept}. Erased: {erased}.',
+			deletedAccount: 'deleted account',
+			deletedCourse: 'deleted course',
 			userActionErrors: {
 				unauthorized: 'Your session has expired. Sign in again.',
 				forbidden: 'Only an active super admin can do this.',
@@ -2075,9 +2083,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			optional: 'אופציונלי',
 			minutes: 'דק׳',
 			hours: 'שעות',
-			days: 'ימים',
-			ago: 'לפני',
-			in: 'בעוד',
+			inDays: 'בעוד {n} ימים',
+			daysAgo: 'לפני {n} ימים',
 			overdue: 'באיחור',
 			today: 'היום',
 			tomorrow: 'מחר',
@@ -2245,8 +2252,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			continueWhere: 'ממשיכים מהמקום שבו עצרתם',
 			lastActivity: 'פעילות אחרונה',
 			completedOn: 'הושלם ב',
-			dueIn: 'יעד בעוד',
-			overdueBy: 'באיחור של',
+			dueIn: 'יעד בעוד {n} ימים',
+			overdueBy: 'באיחור של {n} ימים',
+			dueToday: 'יעד: היום',
+			dueTomorrow: 'יעד: מחר',
+			overdueOneDay: 'באיחור של יום אחד',
 			nextModule: 'המודול הבא',
 		},
 		
@@ -2495,6 +2505,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			scopeCourses: 'קורסים שנוצרו בחשבון: {count} (נשארים, ללא יוצר)',
 			scopeTeam: 'חברי צוות בניהול החשבון: {count} (יישארו ללא מנהל)',
 			accountDeleted: 'החשבון נמחק. רשומות שנשמרו: {kept}. נמחקו: {erased}.',
+			deletedAccount: 'חשבון שנמחק',
+			deletedCourse: 'קורס שנמחק',
 			userActionErrors: {
 				unauthorized: 'פג תוקף ההתחברות. יש להתחבר מחדש.',
 				forbidden: 'הפעולה זמינה רק לחשבון מנהל ראשי פעיל.',

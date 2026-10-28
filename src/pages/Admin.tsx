@@ -33,12 +33,13 @@ type Category = Tables<'course_categories'>;
 type AuditLog = Tables<'audit_log'>;
 type OrgSettings = Tables<'org_settings'>;
 
-function formatAuditMeta(meta: unknown): string | null {
+// Item 133: `nameOf` turns an id in the details into a person's name or a course's title, never the raw id.
+function formatAuditMeta(meta: unknown, nameOf?: (key: string, value: unknown) => string | undefined): string | null {
   if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
   const entries = Object.entries(meta as Record<string, unknown>);
   if (entries.length === 0) return null;
   return entries.
-  map(([k, v]) => `${k}: ${v !== null && typeof v === 'object' ? JSON.stringify(v) : String(v)}`).
+  map(([k, v]) => `${k}: ${nameOf?.(k, v) ?? (v !== null && typeof v === 'object' ? JSON.stringify(v) : String(v))}`).
   join(' · ');
 }
 
@@ -50,6 +51,7 @@ export default function Admin() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [auditLogs, setAuditLogs] = useState<(AuditLog & {actor?: Profile;})[]>([]);
+  const [courseTitles, setCourseTitles] = useState<Record<string, { title_en: string; title_he: string }>>({});
   const [orgSettings, setOrgSettings] = useState<OrgSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -91,6 +93,16 @@ export default function Admin() {
       );
       if (usersError) throw usersError;
       if (usersData) setUsers(usersData);
+
+      // Item 133: course titles, so the Audit Log can name a course instead of printing its id.
+      const { data: coursesData, error: coursesError } = await withTimeout(
+        supabase.
+        from('courses').
+        select('id, title_en, title_he'),
+        10000
+      );
+      if (coursesError) throw coursesError;
+      if (coursesData) setCourseTitles(Object.fromEntries(coursesData.map((c) => [c.id, c])));
 
       // Fetch categories
       const { data: categoriesData, error: categoriesError } = await withTimeout(
@@ -223,6 +235,20 @@ export default function Admin() {
     // One toast: two in the same millisecond share a key in ToastContainer. A cleanup warning makes it an error toast.
     if (result.warnings?.length) showToast('error', `${done} ${result.warnings.join(' ')}`);
     else showToast('success', done);
+  };
+
+  const auditName = (key: string, value: unknown): string | undefined => {
+    if (['user_id', 'old_manager_id', 'new_manager_id', 'created_by'].includes(key)) {
+      if (typeof value !== 'string') return '-';
+      const person = users.find((u) => u.id === value);
+      return person ? person.full_name || person.email || dict.admin.deletedAccount : dict.admin.deletedAccount;
+    }
+    if (key === 'course_id') {
+      if (typeof value !== 'string') return '-';
+      const course = courseTitles[value];
+      return course ? locale === 'he' ? course.title_he : course.title_en : dict.admin.deletedCourse;
+    }
+    return undefined;
   };
 
   const handleSaveCategory = async () => {
@@ -647,8 +673,8 @@ export default function Admin() {
 													</td>
 													<td data-ev-id="ev_e787e135f1" className="px-4 py-3 text-muted-foreground">{(dict.admin.auditEntities as Record<string, string | undefined>)[log.entity] ?? log.entity}</td>
 													<td data-ev-id="ev_f6476c4c17" className="px-4 py-3 text-sm text-muted-foreground">
-														{formatAuditMeta(log.meta) ?
-                          <code data-ev-id="ev_7361b7eabe" dir="ltr" className="text-xs break-all">{formatAuditMeta(log.meta)}</code> :
+														{formatAuditMeta(log.meta, auditName) ?
+                          <code data-ev-id="ev_7361b7eabe" dir="ltr" className="text-xs break-all">{formatAuditMeta(log.meta, auditName)}</code> :
                           '-'}
 													</td>
 												</tr>

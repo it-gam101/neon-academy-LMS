@@ -10,7 +10,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { formatRelativeDate } from '@/utils/formatDate';
+import { formatDuePhrase } from '@/utils/formatDate';
 
 export default function MyLearning() {
   const { locale } = useLocale();
@@ -140,7 +140,7 @@ export default function MyLearning() {
                     isOverdue(enrollment) ? 'text-destructive' : 'text-muted-foreground'}`
                     }>
 														<Calendar className="w-4 h-4" />
-														{isOverdue(enrollment) ? dict.myLearning.overdueBy : dict.myLearning.dueIn} {formatRelativeDate(enrollment.due_at, locale)}
+														{formatDuePhrase(enrollment.due_at, isOverdue(enrollment), locale)}
 													</div>
                     }
 

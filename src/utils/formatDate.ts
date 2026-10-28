@@ -1,21 +1,37 @@
 import type { Locale } from '@/i18n/dictionary';
 import { getDictionary } from '@/i18n/dictionary';
 
+/** Whole calendar days from today to `date`, in the reader's time zone: 0 today, 1 tomorrow, -1 yesterday. */
+export function calendarDaysFromToday(date: string | Date): number {
+	const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+	return Math.round((day(new Date(date)) - day(new Date())) / (1000 * 60 * 60 * 24));
+}
+
 export function formatRelativeDate(date: string | Date, locale: Locale): string {
 	const dict = getDictionary(locale);
-	const now = new Date();
-	const target = new Date(date);
-	const diffMs = target.getTime() - now.getTime();
-	const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+	const diffDays = calendarDaysFromToday(date);
 
 	if (diffDays === 0) return dict.common.today;
 	if (diffDays === 1) return dict.common.tomorrow;
 	if (diffDays === -1) return dict.common.yesterday;
 
-	if (diffDays > 0) {
-		return `${dict.common.in} ${diffDays} ${dict.common.days}`;
+	if (diffDays > 0) return dict.common.inDays.replace('{n}', String(diffDays));
+	return dict.common.daysAgo.replace('{n}', String(-diffDays));
+}
+
+/** My Learning's due line, said whole: "Due in 3 days", "Due today", "Overdue by 2 days". */
+export function formatDuePhrase(date: string | Date, overdue: boolean, locale: Locale): string {
+	const dict = getDictionary(locale);
+	const t = dict.myLearning;
+	const diffDays = calendarDaysFromToday(date);
+
+	if (diffDays < 0) {
+		if (!overdue) return `${dict.course.dueDateLabel}: ${formatRelativeDate(date, locale)}`;
+		return diffDays === -1 ? t.overdueOneDay : t.overdueBy.replace('{n}', String(-diffDays));
 	}
-	return `${Math.abs(diffDays)} ${dict.common.days} ${dict.common.ago}`;
+	if (diffDays === 0) return t.dueToday;
+	if (diffDays === 1) return t.dueTomorrow;
+	return t.dueIn.replace('{n}', String(diffDays));
 }
 
 export function formatDate(date: string | Date, locale: Locale): string {

@@ -1534,7 +1534,7 @@ export default function StudioEditor() {
 				</div>
 
 				{/* Actions */}
-				<div data-ev-id="ev_a8097d2908" className="flex items-center justify-between">
+				<div data-ev-id="ev_a8097d2908" className="flex flex-wrap items-center justify-between gap-2">
 					<Link data-ev-id="ev_ea31afb70a"
           to={`/course/${courseId}?preview=1`}
           className="flex items-center gap-2 px-4 py-2 text-foreground border border-border rounded-lg transition-colors hover:bg-muted">
@@ -1543,7 +1543,7 @@ export default function StudioEditor() {
 						{dict.studio.previewAsLearner}
 					</Link>
 
-					<div data-ev-id="ev_2995b08d20" className="flex items-center gap-2">
+					<div data-ev-id="ev_2995b08d20" className="flex flex-wrap items-center gap-2">
 						<button data-ev-id="ev_fecdcefa3d"
             onClick={handleSave}
             disabled={saving}
