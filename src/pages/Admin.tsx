@@ -525,7 +525,7 @@ export default function Admin() {
 									</div>
 
 									{/* Users table */}
-									<div data-ev-id="ev_3da704ba7d" className="bg-card border border-border rounded-lg overflow-hidden">
+									<div data-ev-id="ev_3da704ba7d" className="bg-card border border-border rounded-lg overflow-x-auto">
 										<table data-ev-id="ev_22b00da6d8" className="w-full">
 											<thead data-ev-id="ev_e18b5c89db" className="bg-muted">
 												<tr data-ev-id="ev_97d6aff318">
@@ -648,7 +648,7 @@ export default function Admin() {
 
             if (activeTab === 'audit') {
               return (
-                <div data-ev-id="ev_57877985ca" className="bg-card border border-border rounded-lg overflow-hidden">
+                <div data-ev-id="ev_57877985ca" className="bg-card border border-border rounded-lg overflow-x-auto">
 									<table data-ev-id="ev_304ecf4773" className="w-full">
 										<thead data-ev-id="ev_8e9a57f5de" className="bg-muted">
 											<tr data-ev-id="ev_86a636b91d">
@@ -672,7 +672,7 @@ export default function Admin() {
 														<Badge variant="info">{(dict.admin.auditActions as Record<string, string | undefined>)[log.action] ?? log.action}</Badge>
 													</td>
 													<td data-ev-id="ev_e787e135f1" className="px-4 py-3 text-muted-foreground">{(dict.admin.auditEntities as Record<string, string | undefined>)[log.entity] ?? log.entity}</td>
-													<td data-ev-id="ev_f6476c4c17" className="px-4 py-3 text-sm text-muted-foreground">
+													<td data-ev-id="ev_f6476c4c17" className="px-4 py-3 text-sm text-muted-foreground min-w-64">
 														{formatAuditMeta(log.meta, auditName) ?
                           <code data-ev-id="ev_7361b7eabe" dir="ltr" className="text-xs break-all">{formatAuditMeta(log.meta, auditName)}</code> :
                           '-'}

@@ -621,6 +621,8 @@ export interface Dictionary {
 		enrolledLearners: string;
 		timeLimitHelp: string;
 		saveDraft: string;
+		unsavedChanges: string;
+		noModulesYet: string;
 		publishCourse: string;
 		unpublishCourse: string;
 		previewAsLearner: string;
@@ -1507,6 +1509,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			enrolledLearners: '{count} enrolled learner(s)',
 			timeLimitHelp: 'Leave empty for no time limit',
 			saveDraft: 'Save Draft',
+			unsavedChanges: 'Unsaved changes',
+			noModulesYet: 'No modules yet. Add a lesson, a quiz or a SCORM package with the buttons above.',
 			publishCourse: 'Publish Course',
 			unpublishCourse: 'Unpublish',
 			previewAsLearner: 'Preview as Learner',
@@ -2372,6 +2376,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
 			enrolledLearners: '{count} לומדים רשומים',
 			timeLimitHelp: 'אם השדה ריק, למבחן לא תהיה מגבלת זמן',
 			saveDraft: 'שמירת טיוטה',
+			unsavedChanges: 'יש שינויים שלא נשמרו',
+			noModulesYet: 'עדיין אין מודולים בקורס. אפשר להוסיף שיעור, מבחן או חבילת SCORM בכפתורים שלמעלה.',
 			publishCourse: 'פרסום הקורס',
 			unpublishCourse: 'ביטול פרסום',
 			previewAsLearner: 'תצוגה מקדימה ללומדים',

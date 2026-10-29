@@ -295,7 +295,7 @@ export default function Team() {
         description={dict.team.noReportsDescription} /> :
 
 
-      <div data-ev-id="ev_359f687516" className="bg-card border border-border rounded-lg overflow-hidden">
+      <div data-ev-id="ev_359f687516" className="bg-card border border-border rounded-lg overflow-x-auto">
             <table data-ev-id="ev_8f3258bc57" className="w-full">
               <thead data-ev-id="ev_a51c5fb992" className="bg-muted">
                 <tr data-ev-id="ev_b95ffa0af0">

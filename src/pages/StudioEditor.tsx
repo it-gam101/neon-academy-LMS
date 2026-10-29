@@ -335,22 +335,26 @@ export default function StudioEditor() {
     fetchData();
   }, [courseId, loadQuizzes, reloadKey]);
 
+  // Item 136: do the course details differ from the saved course? Shown as the unsaved-changes bar, and flushed
+  // on the way out (below).
+  const detailsDirty = !!course && (
+    titleEn.trim() !== course.title_en.trim() ||
+    titleHe.trim() !== course.title_he.trim() ||
+    (descriptionEn || '').trim() !== (course.description_en || '').trim() ||
+    (descriptionHe || '').trim() !== (course.description_he || '').trim() ||
+    (categoryId || '') !== (course.category_id || '') ||
+    (thumbnailUrl || '') !== (course.thumbnail_url || '') ||
+    (estimatedMinutes || '') !== (course.estimated_minutes?.toString() || '') ||
+    isMandatory !== course.is_mandatory ||
+    openEnrollment !== course.open_enrollment ||
+    (dueDays || '') !== (course.due_days?.toString() || ''));
+
   // Refreshed after every render so the unmount cleanup below reads the CURRENT values.
   // No dependency array on purpose.
   useEffect(() => {
     pendingSaveRef.current = course ?
     {
-      dirty:
-      titleEn.trim() !== course.title_en.trim() ||
-      titleHe.trim() !== course.title_he.trim() ||
-      (descriptionEn || '').trim() !== (course.description_en || '').trim() ||
-      (descriptionHe || '').trim() !== (course.description_he || '').trim() ||
-      (categoryId || '') !== (course.category_id || '') ||
-      (thumbnailUrl || '') !== (course.thumbnail_url || '') ||
-      (estimatedMinutes || '') !== (course.estimated_minutes?.toString() || '') ||
-      isMandatory !== course.is_mandatory ||
-      openEnrollment !== course.open_enrollment ||
-      (dueDays || '') !== (course.due_days?.toString() || ''),
+      dirty: detailsDirty,
       values: {
         title_en: titleEn.trim(),
         title_he: titleHe.trim(),
@@ -1192,7 +1196,7 @@ export default function StudioEditor() {
 
   return (
     <div data-ev-id="ev_76d7ff4176" className="min-h-screen bg-background">
-      <div data-ev-id="ev_51ab3d06b9" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div data-ev-id="ev_51ab3d06b9" className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8${detailsDirty ? ' pb-24' : ''}`}>
         {/* Breadcrumbs */}
         <Breadcrumbs
           items={[
@@ -1428,7 +1432,7 @@ export default function StudioEditor() {
 					}
 					{modules.length === 0 ?
           <p data-ev-id="ev_0c64ff2cae" className="text-center text-muted-foreground py-8">
-							{dict.common.noResults}
+							{dict.studio.noModulesYet}
 						</p> :
 
           <div data-ev-id="ev_9877fe3599" className="space-y-2">
@@ -1579,6 +1583,23 @@ export default function StudioEditor() {
             }
 					</div>
 				</div>
+
+				{/* Item 136: unsaved course details are announced, with Save Draft in reach on any screen */}
+				{detailsDirty &&
+				<div data-ev-id="ev_unsaved_bar" role="status" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card">
+					<div data-ev-id="ev_unsaved_bar_inner" className="max-w-4xl mx-auto flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-3">
+						<span data-ev-id="ev_unsaved_bar_text" className="text-sm text-foreground">{dict.studio.unsavedChanges}</span>
+						<button data-ev-id="ev_unsaved_bar_save"
+						type="button"
+						onClick={handleSave}
+						disabled={saving}
+						className="flex shrink-0 items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
+							<Save className="w-4 h-4" />
+							{saving ? dict.common.loading : dict.studio.saveDraft}
+						</button>
+					</div>
+				</div>
+				}
 
 				{/* Danger Zone */}
 				{canManage &&

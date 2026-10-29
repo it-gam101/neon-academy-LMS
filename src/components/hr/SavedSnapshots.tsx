@@ -121,7 +121,7 @@ export function SavedSnapshots({ version }: {version: number;}) {
 			!loadError && <p data-ev-id="ev_hr_snapshots_empty" className="text-sm text-muted-foreground">{h.noSnapshots}</p> :
 
 			<div data-ev-id="ev_hr_snapshots_list" className="bg-card border border-border rounded-lg overflow-hidden">
-					<div data-ev-id="ev_hr_snapshots_scroll" className="overflow-x-auto">
+					<div data-ev-id="ev_hr_snapshots_scroll" className="relative overflow-x-auto">
 						<table data-ev-id="ev_hr_snapshots_table" className="w-full">
 							<thead data-ev-id="ev_hr_snapshots_thead" className="bg-muted">
 								<tr data-ev-id="ev_hr_snapshots_headrow">
